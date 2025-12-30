@@ -24,9 +24,10 @@ import {
   EntryDetailModal,
 } from '../src/components/ui';
 import { AddEntryBottomSheet, AddEntryBottomSheetRef } from '../src/components/sheets';
-import { useAppStore } from '../src/stores';
+import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { getWeekDaysInfo } from '../src/utils/date';
+import { calculateQuestTotals } from '../src/utils/questCalculator';
 import type { Entry, HomeWorkoutEntry, RunEntry } from '../src/types';
 
 export default function TodayScreen() {
@@ -43,6 +44,8 @@ export default function TodayScreen() {
     getSportEntries,
     getMonthlyStats,
   } = useAppStore();
+
+  const { recalculateAllQuests } = useGamificationStore();
 
   const streak = getStreak();
   const weekWorkoutsCount = getWeekWorkoutsCount();
@@ -74,8 +77,13 @@ export default function TodayScreen() {
   }, []);
 
   const handleDeleteEntry = useCallback((id: string) => {
+    // Supprimer l'entrée
     deleteEntry(id);
-  }, [deleteEntry]);
+    // Recalculer les quêtes avec les entrées restantes
+    const remainingEntries = entries.filter(e => e.id !== id);
+    const totals = calculateQuestTotals(remainingEntries);
+    recalculateAllQuests(totals);
+  }, [deleteEntry, entries, recalculateAllQuests]);
 
   const handleEditEntry = useCallback((entry: Entry) => {
     // TODO: Implémenter la navigation ou l'ouverture d'un formulaire d'édition

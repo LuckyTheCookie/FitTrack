@@ -1,23 +1,18 @@
 
-// ============================================================================
-// GAMIFICATION SCREEN
-// ============================================================================
-
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { GlassCard, SectionHeader, Button } from '../src/components/ui';
+import { GlassCard, SectionHeader } from '../src/components/ui';
 import { useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, withSpring, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
-// Asset local (à vérifier si le chemin est correct via require ou uri)
-// Le user a indiqué: assets/ploppy.png
+// Asset local
 const PLOPPY_IMAGE = require('../assets/ploppy.png');
 
 export default function GamificationScreen() {
-    const { xp, level, rank, quests, generateWeeklyQuests } = useGamificationStore();
+    const { xp, level, rank, quests, history, generateWeeklyQuests } = useGamificationStore();
     const scale = useSharedValue(1);
 
     // Animation de respiration pour Ploppy
@@ -31,7 +26,6 @@ export default function GamificationScreen() {
             true
         );
 
-        // Générer des quêtes si vide
         if (quests.length === 0) {
             generateWeeklyQuests();
         }
@@ -43,6 +37,11 @@ export default function GamificationScreen() {
 
     const xpForNextLevel = level * 100;
     const progress = Math.min(Math.max(xp / xpForNextLevel, 0), 1);
+
+    const formatDate = (isoString: string) => {
+        const d = new Date(isoString);
+        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -114,6 +113,28 @@ export default function GamificationScreen() {
                     </View>
                 </View>
 
+                {/* HISTORY SECTION */}
+                <View style={styles.section}>
+                    <SectionHeader title="Derniers gains" />
+                    <GlassCard style={styles.historyCard}>
+                        {history.length === 0 ? (
+                            <Text style={styles.emptyHistory}>Aucune activité récente</Text>
+                        ) : (
+                            history.map((item, index) => (
+                                <View key={item.id} style={[styles.historyItem, index !== history.length - 1 && styles.historyItemBorder]}>
+                                    <View style={styles.historyInfo}>
+                                        <Text style={styles.historyReason}>{item.reason}</Text>
+                                        <Text style={styles.historyDate}>{formatDate(item.date)}</Text>
+                                    </View>
+                                    <View style={styles.historyAmount}>
+                                        <Text style={styles.historyAmountText}>+{item.amount} XP</Text>
+                                    </View>
+                                </View>
+                            ))
+                        )}
+                    </GlassCard>
+                </View>
+
                 <View style={styles.spacer} />
             </ScrollView>
         </SafeAreaView>
@@ -152,7 +173,7 @@ const styles = StyleSheet.create({
         borderRadius: 70,
         backgroundColor: Colors.cta,
         opacity: 0.2,
-        filter: 'blur(40px)', // Note: might not work on all RN versions, simplified visual fallback handled by opacity
+        filter: 'blur(40px)',
     },
     levelBadge: {
         position: 'absolute',
@@ -251,6 +272,50 @@ const styles = StyleSheet.create({
         height: '100%',
         backgroundColor: Colors.warning,
         borderRadius: 2,
+    },
+    historyCard: {
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+    },
+    historyItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+    },
+    historyItemBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.separator,
+    },
+    historyInfo: {
+        flex: 1,
+        marginRight: Spacing.md,
+    },
+    historyReason: {
+        fontSize: FontSize.sm,
+        color: Colors.text,
+        marginBottom: 2,
+    },
+    historyDate: {
+        fontSize: 10,
+        color: Colors.muted,
+    },
+    historyAmount: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.sm,
+    },
+    historyAmountText: {
+        fontSize: FontSize.sm,
+        fontWeight: FontWeight.bold,
+        color: Colors.success,
+    },
+    emptyHistory: {
+        textAlign: 'center',
+        color: Colors.muted,
+        paddingVertical: Spacing.lg,
+        fontStyle: 'italic',
     },
     spacer: {
         height: 40,

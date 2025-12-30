@@ -16,7 +16,7 @@ import {
     Pressable,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { InputField, TextArea, Button, SegmentedControl } from '../ui';
+import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui';
 import { useAppStore, useGamificationStore } from '../../stores';
 import type { EntryType } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
@@ -60,6 +60,33 @@ const EXAMPLE_JSON = `{
   ],
   "includeAbsBlock": true
 }`;
+
+
+
+const parseDurationToMinutes = (input: string): number | null => {
+    const s = (input || '').trim().replace(',', '.');
+    if (!s) return null;
+
+    // mm:ss format (e.g. 10:30)
+    if (s.includes(':')) {
+        const parts = s.split(':');
+        if (parts.length === 2) {
+            const mm = parseFloat(parts[0]);
+            const ss = parseFloat(parts[1]);
+            if (!isNaN(mm) && !isNaN(ss)) {
+                return mm + ss / 60;
+            }
+        }
+    }
+
+    // Direct number (int or float)
+    const val = parseFloat(s);
+    if (!isNaN(val) && val > 0) {
+        return val;
+    }
+
+    return null;
+};
 
 export function AddEntryForm({
     onSuccess,
@@ -131,7 +158,7 @@ export function AddEntryForm({
     const formatExercisesToText = (exs: Exercise[]): string => {
         return exs
             .filter(ex => ex.name.trim())
-            .map(ex => `${ex.name}: ${ex.sets}x${ex.reps}`)
+            .map(ex => `${ex.name}: ${ex.sets}x${ex.reps} `)
             .join('\n');
     };
 
@@ -177,10 +204,12 @@ export function AddEntryForm({
                         return;
                     }
                     const exercisesText = formatExercisesToText(validExercises);
+                    const homeTotalReps = validExercises.reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
                     addHomeWorkout({
                         name: homeName.trim() || undefined,
                         exercises: exercisesText,
                         absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
+                        totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
                     });
                     break;
 
@@ -205,37 +234,10 @@ export function AddEntryForm({
                     break;
 
                 case 'beatsaber':
-                    // Parse duration (accept formats: "10", "10.5", "10,5", "10:30")
-                    const parseDurationToMinutes = (input: string): number | null => {
-                        const s = (input || '').trim();
-                        if (!s) return null;
-
-                        // mm:ss format
-                        if (/^\d+\s*:\s*\d{1,2}$/.test(s)) {
-                            const parts = s.split(':').map(p => p.trim());
-                            const mm = parseInt(parts[0], 10);
-                            const ss = parseInt(parts[1], 10);
-                            if (isNaN(mm) || isNaN(ss)) return null;
-                            return (mm * 60 + ss) / 60; // minutes as float
-                        }
-
-                        // Try numeric with optional decimal (comma or dot)
-                        const m = s.replace(',', '.').match(/[-+]?[0-9]*\.?[0-9]+/);
-                        if (m) {
-                            const val = parseFloat(m[0]);
-                            if (!isNaN(val)) return val;
-                        }
-
-                        // Fallback: extract digits
-                        const digits = s.replace(/[^0-9]/g, '');
-                        if (!digits) return null;
-                        const val = parseInt(digits, 10);
-                        return isNaN(val) ? null : val;
-                    };
-
                     const rawMinutes = parseDurationToMinutes(bsDuration);
-                    if (rawMinutes === null || isNaN(rawMinutes) || rawMinutes <= 0) {
-                        Alert.alert('Erreur', 'Durée invalide');
+
+                    if (rawMinutes === null || rawMinutes <= 0) {
+                        Alert.alert('Erreur', 'Durée invalide (ex: 10 ou 10:30)');
                         return;
                     }
 
@@ -249,7 +251,7 @@ export function AddEntryForm({
                         bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
                     });
 
-                    addXp(15 + Math.floor(bsMinutesRounded / 5)); // 15 XP base + 1 XP / 5min
+                    addXp(15 + Math.floor(bsMinutesRounded / 5), `Beat Saber (${bsMinutesRounded}min)`); // 15 XP base + 1 XP / 5min
                     updateQuestProgress('duration', bsMinutesRounded);
                     updateQuestProgress('workouts', 1);
                     break;
@@ -282,14 +284,14 @@ export function AddEntryForm({
 
             // XP Reward generic for other types
             if (activeTab === 'home') {
-                addXp(50); // Base XP for workout
+                addXp(50, `Séance maison : ${homeName || 'Workout'}`); // Base XP for workout
                 updateQuestProgress('workouts', 1);
-                // Count total reps roughly?
-                const totalReps = exercises.reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
-                if (totalReps > 0) updateQuestProgress('exercises', totalReps);
+                // Use validExercises calculated above
+                const reps = exercises.filter(ex => ex.name.trim()).reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
+                if (reps > 0) updateQuestProgress('exercises', reps);
             } else if (activeTab === 'run') {
                 const km = parseFloat(runKm);
-                addXp(30 + Math.floor(km * 5));
+                addXp(30 + Math.floor(km * 5), `Running (${km}km)`);
                 updateQuestProgress('workouts', 1);
             }
 
@@ -342,11 +344,13 @@ export function AddEntryForm({
                     {tabs.map((tab) => (
                         <TouchableOpacity
                             key={tab.value}
-                            style={styles.activityCard}
+                            style={styles.activityTouch}
                             onPress={() => handleStartActivity(tab.value)}
                         >
-                            <Text style={styles.activityEmoji}>{tab.label.split(' ')[0]}</Text>
-                            <Text style={styles.activityLabel}>{tab.label.split(' ').slice(1).join(' ')}</Text>
+                            <GlassCard style={styles.activityCard}>
+                                <Text style={styles.activityEmoji}>{tab.label.split(' ')[0]}</Text>
+                                <Text style={styles.activityLabel}>{tab.label.split(' ').slice(1).join(' ')}</Text>
+                            </GlassCard>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -834,49 +838,46 @@ const styles = StyleSheet.create({
         minHeight: 300,
     },
     introTitle: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: FontWeight.bold,
         color: Colors.text,
         textAlign: 'center',
-        marginBottom: 8,
+        marginBottom: Spacing.sm,
     },
     introSubtitle: {
-        fontSize: FontSize.md,
+        fontSize: FontSize.lg,
         color: Colors.muted,
         textAlign: 'center',
         marginBottom: Spacing.xxl,
     },
-    introButtonText: {
-        color: '#fff',
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
-    },
     activityGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 12,
-        marginTop: Spacing.xl,
+        gap: 16,
         justifyContent: 'center',
         width: '100%',
     },
+    activityTouch: {
+        width: '45%',
+        aspectRatio: 1.1,
+    },
     activityCard: {
-        width: '46%',
-        aspectRatio: 1.2,
-        backgroundColor: Colors.cardSolid,
-        borderRadius: BorderRadius.xl,
+        width: '100%',
+        height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: Colors.stroke,
-        gap: 8,
+        gap: 12,
+        backgroundColor: 'rgba(255,255,255,0.05)', // Slightly lighter than default glass
     },
     activityEmoji: {
-        fontSize: 40,
+        fontSize: 48,
+        marginBottom: 4,
     },
     activityLabel: {
         fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
+        fontWeight: FontWeight.bold,
         color: Colors.text,
+        textAlign: 'center',
     },
     headerRow: {
         flexDirection: 'row',

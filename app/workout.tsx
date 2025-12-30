@@ -18,9 +18,10 @@ import {
   EmptyState,
   EntryDetailModal,
 } from '../src/components/ui';
-import { useAppStore } from '../src/stores';
+import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
+import { calculateQuestTotals } from '../src/utils/questCalculator';
 import type { Entry, EntryType, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry } from '../src/types';
 
 type FilterType = 'all' | 'home' | 'run' | 'beatsaber' | 'meal' | 'measure';
@@ -170,6 +171,7 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
 
 export default function WorkoutScreen() {
   const { entries, deleteEntry } = useAppStore();
+  const { recalculateAllQuests } = useGamificationStore();
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -188,11 +190,18 @@ export default function WorkoutScreen() {
         { 
           text: 'Supprimer', 
           style: 'destructive',
-          onPress: () => deleteEntry(entry.id),
+          onPress: () => {
+            // Supprimer l'entrée
+            deleteEntry(entry.id);
+            // Recalculer les quêtes avec les entrées restantes
+            const remainingEntries = entries.filter(e => e.id !== entry.id);
+            const totals = calculateQuestTotals(remainingEntries);
+            recalculateAllQuests(totals);
+          },
         },
       ]
     );
-  }, [deleteEntry]);
+  }, [deleteEntry, entries, recalculateAllQuests]);
 
   const handleEditEntry = useCallback((entry: Entry) => {
     // TODO: Implémenter la navigation ou l'ouverture d'un formulaire d'édition

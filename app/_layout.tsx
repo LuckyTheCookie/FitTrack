@@ -88,8 +88,13 @@ const TabButton = ({ route, descriptor, isFocused, navigation, config }: any) =>
     );
 };
 
-function CustomTabBar({ state, descriptors, navigation }: any) {
+function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
     const insets = useSafeAreaInsets();
+
+    // Ne montrer que les onglets visibles
+    const visibleRoutes = state.routes.filter((route: any) => 
+        visibleTabs.some((tab: any) => tab.name === route.name)
+    );
 
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md }]}>
@@ -99,12 +104,12 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
 
                 <View style={styles.tabBarContent}>
-                    {state.routes.map((route: any) => {
-                        const config = TAB_CONFIG.find(c => c.name === route.name) || { name: route.name, label: route.name, Icon: LayoutDashboard };
+                    {visibleRoutes.map((route: any) => {
+                        const config = visibleTabs.find((c: any) => c.name === route.name) || { name: route.name, label: route.name, Icon: LayoutDashboard };
                         const index = state.routes.findIndex((r: any) => r.key === route.key);
                         return (
                             <TabButton
-                                key={route.key}
+                                key={`tab-${route.name}`}
                                 route={route}
                                 descriptor={descriptors[route.key]}
                                 isFocused={state.index === index}
@@ -122,19 +127,38 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 export default function Layout() {
     const settings = useSettings();
 
+    // Filtrer les onglets visibles pour le CustomTabBar
+    const visibleTabs = TAB_CONFIG.filter(tab => {
+        if (tab.name === 'workout' && settings.hiddenTabs?.workout) return false;
+        if (tab.name === 'tools' && settings.hiddenTabs?.tools) return false;
+        return true;
+    });
+
     return (
         <Tabs
-            tabBar={(props) => <CustomTabBar {...props} />}
+            tabBar={(props) => <CustomTabBar {...props} visibleTabs={visibleTabs} />}
             screenOptions={{
                 headerShown: false,
                 tabBarStyle: { display: 'none' },
             }}
         >
             <Tabs.Screen name="index" options={{ title: "Today" }} />
-            {!settings.hiddenTabs?.workout && <Tabs.Screen name="workout" options={{ title: "Workout" }} />}
+            <Tabs.Screen 
+                name="workout" 
+                options={{ 
+                    title: "Workout",
+                    href: settings.hiddenTabs?.workout ? null : undefined,
+                }} 
+            />
             <Tabs.Screen name="gamification" options={{ title: "Ploppy" }} />
             <Tabs.Screen name="progress" options={{ title: "Progress" }} />
-            {!settings.hiddenTabs?.tools && <Tabs.Screen name="tools" options={{ title: "Tools" }} />}
+            <Tabs.Screen 
+                name="tools" 
+                options={{ 
+                    title: "Tools",
+                    href: settings.hiddenTabs?.tools ? null : undefined,
+                }} 
+            />
             <Tabs.Screen name="settings" options={{ title: "Settings" }} />
         </Tabs>
     );
