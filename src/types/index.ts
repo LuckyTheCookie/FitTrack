@@ -1,0 +1,159 @@
+// ============================================================================
+// TYPES PRINCIPAUX - FitTrack App
+// ============================================================================
+
+// Types de base
+export type WorkoutType = 'home' | 'run';
+export type EntryType = 'home' | 'run' | 'meal' | 'measure';
+export type FocusArea = 'upper' | 'abs' | 'legs' | 'full';
+export type Intensity = 'easy' | 'medium' | 'hard';
+export type Duration = 10 | 20 | 30;
+
+// ============================================================================
+// ENTRÉES (Logs)
+// ============================================================================
+
+export interface BaseEntry {
+  id: string;
+  type: EntryType;
+  createdAt: string; // ISO date
+  date: string; // YYYY-MM-DD pour regroupement
+}
+
+// Séance à la maison
+export interface HomeWorkoutEntry extends BaseEntry {
+  type: 'home';
+  name?: string;
+  exercises: string; // Texte libre: "Pompes: 3x10\nSquats: 3x20"
+  absBlock?: string; // Bloc abdos optionnel
+}
+
+// Course
+export interface RunEntry extends BaseEntry {
+  type: 'run';
+  distanceKm: number;
+  durationMinutes: number;
+  avgSpeed?: number; // Calculé automatiquement
+  bpmAvg?: number;
+  bpmMax?: number;
+}
+
+// Repas
+export interface MealEntry extends BaseEntry {
+  type: 'meal';
+  mealName: string;
+  description: string; // Texte libre
+}
+
+// Mensurations
+export interface MeasureEntry extends BaseEntry {
+  type: 'measure';
+  weight?: number; // kg
+  waist?: number; // cm - tour de taille
+  arm?: number; // cm - tour de bras
+  hips?: number; // cm - hanches
+}
+
+export type Entry = HomeWorkoutEntry | RunEntry | MealEntry | MeasureEntry;
+export type SportEntry = HomeWorkoutEntry | RunEntry;
+
+// ============================================================================
+// GAMIFICATION
+// ============================================================================
+
+export type BadgeId = 
+  | 'first_workout'
+  | 'streak_7'
+  | 'streak_30'
+  | 'workouts_10'
+  | 'workouts_50'
+  | 'workouts_100'
+  | 'runner_10km'
+  | 'runner_50km'
+  | 'consistent_month';
+
+export interface Badge {
+  id: BadgeId;
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt?: string; // ISO date si débloqué
+}
+
+export interface StreakInfo {
+  current: number; // Streak actuel en jours
+  best: number; // Meilleur streak
+  lastActivityDate?: string; // Dernière date d'activité (YYYY-MM-DD)
+}
+
+// ============================================================================
+// GÉNÉRATEUR DE SÉANCE
+// ============================================================================
+
+export interface GeneratedExercise {
+  name: string;
+  sets: number;
+  reps?: number;
+  durationSec?: number;
+  isRest?: boolean;
+}
+
+export interface GeneratedWorkout {
+  focusArea: FocusArea;
+  intensity: Intensity;
+  duration: Duration;
+  exercises: GeneratedExercise[];
+  absBlock?: GeneratedExercise[];
+}
+
+// ============================================================================
+// SETTINGS
+// ============================================================================
+
+export interface UserSettings {
+  weeklyGoal: number; // Nombre de séances sport par semaine (défaut: 4)
+  units: {
+    weight: 'kg' | 'lbs';
+    distance: 'km' | 'miles';
+  };
+}
+
+// ============================================================================
+// STATS & PROGRESS
+// ============================================================================
+
+export interface WeekStats {
+  weekStart: string; // YYYY-MM-DD (lundi)
+  workoutsCount: number;
+  runDistance: number;
+  runDuration: number;
+  homeWorkouts: number;
+  runs: number;
+}
+
+export interface MonthStats {
+  month: string; // YYYY-MM
+  workoutsCount: number;
+  goalProgress: number; // 0-1
+}
+
+// ============================================================================
+// EXPORT
+// ============================================================================
+
+export interface WeeklyExport {
+  weekStart: string;
+  weekEnd: string;
+  exportedAt: string;
+  entries: {
+    workouts: (HomeWorkoutEntry | RunEntry)[];
+    meals: MealEntry[];
+    measures: MeasureEntry[];
+  };
+  stats: {
+    totalWorkouts: number;
+    totalRuns: number;
+    totalDistance: number;
+    streak: StreakInfo;
+  };
+}
