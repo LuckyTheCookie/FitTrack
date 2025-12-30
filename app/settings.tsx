@@ -19,8 +19,9 @@ import {
   Button,
   InputField,
 } from '../src/components/ui';
-import { useAppStore } from '../src/stores';
+import { useAppStore, useGamificationStore } from '../src/stores';
 import { generateWeeklyExport, exportToJSON, getWeekDisplayRange } from '../src/utils/export';
+import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
 export default function SettingsScreen() {
@@ -32,6 +33,8 @@ export default function SettingsScreen() {
     resetAllData,
     getStreak,
   } = useAppStore();
+
+  const { recalculateFromScratch } = useGamificationStore();
 
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
   const streak = getStreak();
@@ -77,7 +80,31 @@ export default function SettingsScreen() {
         },
       ]
     );
-  }, [resetAllData]);
+  }, [resetAllData]);   
+
+
+  // Recalculer les quêtes et le niveau
+  const handleRecalculateQuests = useCallback(() => {
+    Alert.alert(
+      '🔄 Recalculer le niveau ?',
+      'Cette action recalculera ton niveau et tes quêtes basés sur tes entrées actuelles. Cela corrigera les éventuelles incohérences.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Recalculer', 
+          onPress: () => {
+            const totals = calculateQuestTotals(entries);
+            const workoutCount = entries.filter(e => 
+              e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
+            ).length;
+            recalculateFromScratch({ ...totals, totalWorkouts: workoutCount });
+            Alert.alert('Recalculé !', 'Ton niveau et tes quêtes ont été mis à jour.');
+          },
+        },
+      ]
+    );
+  }, [entries, recalculateFromScratch]);
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -197,6 +224,20 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </GlassCard>
 
+        {/* GAMIFICATION */}
+        <GlassCard style={styles.section}>
+          <SectionHeader title="Gamification" />
+          <Text style={styles.description}>
+            Recalcule ton niveau et tes quêtes basés sur tes entrées actuelles.
+          </Text>
+          <Button
+            title="🔄 Recalculer le niveau et les quêtes"
+            variant="cta"
+            onPress={handleRecalculateQuests}
+            style={styles.recalculateButton}
+          />
+        </GlassCard>
+
         {/* À PROPOS */}
         <GlassCard style={styles.section}>
           <SectionHeader title="À propos" />
@@ -293,6 +334,9 @@ const styles = StyleSheet.create({
     color: Colors.muted,
   },
   exportButton: {
+    marginTop: Spacing.sm,
+  },
+  recalculateButton: {
     marginTop: Spacing.sm,
   },
   dataStats: {

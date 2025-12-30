@@ -153,7 +153,8 @@ export default function TodayScreen() {
           <SectionHeader 
             title="Recent Workouts" 
             actionLabel={sportEntries.length > 5 ? 'See All →' : undefined}
-            onAction={() => {/* Navigate to workout tab */}}
+            /* Navigate to progress tab */
+            onAction={() => {}}
           />
           {recentWorkouts.length > 0 ? (
             <ScrollView 

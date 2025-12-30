@@ -20,8 +20,10 @@ import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui
 import { useAppStore, useGamificationStore } from '../../stores';
 import type { EntryType } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
+import { nanoid } from 'nanoid/non-secure';
 
 interface Exercise {
+    id: string;
     name: string;
     reps: string;
     sets: string;
@@ -73,10 +75,11 @@ const parseDurationToMinutes = (input: string): number | null => {
         if (parts.length === 2) {
             const mm = parseFloat(parts[0]);
             const ss = parseFloat(parts[1]);
-            if (!isNaN(mm) && !isNaN(ss)) {
+            if (!isNaN(mm) && !isNaN(ss) && mm >= 0 && ss >= 0) {
                 return mm + ss / 60;
             }
         }
+        return null;
     }
 
     // Direct number (int or float)
@@ -105,7 +108,7 @@ export function AddEntryForm({
     // Home workout - nouveau format
     const [homeName, setHomeName] = useState('');
     const [exercises, setExercises] = useState<Exercise[]>([
-        { name: '', reps: '', sets: '3' }
+        { id: nanoid(), name: '', reps: '', sets: '3' }
     ]);
     const [withAbsBlock, setWithAbsBlock] = useState(includeAbsBlock);
 
@@ -137,7 +140,7 @@ export function AddEntryForm({
 
     // Ajouter un exercice
     const addExercise = () => {
-        setExercises([...exercises, { name: '', reps: '', sets: '3' }]);
+        setExercises([...exercises, { id: nanoid(), name: '', reps: '', sets: '3' }]);
     };
 
     // Supprimer un exercice
@@ -168,6 +171,7 @@ export function AddEntryForm({
             const data = JSON.parse(jsonInput);
             if (data.exercises && Array.isArray(data.exercises)) {
                 const newExercises = data.exercises.map((ex: any) => ({
+                    id: nanoid(),
                     name: ex.name || '',
                     reps: String(ex.reps || ''),
                     sets: String(ex.sets || 3),
@@ -297,7 +301,7 @@ export function AddEntryForm({
 
             // Reset form
             setHomeName('');
-            setExercises([{ name: '', reps: '', sets: '3' }]);
+            setExercises([{ id: nanoid(), name: '', reps: '', sets: '3' }]);
             setWithAbsBlock(false);
             setRunKm('');
             setRunMinutes('');
@@ -390,7 +394,7 @@ export function AddEntryForm({
 
                         <Text style={styles.sectionLabel}>Exercices</Text>
                         {exercises.map((ex, index) => (
-                            <View key={index} style={styles.exerciseRow}>
+                            <View key={ex.id} style={styles.exerciseRow}>
                                 <InputField
                                     placeholder="Exercice"
                                     value={ex.name}
@@ -509,10 +513,10 @@ export function AddEntryForm({
                         <View style={styles.row}>
                             <InputField
                                 label="Durée (min)"
-                                placeholder="ex: 10 ou 10:30"
+                                placeholder="10"
                                 value={bsDuration}
                                 onChangeText={setBsDuration}
-                                keyboardType="default"
+                                keyboardType="decimal-pad"
                                 containerStyle={styles.halfInput}
                             />
                             <InputField

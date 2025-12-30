@@ -1,6 +1,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { nanoid } from 'nanoid/non-secure';
 import { zustandStorage } from '../storage';
 
 // Types
@@ -30,6 +31,7 @@ export interface GamificationState {
     updateQuestProgress: (type: Quest['type'], value: number) => void;
     recalculateQuestProgress: (type: Quest['type'], newTotal: number) => void;
     recalculateAllQuests: (totals: { exercises: number; workouts: number; duration: number; distance: number }) => void;
+    recalculateFromScratch: (totals: { exercises: number; workouts: number; duration: number; distance: number; totalWorkouts: number }) => void;
     generateWeeklyQuests: () => void;
 }
 
@@ -70,7 +72,7 @@ export const useGamificationStore = create<GamificationState>()(
                 let newLevel = level;
                 let newHistory = [
                     {
-                        id: Date.now().toString(),
+                        id: nanoid(),
                         date: new Date().toISOString(),
                         amount: amount,
                         reason: reason,
@@ -85,7 +87,7 @@ export const useGamificationStore = create<GamificationState>()(
                     newLevel += 1;
                     newHistory = [
                         {
-                            id: (Date.now() + 1).toString(),
+                            id: nanoid(),
                             date: new Date().toISOString(),
                             amount: 0,
                             reason: `Niveau ${newLevel} atteint !`,
@@ -127,7 +129,7 @@ export const useGamificationStore = create<GamificationState>()(
                 if (amount > 0) {
                     newHistory = [
                         {
-                            id: Date.now().toString(),
+                            id: nanoid(),
                             date: new Date().toISOString(),
                             amount: -amount,
                             reason: reason,
@@ -237,6 +239,59 @@ export const useGamificationStore = create<GamificationState>()(
                 if (JSON.stringify(updatedQuests) !== JSON.stringify(quests)) {
                     set({ quests: updatedQuests });
                 }
+            },
+
+            recalculateFromScratch: (totals) => {
+                // Recalcule complètement le niveau et les XP basé sur les entrées actuelles
+                // Utilisé pour corriger les incohérences
+                const { quests } = get();
+
+                // Calculer les XP basés sur les totaux
+                let totalXp = 0;
+                
+                // XP pour les séances (50 XP par séance maison, 30 base + 5 par km pour run, 15 + 1/5min pour beat saber)
+                // On fait une approximation moyenne : 40 XP par séance
+                totalXp += totals.totalWorkouts * 40;
+
+                // Recalculer les quêtes et ajouter les XP de quêtes complétées
+                const updatedQuests = quests.map(quest => {
+                    const newTotal = totals[quest.type] || 0;
+                    const newCurrent = Math.min(newTotal, quest.target);
+                    const isCompleted = newCurrent >= quest.target;
+
+                    if (isCompleted) {
+                        totalXp += quest.rewardXp;
+                    }
+
+                    return { ...quest, current: newCurrent, completed: isCompleted };
+                });
+
+                // Calculer le niveau basé sur les XP totaux
+                let newLevel = 1;
+                let remainingXp = totalXp;
+                while (remainingXp >= getXpForNextLevel(newLevel)) {
+                    remainingXp -= getXpForNextLevel(newLevel);
+                    newLevel += 1;
+                }
+
+                // Ajouter une entrée d'historique
+                const newHistory = [
+                    {
+                        id: nanoid(),
+                        date: new Date().toISOString(),
+                        amount: 0,
+                        reason: 'Recalcul complet du niveau et des quêtes',
+                        type: 'level_up' as const
+                    }
+                ];
+
+                set({
+                    xp: remainingXp,
+                    level: newLevel,
+                    rank: getRank(newLevel),
+                    quests: updatedQuests,
+                    history: newHistory,
+                });
             },
 
             generateWeeklyQuests: () => {
