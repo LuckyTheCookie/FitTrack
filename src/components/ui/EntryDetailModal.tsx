@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry } from '../../types';
+import type { Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 
 interface EntryDetailModalProps {
@@ -26,6 +26,7 @@ interface EntryDetailModalProps {
 const typeLabels: Record<string, { icon: string; label: string; color: string }> = {
   home: { icon: '🏠', label: 'Séance maison', color: 'rgba(147, 51, 234, 0.20)' },
   run: { icon: '🏃', label: 'Course', color: 'rgba(34, 197, 94, 0.20)' },
+  beatsaber: { icon: '🕹️', label: 'Beat Saber', color: 'rgba(244, 63, 94, 0.12)' },
   meal: { icon: '🍽️', label: 'Repas', color: 'rgba(251, 191, 36, 0.20)' },
   measure: { icon: '📏', label: 'Mesures', color: 'rgba(59, 130, 246, 0.20)' },
 };
@@ -83,6 +84,47 @@ function RunDetails({ entry }: { entry: RunEntry }) {
           <View style={styles.stat}>
             <Text style={styles.statValue}>{entry.avgSpeed}</Text>
             <Text style={styles.statLabel}>km/h</Text>
+          </View>
+        )}
+        {entry.cardiacLoad !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.cardiacLoad}</Text>
+            <Text style={styles.statLabel}>charge</Text>
+          </View>
+        )}
+      </View>
+      {(entry.bpmAvg || entry.bpmMax) && (
+        <View style={styles.bpmRow}>
+          {entry.bpmAvg && (
+            <View style={styles.bpmItem}>
+              <Text style={styles.bpmLabel}>BPM moy.</Text>
+              <Text style={styles.bpmValue}>{entry.bpmAvg}</Text>
+            </View>
+          )}
+          {entry.bpmMax && (
+            <View style={styles.bpmItem}>
+              <Text style={styles.bpmLabel}>BPM max</Text>
+              <Text style={styles.bpmValue}>{entry.bpmMax}</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function BeatSaberDetails({ entry }: { entry: BeatSaberEntry }) {
+  return (
+    <View style={styles.details}>
+      <View style={styles.statsRow}>
+        <View style={styles.stat}>
+          <Text style={styles.statValue}>{entry.durationMinutes}</Text>
+          <Text style={styles.statLabel}>min</Text>
+        </View>
+        {entry.cardiacLoad !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.cardiacLoad}</Text>
+            <Text style={styles.statLabel}>charge</Text>
           </View>
         )}
       </View>
@@ -173,6 +215,7 @@ export function EntryDetailModal({
 
             {entry.type === 'home' && <HomeWorkoutDetails entry={entry} />}
             {entry.type === 'run' && <RunDetails entry={entry} />}
+            {entry.type === 'beatsaber' && <BeatSaberDetails entry={entry as BeatSaberEntry} />}
             {entry.type === 'meal' && <MealDetails entry={entry} />}
             {entry.type === 'measure' && <MeasureDetails entry={entry} />}
           </ScrollView>

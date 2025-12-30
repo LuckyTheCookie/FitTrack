@@ -138,7 +138,7 @@ export default function SettingsScreen() {
           <View style={styles.dataStats}>
             <View style={styles.dataStat}>
               <Text style={styles.dataStatValue}>
-                {entries.filter(e => e.type === 'home' || e.type === 'run').length}
+                {entries.filter(e => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber').length}
               </Text>
               <Text style={styles.dataStatLabel}>Séances sport</Text>
             </View>

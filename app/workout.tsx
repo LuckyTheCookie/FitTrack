@@ -23,12 +23,13 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/cons
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
 import type { Entry, EntryType, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry } from '../src/types';
 
-type FilterType = 'all' | 'home' | 'run' | 'meal' | 'measure';
+type FilterType = 'all' | 'home' | 'run' | 'beatsaber' | 'meal' | 'measure';
 
 const filterOptions: { value: FilterType; label: string }[] = [
   { value: 'all', label: 'Tout' },
   { value: 'home', label: '🏠' },
   { value: 'run', label: '🏃' },
+  { value: 'beatsaber', label: '🕹️' },
   { value: 'meal', label: '🍽️' },
   { value: 'measure', label: '📏' },
 ];
@@ -72,6 +73,27 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
               )}
               {runEntry.bpmAvg && (
                 <Text style={styles.runStat}>❤️ {runEntry.bpmAvg} bpm</Text>
+              )}
+            </View>
+          </>
+        );
+      }
+
+      case 'beatsaber': {
+        const bs = entry as any;
+        return (
+          <>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>🕹️</Text>
+              <Text style={styles.cardType}>Beat Saber</Text>
+            </View>
+            <Text style={styles.cardTitle}>{bs.durationMinutes} min</Text>
+            <View style={styles.runStats}>
+              {bs.bpmAvg && (
+                <Text style={styles.runStat}>❤️ {bs.bpmAvg} bpm</Text>
+              )}
+              {bs.cardiacLoad !== undefined && (
+                <Text style={styles.runStat}>💓 {bs.cardiacLoad}</Text>
               )}
             </View>
           </>

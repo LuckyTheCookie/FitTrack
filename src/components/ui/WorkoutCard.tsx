@@ -4,24 +4,34 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import type { HomeWorkoutEntry, RunEntry } from '../../types';
+import type { HomeWorkoutEntry, RunEntry, BeatSaberEntry } from '../../types';
 import { GlassCard } from './GlassCard';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../constants';
 import { getRelativeTime } from '../../utils/date';
 
 interface WorkoutCardProps {
-  entry: HomeWorkoutEntry | RunEntry;
+  entry: HomeWorkoutEntry | RunEntry | BeatSaberEntry;
   onPress?: () => void;
 }
 
 export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
   const isRun = entry.type === 'run';
-  const icon = isRun ? '🏃' : '🏠';
-  const title = isRun ? 'Course' : (entry.name || 'Séance maison');
+  const isBeat = entry.type === 'beatsaber';
+  const icon = isRun ? '🏃' : (isBeat ? '🕹️' : '🏠');
+  const title = isRun ? 'Course' : (isBeat ? 'Beat Saber' : (entry.name || 'Séance maison'));
   
   const getDescription = () => {
     if (entry.type === 'run') {
-      return `${entry.distanceKm} km • ${entry.durationMinutes} min${entry.avgSpeed ? ` • ${entry.avgSpeed} km/h` : ''}`;
+      const parts = [`${entry.distanceKm} km`, `${entry.durationMinutes} min`];
+      if (entry.avgSpeed) parts.push(`${entry.avgSpeed} km/h`);
+      if (entry.cardiacLoad !== undefined) parts.push(`Charge ${entry.cardiacLoad}`);
+      return parts.join(' • ');
+    }
+    if (entry.type === 'beatsaber') {
+      const parts = [`${entry.durationMinutes} min`];
+      if (entry.bpmAvg) parts.push(`${entry.bpmAvg} BPM`);
+      if (entry.cardiacLoad) parts.push(`Charge ${entry.cardiacLoad}`);
+      return parts.join(' • ');
     }
     // Pour home workout, afficher les premiers exercices
     const lines = entry.exercises.split('\n').slice(0, 2);

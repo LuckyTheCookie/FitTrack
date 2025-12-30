@@ -10,6 +10,7 @@ import type {
   Entry, 
   HomeWorkoutEntry, 
   RunEntry, 
+  BeatSaberEntry,
   MealEntry, 
   MeasureEntry,
   UserSettings,
@@ -40,6 +41,7 @@ interface AppState {
   addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>) => void;
   addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
   addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
+  addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
   deleteEntry: (id: string) => void;
   
   // Actions - Settings
@@ -144,6 +146,30 @@ export const useAppStore = create<AppState>()(
         });
       },
 
+      addBeatSaber: (data) => {
+        const entry: BeatSaberEntry = {
+          id: nanoid(),
+          type: 'beatsaber',
+          createdAt: getNowISO(),
+          date: getTodayDateString(),
+          ...data,
+        };
+
+        set((state) => {
+          const newEntries = [entry, ...state.entries];
+          const newBadges = checkBadges(
+            newEntries,
+            get().getStreak().current,
+            get().getStreak().best,
+            0
+          );
+          return { 
+            entries: newEntries,
+            unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
+          };
+        });
+      },
+
       addMeal: (data) => {
         const entry: MealEntry = {
           id: nanoid(),
@@ -213,7 +239,7 @@ export const useAppStore = create<AppState>()(
       getStreak: () => {
         const { entries } = get();
         const sportDates = entries
-          .filter((e) => e.type === 'home' || e.type === 'run')
+          .filter((e) => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber')
           .map((e) => e.date);
         return calculateStreak(sportDates);
       },
@@ -221,7 +247,7 @@ export const useAppStore = create<AppState>()(
       getWeekWorkoutsCount: () => {
         const { entries } = get();
         return entries.filter(
-          (e) => (e.type === 'home' || e.type === 'run') && isInCurrentWeek(e.date)
+          (e) => (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') && isInCurrentWeek(e.date)
         ).length;
       },
 
@@ -233,7 +259,7 @@ export const useAppStore = create<AppState>()(
       getSportEntries: () => {
         const { entries } = get();
         return entries.filter(
-          (e): e is HomeWorkoutEntry | RunEntry => e.type === 'home' || e.type === 'run'
+          (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
         );
       },
 
@@ -244,7 +270,7 @@ export const useAppStore = create<AppState>()(
         return months.map((month) => {
           const count = entries.filter(
             (e) => 
-              (e.type === 'home' || e.type === 'run') && 
+              (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') && 
               e.date.startsWith(month)
           ).length;
           return { month, count };

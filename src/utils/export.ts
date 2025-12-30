@@ -2,7 +2,7 @@
 // EXPORT JSON HEBDOMADAIRE - FitTrack App
 // ============================================================================
 
-import type { Entry, WeeklyExport, StreakInfo, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry } from '../types';
+import type { Entry, WeeklyExport, StreakInfo, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../types';
 import { getWeekExportRange, getCurrentWeekStart, getCurrentWeekEnd } from './date';
 import { format } from 'date-fns';
 
@@ -19,7 +19,7 @@ export function generateWeeklyExport(
 
   // Séparer par type
   const workouts = weekEntries.filter(
-    (e): e is HomeWorkoutEntry | RunEntry => e.type === 'home' || e.type === 'run'
+    (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
   );
   const meals = weekEntries.filter((e): e is MealEntry => e.type === 'meal');
   const measures = weekEntries.filter((e): e is MeasureEntry => e.type === 'measure');

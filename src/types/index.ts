@@ -3,8 +3,8 @@
 // ============================================================================
 
 // Types de base
-export type WorkoutType = 'home' | 'run';
-export type EntryType = 'home' | 'run' | 'meal' | 'measure';
+export type WorkoutType = 'home' | 'run' | 'beatsaber';
+export type EntryType = 'home' | 'run' | 'meal' | 'measure' | 'beatsaber';
 export type FocusArea = 'upper' | 'abs' | 'legs' | 'full';
 export type Intensity = 'easy' | 'medium' | 'hard';
 export type Duration = 10 | 20 | 30;
@@ -36,6 +36,16 @@ export interface RunEntry extends BaseEntry {
   avgSpeed?: number; // Calculé automatiquement
   bpmAvg?: number;
   bpmMax?: number;
+  cardiacLoad?: number; // Charge cardiaque optionnelle
+}
+
+// Beat Saber
+export interface BeatSaberEntry extends BaseEntry {
+  type: 'beatsaber';
+  durationMinutes: number;
+  cardiacLoad?: number; // Charge cardiaque optionnelle
+  bpmAvg?: number;
+  bpmMax?: number;
 }
 
 // Repas
@@ -54,8 +64,8 @@ export interface MeasureEntry extends BaseEntry {
   hips?: number; // cm - hanches
 }
 
-export type Entry = HomeWorkoutEntry | RunEntry | MealEntry | MeasureEntry;
-export type SportEntry = HomeWorkoutEntry | RunEntry;
+export type Entry = HomeWorkoutEntry | RunEntry | BeatSaberEntry | MealEntry | MeasureEntry;
+export type SportEntry = HomeWorkoutEntry | RunEntry | BeatSaberEntry;
 
 // ============================================================================
 // GAMIFICATION
@@ -150,7 +160,7 @@ export interface WeeklyExport {
   weekEnd: string;
   exportedAt: string;
   entries: {
-    workouts: (HomeWorkoutEntry | RunEntry)[];
+    workouts: (HomeWorkoutEntry | RunEntry | BeatSaberEntry)[];
     meals: MealEntry[];
     measures: MeasureEntry[];
   };
