@@ -64,33 +64,6 @@ const EXAMPLE_JSON = `{
 }`;
 
 
-
-const parseDurationToMinutes = (input: string): number | null => {
-    const s = (input || '').trim().replace(',', '.');
-    if (!s) return null;
-
-    // mm:ss format (e.g. 10:30)
-    if (s.includes(':')) {
-        const parts = s.split(':');
-        if (parts.length === 2) {
-            const mm = parseFloat(parts[0]);
-            const ss = parseFloat(parts[1]);
-            if (!isNaN(mm) && !isNaN(ss) && mm >= 0 && ss >= 0) {
-                return mm + ss / 60;
-            }
-        }
-        return null;
-    }
-
-    // Direct number (int or float)
-    const val = parseFloat(s);
-    if (!isNaN(val) && val > 0) {
-        return val;
-    }
-
-    return null;
-};
-
 export function AddEntryForm({
     onSuccess,
     initialTab = 'home',
@@ -238,15 +211,15 @@ export function AddEntryForm({
                     break;
 
                 case 'beatsaber':
-                    const rawMinutes = parseDurationToMinutes(bsDuration);
-
-                    if (rawMinutes === null || rawMinutes <= 0) {
-                        Alert.alert('Erreur', 'Durée invalide (ex: 10 ou 10:30)');
+                    const bsMinutes = parseInt(bsDuration, 10);
+                    
+                    if (isNaN(bsMinutes) || bsMinutes <= 0) {
+                        Alert.alert('Erreur', 'Durée invalide');
                         return;
                     }
 
                     // Store rounded minutes (at least 1)
-                    const bsMinutesRounded = Math.max(1, Math.round(rawMinutes));
+                    const bsMinutesRounded = Math.max(1, Math.round(bsMinutes));
 
                     addBeatSaber({
                         durationMinutes: bsMinutesRounded,
