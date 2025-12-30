@@ -116,6 +116,10 @@ export interface UserSettings {
     weight: 'kg' | 'lbs';
     distance: 'km' | 'miles';
   };
+  hiddenTabs: {
+    tools: boolean;
+    workout: boolean;
+  };
 }
 
 // ============================================================================

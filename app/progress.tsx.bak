@@ -11,7 +11,6 @@ import {
   SectionHeader, 
   BadgeWithProgress,
   EmptyState,
-  DayBadge,
 } from '../src/components/ui';
 import { useAppStore } from '../src/stores';
 import { getBadgesWithState, BADGE_DEFINITIONS } from '../src/utils/badges';
@@ -234,32 +233,31 @@ export default function ProgressScreen() {
               ))}
             </View>
             <View style={styles.calendarGrid}>
-              {/* Days of the month with DayBadge style */}
-              {Array.from({ length: 42 }).map((_, index) => {
-                const dayIndex = index - calendarData.startDayOfWeek;
-                if (dayIndex < 0 || dayIndex >= calendarData.daysInMonth) {
-                  return <View key={`empty-${index}`} style={styles.calendarDayEmpty} />;
-                }
-                const day = dayIndex + 1;
+              {/* Empty cells for days before the 1st */}
+              {Array.from({ length: calendarData.startDayOfWeek }).map((_, i) => (
+                <View key={`empty-${i}`} style={styles.calendarDay} />
+              ))}
+              {/* Days of the month */}
+              {Array.from({ length: calendarData.daysInMonth }).map((_, i) => {
+                const day = i + 1;
                 const isActive = calendarData.activeDays.has(day);
                 const isToday = day === new Date().getDate();
                 return (
                   <View 
                     key={day} 
                     style={[
-                      styles.calendarDayBadge,
-                      isActive && styles.calendarDayBadgeActive,
-                      isToday && styles.calendarDayBadgeToday,
+                      styles.calendarDay,
+                      isActive && styles.calendarDayActive,
+                      isToday && styles.calendarDayToday,
                     ]}
                   >
-                    <Text style={styles.calendarDow}>{day.toString().padStart(2, '0')}</Text>
-                    {isActive ? (
-                      <View style={styles.calendarCheckCircle}>
-                        <Text style={styles.calendarCheckMark}>✓</Text>
-                      </View>
-                    ) : (
-                      <Text style={[styles.calendarDate, isToday && styles.calendarDateToday]}>{day}</Text>
-                    )}
+                    <Text style={[
+                      styles.calendarDayText,
+                      isActive && styles.calendarDayTextActive,
+                    ]}>
+                      {day}
+                    </Text>
+                    {isActive && <Text style={styles.calendarCheck}>✓</Text>}
                   </View>
                 );
               })}
@@ -546,54 +544,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  calendarDayEmpty: {
+  calendarDay: {
     width: '14.28%',
     aspectRatio: 1,
-  },
-  calendarDayBadge: {
-    width: '14.28%',
-    aspectRatio: 1,
-    borderRadius: BorderRadius.md,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
-  calendarDayBadgeActive: {
-    backgroundColor: 'rgba(227, 160, 144, 0.35)',
-    borderColor: 'rgba(227, 160, 144, 0.55)',
+  calendarDayActive: {
+    backgroundColor: 'rgba(34, 197, 94, 0.20)',
+    borderRadius: BorderRadius.sm,
   },
-  calendarDayBadgeToday: {
-    borderColor: 'rgba(255, 255, 255, 0.30)',
+  calendarDayToday: {
+    borderWidth: 2,
+    borderColor: Colors.cta,
+    borderRadius: BorderRadius.sm,
   },
-  calendarDow: {
-    fontSize: FontSize.xs,
-    color: 'rgba(255, 255, 255, 0.55)',
-    marginBottom: 6,
+  calendarDayText: {
+    fontSize: FontSize.sm,
+    color: Colors.muted,
   },
-  calendarDate: {
-    fontSize: FontSize.lg,
+  calendarDayTextActive: {
+    color: Colors.text,
     fontWeight: FontWeight.semibold,
-    color: 'rgba(255, 255, 255, 0.75)',
   },
-  calendarDateToday: {
-    color: Colors.text,
-  },
-  calendarCheckCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  calendarCheckMark: {
-    color: Colors.text,
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
+  calendarCheck: {
+    position: 'absolute',
+    bottom: 2,
+    fontSize: 8,
+    color: Colors.success,
   },
   weightChartContainer: {
     marginTop: Spacing.sm,

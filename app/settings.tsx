@@ -28,6 +28,7 @@ export default function SettingsScreen() {
     entries, 
     settings, 
     updateWeeklyGoal,
+    updateSettings,
     resetAllData,
     getStreak,
   } = useAppStore();
@@ -156,6 +157,46 @@ export default function SettingsScreen() {
           </View>
         </GlassCard>
 
+        {/* PERSONNALISATION */}
+        <GlassCard style={styles.section}>
+          <SectionHeader title="Navigation" />
+          <Text style={styles.description}>
+            Masque les onglets que tu n'utilises pas.
+          </Text>
+          <TouchableOpacity 
+            style={styles.toggleItem}
+            onPress={() => updateSettings({ 
+              hiddenTabs: { 
+                ...settings.hiddenTabs, 
+                tools: !settings.hiddenTabs?.tools 
+              } 
+            })}
+          >
+            <Text style={styles.toggleItemLabel}>⚡ Onglet Générer</Text>
+            <View style={[styles.toggleBadge, settings.hiddenTabs?.tools && styles.toggleBadgeHidden]}>
+              <Text style={styles.toggleBadgeText}>
+                {settings.hiddenTabs?.tools ? 'Masqué' : 'Visible'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.toggleItem}
+            onPress={() => updateSettings({ 
+              hiddenTabs: { 
+                ...settings.hiddenTabs, 
+                workout: !settings.hiddenTabs?.workout 
+              } 
+            })}
+          >
+            <Text style={styles.toggleItemLabel}>📋 Onglet Historique</Text>
+            <View style={[styles.toggleBadge, settings.hiddenTabs?.workout && styles.toggleBadgeHidden]}>
+              <Text style={styles.toggleBadgeText}>
+                {settings.hiddenTabs?.workout ? 'Masqué' : 'Visible'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </GlassCard>
+
         {/* À PROPOS */}
         <GlassCard style={styles.section}>
           <SectionHeader title="À propos" />
@@ -270,6 +311,32 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.muted,
     marginTop: 4,
+  },
+  toggleItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.stroke,
+  },
+  toggleItemLabel: {
+    fontSize: FontSize.md,
+    color: Colors.text,
+  },
+  toggleBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(34, 197, 94, 0.20)',
+  },
+  toggleBadgeHidden: {
+    backgroundColor: 'rgba(248, 113, 113, 0.20)',
+  },
+  toggleBadgeText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    color: Colors.text,
   },
   aboutText: {
     fontSize: FontSize.md,

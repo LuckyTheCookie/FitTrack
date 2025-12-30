@@ -8,7 +8,7 @@ import { Colors, BorderRadius, Shadows, Spacing } from '../../constants';
 
 interface GlassCardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: ViewStyle | ViewStyle[];
   variant?: 'default' | 'teal' | 'solid';
 }
 

@@ -16,6 +16,7 @@ import {
   GlassCard, 
   SegmentedControl,
   EmptyState,
+  EntryDetailModal,
 } from '../src/components/ui';
 import { useAppStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
@@ -33,7 +34,7 @@ const filterOptions: { value: FilterType; label: string }[] = [
 ];
 
 // Composant pour afficher une entrée selon son type
-function EntryCard({ entry, onDelete }: { entry: Entry; onDelete: () => void }) {
+function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () => void; onPress?: () => void }) {
   const getContent = () => {
     switch (entry.type) {
       case 'home': {
@@ -133,6 +134,7 @@ function EntryCard({ entry, onDelete }: { entry: Entry; onDelete: () => void }) 
 
   return (
     <TouchableOpacity 
+      onPress={onPress}
       onLongPress={onDelete}
       activeOpacity={0.9}
     >
@@ -147,6 +149,8 @@ function EntryCard({ entry, onDelete }: { entry: Entry; onDelete: () => void }) 
 export default function WorkoutScreen() {
   const { entries, deleteEntry } = useAppStore();
   const [filter, setFilter] = useState<FilterType>('all');
+  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
 
   const filteredEntries = useMemo(() => {
     if (filter === 'all') return entries;
@@ -168,9 +172,18 @@ export default function WorkoutScreen() {
     );
   }, [deleteEntry]);
 
+  const handleEditEntry = useCallback((entry: Entry) => {
+    // TODO: Implémenter la navigation ou l'ouverture d'un formulaire d'édition
+    console.log('Edit entry:', entry);
+  }, []);
+
   const renderItem = useCallback(({ item }: { item: Entry }) => (
     <EntryCard 
-      entry={item} 
+      entry={item}
+      onPress={() => {
+        setSelectedEntry(item);
+        setDetailModalVisible(true);
+      }}
       onDelete={() => handleDelete(item)}
     />
   ), [handleDelete]);
@@ -211,6 +224,15 @@ export default function WorkoutScreen() {
       <Text style={styles.hint}>
         💡 Appui long pour supprimer
       </Text>
+
+      {/* MODAL DÉTAILS */}
+      <EntryDetailModal
+        entry={selectedEntry}
+        visible={detailModalVisible}
+        onClose={() => setDetailModalVisible(false)}
+        onEdit={handleEditEntry}
+        onDelete={deleteEntry}
+      />
     </SafeAreaView>
   );
 }

@@ -182,29 +182,16 @@ export default function ToolsScreen() {
             </View>
 
             {generatedWorkout.absBlock && generatedWorkout.absBlock.length > 0 && (
-              <>
-                <Text style={styles.absTitle}>🎯 Bloc Abdos</Text>
-                <View style={styles.exerciseList}>
-                  {generatedWorkout.absBlock.map((exercise, index) => (
-                    <View key={`abs-${index}`} style={styles.exerciseItem}>
-                      <Text style={styles.exerciseNumber}>A{index + 1}</Text>
-                      <View style={styles.exerciseInfo}>
-                        <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <Text style={styles.exerciseReps}>
-                          {exercise.reps 
-                            ? `${exercise.sets} × ${exercise.reps} reps`
-                            : `${exercise.sets} × ${exercise.durationSec}s`
-                          }
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </>
+              <View style={styles.absReminder}>
+                <Text style={styles.absReminderIcon}>🎯</Text>
+                <Text style={styles.absReminderText}>
+                  N'oublie pas d'effectuer ton bloc abdos à la fin ! 💪
+                </Text>
+              </View>
             )}
 
             <Button
-              title="Démarrer cette séance"
+              title={generatedWorkout.absBlock ? "Démarrer (+ bloc abdos)" : "Démarrer cette séance"}
               variant="cta"
               onPress={handleStartWorkout}
               style={styles.startButton}
@@ -328,6 +315,26 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginTop: Spacing.lg,
     marginBottom: Spacing.md,
+  },
+  absReminder: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.30)',
+  },
+  absReminderIcon: {
+    fontSize: 24,
+  },
+  absReminderText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.text,
+    fontWeight: FontWeight.medium,
   },
   startButton: {
     marginTop: Spacing.lg,

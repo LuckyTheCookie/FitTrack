@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid/non-secure';
 import type { 
   Entry, 
   HomeWorkoutEntry, 
@@ -68,6 +68,10 @@ const defaultSettings: UserSettings = {
     weight: 'kg',
     distance: 'km',
   },
+  hiddenTabs: {
+    tools: false,
+    workout: false,
+  },
 };
 
 // ============================================================================
@@ -88,7 +92,7 @@ export const useAppStore = create<AppState>()(
 
       addHomeWorkout: (data) => {
         const entry: HomeWorkoutEntry = {
-          id: uuidv4(),
+          id: nanoid(),
           type: 'home',
           createdAt: getNowISO(),
           date: getTodayDateString(),
@@ -117,7 +121,7 @@ export const useAppStore = create<AppState>()(
           : 0;
 
         const entry: RunEntry = {
-          id: uuidv4(),
+          id: nanoid(),
           type: 'run',
           createdAt: getNowISO(),
           date: getTodayDateString(),
@@ -142,7 +146,7 @@ export const useAppStore = create<AppState>()(
 
       addMeal: (data) => {
         const entry: MealEntry = {
-          id: uuidv4(),
+          id: nanoid(),
           type: 'meal',
           createdAt: getNowISO(),
           date: getTodayDateString(),
@@ -156,7 +160,7 @@ export const useAppStore = create<AppState>()(
 
       addMeasure: (data) => {
         const entry: MeasureEntry = {
-          id: uuidv4(),
+          id: nanoid(),
           type: 'measure',
           createdAt: getNowISO(),
           date: getTodayDateString(),

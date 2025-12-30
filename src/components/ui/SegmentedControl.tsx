@@ -6,13 +6,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors, BorderRadius, FontSize, FontWeight, Spacing } from '../../constants';
 
-interface SegmentedControlProps<T extends string> {
+interface SegmentedControlProps<T extends string | number> {
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
 }
 
-export function SegmentedControl<T extends string>({ 
+export function SegmentedControl<T extends string | number>({ 
   options, 
   value, 
   onChange 
@@ -21,7 +21,7 @@ export function SegmentedControl<T extends string>({
     <View style={styles.container}>
       {options.map((option) => (
         <TouchableOpacity
-          key={option.value}
+          key={String(option.value)}
           style={[
             styles.segment,
             value === option.value && styles.segmentActive,

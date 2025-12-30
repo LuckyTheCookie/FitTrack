@@ -13,3 +13,6 @@ export { MonthCard } from './MonthCard';
 export { SectionHeader } from './SectionHeader';
 export { BadgeDisplay } from './BadgeDisplay';
 export { EmptyState } from './EmptyState';
+export { BadgeWithProgress } from './BadgeWithProgress';
+export { EntryDetailModal } from './EntryDetailModal';
+export { TabBar } from './TabBar';
