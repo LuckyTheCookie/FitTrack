@@ -1,8 +1,8 @@
 // ============================================================================
-// SETTINGS SCREEN - Paramètres, Export, Reset
+// SETTINGS SCREEN - Paramètres, Export, Reset (Redesign complet)
 // ============================================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -13,12 +13,29 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Constants from 'expo-constants';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { Activity, ChevronRight, Database, Camera, Eye } from 'lucide-react-native';
+import { 
+  Settings as SettingsIcon,
+  Target,
+  Download,
+  Database,
+  Trash2,
+  Activity,
+  Camera,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  RefreshCw,
+  Rocket,
+  Zap,
+  History,
+  Sparkles,
+} from 'lucide-react-native';
 import { 
   GlassCard, 
-  SectionHeader, 
-  Button,
   InputField,
   ExportModal,
 } from '../src/components/ui';
@@ -26,6 +43,98 @@ import { useAppStore, useGamificationStore } from '../src/stores';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
+
+// Setting Item composant
+function SettingItem({
+  icon,
+  iconColor,
+  title,
+  subtitle,
+  onPress,
+  rightElement,
+  showChevron = true,
+  delay = 0,
+}: {
+  icon: React.ReactNode;
+  iconColor: string;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+  showChevron?: boolean;
+  delay?: number;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()}>
+      <TouchableOpacity 
+        style={styles.settingItem}
+        onPress={onPress}
+        activeOpacity={onPress ? 0.7 : 1}
+        disabled={!onPress}
+      >
+        <View style={[styles.settingIconContainer, { backgroundColor: `${iconColor}20` }]}>
+          {icon}
+        </View>
+        <View style={styles.settingInfo}>
+          <Text style={styles.settingTitle}>{title}</Text>
+          {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+        </View>
+        {rightElement}
+        {showChevron && onPress && (
+          <ChevronRight size={18} color={Colors.muted} />
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// Section Header composant
+function SectionTitle({ title, delay = 0 }: { title: string; delay?: number }) {
+  return (
+    <Animated.View entering={FadeIn.delay(delay)}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+    </Animated.View>
+  );
+}
+
+// Stats Card Hero
+function StatsHero({ sportCount, mealCount, measureCount }: { 
+  sportCount: number; 
+  mealCount: number; 
+  measureCount: number;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.delay(100).springify()}>
+      <LinearGradient
+        colors={['rgba(215, 150, 134, 0.4)', 'rgba(215, 150, 134, 0.15)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.statsHero}
+      >
+        <View style={styles.statsHeroHeader}>
+          <Database size={20} color={Colors.cta} />
+          <Text style={styles.statsHeroTitle}>Tes données</Text>
+        </View>
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{sportCount}</Text>
+            <Text style={styles.statLabel}>Séances</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{mealCount}</Text>
+            <Text style={styles.statLabel}>Repas</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{measureCount}</Text>
+            <Text style={styles.statLabel}>Mesures</Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </Animated.View>
+  );
+}
 
 export default function SettingsScreen() {
   const { 
@@ -42,6 +151,13 @@ export default function SettingsScreen() {
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const streak = getStreak();
+
+  // Stats calculées
+  const stats = useMemo(() => ({
+    sport: entries.filter(e => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber').length,
+    meal: entries.filter(e => e.type === 'meal').length,
+    measure: entries.filter(e => e.type === 'measure').length,
+  }), [entries]);
 
   // Sauvegarder l'objectif hebdo
   const handleSaveGoal = useCallback(() => {
@@ -78,7 +194,6 @@ export default function SettingsScreen() {
     );
   }, [resetAllData]);   
 
-
   // Recalculer les quêtes et le niveau
   const handleRecalculateQuests = useCallback(() => {
     Alert.alert(
@@ -101,7 +216,6 @@ export default function SettingsScreen() {
     );
   }, [entries, recalculateFromScratch]);
 
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView 
@@ -109,227 +223,218 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.screenTitle}>Settings</Text>
-
-        {/* OBJECTIF HEBDO */}
-        <GlassCard style={styles.section}>
-          <SectionHeader title="Objectif hebdomadaire" />
-          <Text style={styles.description}>
-            Combien de séances sport par semaine ?
-          </Text>
-          <View style={styles.goalRow}>
-            <InputField
-              value={weeklyGoalInput}
-              onChangeText={setWeeklyGoalInput}
-              keyboardType="number-pad"
-              containerStyle={styles.goalInput}
-              maxLength={2}
-            />
-            <Text style={styles.goalUnit}>séances / semaine</Text>
+        {/* Header */}
+        <Animated.View entering={FadeIn.delay(50)} style={styles.header}>
+          <Text style={styles.screenTitle}>Paramètres</Text>
+          <View style={styles.headerIcon}>
+            <SettingsIcon size={24} color={Colors.cta} />
           </View>
-          <Button
-            title="Sauvegarder"
-            variant="primary"
-            onPress={handleSaveGoal}
-            style={styles.saveButton}
-          />
-        </GlassCard>
+        </Animated.View>
 
-        {/* EXPORT */}
-        <GlassCard style={styles.section}>
-          <SectionHeader title="Export JSON" />
-          <Text style={styles.description}>
-            Exporte tes données au format JSON. Choisis la période et les catégories à exporter.
-          </Text>
-          
-          <Button
-            title="📋 Exporter les données"
-            variant="cta"
-            onPress={handleExportJSON}
-            style={styles.exportButton}
-          />
-        </GlassCard>
+        {/* Stats Hero */}
+        <StatsHero 
+          sportCount={stats.sport} 
+          mealCount={stats.meal} 
+          measureCount={stats.measure} 
+        />
 
-        {/* STATISTIQUES */}
-        <GlassCard style={styles.section}>
-          <SectionHeader title="Données" />
-          <View style={styles.dataStats}>
-            <View style={styles.dataStat}>
-              <Text style={styles.dataStatValue}>
-                {entries.filter(e => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber').length}
-              </Text>
-              <Text style={styles.dataStatLabel}>Séances sport</Text>
+        {/* OBJECTIFS */}
+        <SectionTitle title="Objectifs" delay={150} />
+        <GlassCard style={styles.settingsCard}>
+          <View style={styles.goalSection}>
+            <View style={styles.goalHeader}>
+              <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(74, 222, 128, 0.2)' }]}>
+                <Target size={20} color="#4ade80" />
+              </View>
+              <View style={styles.goalInfo}>
+                <Text style={styles.settingTitle}>Objectif hebdomadaire</Text>
+                <Text style={styles.settingSubtitle}>Nombre de séances par semaine</Text>
+              </View>
             </View>
-            <View style={styles.dataStat}>
-              <Text style={styles.dataStatValue}>
-                {entries.filter(e => e.type === 'meal').length}
-              </Text>
-              <Text style={styles.dataStatLabel}>Repas</Text>
-            </View>
-            <View style={styles.dataStat}>
-              <Text style={styles.dataStatValue}>
-                {entries.filter(e => e.type === 'measure').length}
-              </Text>
-              <Text style={styles.dataStatLabel}>Mesures</Text>
+            <View style={styles.goalInputRow}>
+              <InputField
+                value={weeklyGoalInput}
+                onChangeText={setWeeklyGoalInput}
+                keyboardType="number-pad"
+                containerStyle={styles.goalInput}
+                maxLength={2}
+              />
+              <Text style={styles.goalUnit}>/ semaine</Text>
+              <TouchableOpacity 
+                style={styles.goalSaveButton}
+                onPress={handleSaveGoal}
+              >
+                <Text style={styles.goalSaveText}>Sauver</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </GlassCard>
 
-        {/* PERSONNALISATION */}
-        <GlassCard style={styles.section}>
-          <SectionHeader title="Navigation" />
-          <Text style={styles.description}>
-            Masque les onglets que tu n'utilises pas.
-          </Text>
-          <TouchableOpacity 
-            style={styles.toggleItem}
+        {/* NAVIGATION */}
+        <SectionTitle title="Affichage" delay={200} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Zap size={20} color="#a78bfa" />}
+            iconColor="#a78bfa"
+            title="Onglet Générer"
+            subtitle="Générateur de séances"
+            showChevron={false}
+            rightElement={
+              <View style={[styles.visibilityBadge, settings.hiddenTabs?.tools && styles.visibilityBadgeHidden]}>
+                {settings.hiddenTabs?.tools ? (
+                  <EyeOff size={14} color={Colors.error} />
+                ) : (
+                  <Eye size={14} color="#4ade80" />
+                )}
+                <Text style={[styles.visibilityText, settings.hiddenTabs?.tools && styles.visibilityTextHidden]}>
+                  {settings.hiddenTabs?.tools ? 'Masqué' : 'Visible'}
+                </Text>
+              </View>
+            }
             onPress={() => updateSettings({ 
               hiddenTabs: { 
                 ...settings.hiddenTabs, 
                 tools: !settings.hiddenTabs?.tools 
               } 
             })}
-          >
-            <Text style={styles.toggleItemLabel}>⚡ Onglet Générer</Text>
-            <View style={[styles.toggleBadge, settings.hiddenTabs?.tools && styles.toggleBadgeHidden]}>
-              <Text style={styles.toggleBadgeText}>
-                {settings.hiddenTabs?.tools ? 'Masqué' : 'Visible'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.toggleItem}
+            delay={220}
+          />
+          <SettingItem
+            icon={<History size={20} color="#60a5fa" />}
+            iconColor="#60a5fa"
+            title="Onglet Historique"
+            subtitle="Journal des séances"
+            showChevron={false}
+            rightElement={
+              <View style={[styles.visibilityBadge, settings.hiddenTabs?.workout && styles.visibilityBadgeHidden]}>
+                {settings.hiddenTabs?.workout ? (
+                  <EyeOff size={14} color={Colors.error} />
+                ) : (
+                  <Eye size={14} color="#4ade80" />
+                )}
+                <Text style={[styles.visibilityText, settings.hiddenTabs?.workout && styles.visibilityTextHidden]}>
+                  {settings.hiddenTabs?.workout ? 'Masqué' : 'Visible'}
+                </Text>
+              </View>
+            }
             onPress={() => updateSettings({ 
               hiddenTabs: { 
                 ...settings.hiddenTabs, 
                 workout: !settings.hiddenTabs?.workout 
               } 
             })}
-          >
-            <Text style={styles.toggleItemLabel}>📋 Onglet Historique</Text>
-            <View style={[styles.toggleBadge, settings.hiddenTabs?.workout && styles.toggleBadgeHidden]}>
-              <Text style={styles.toggleBadgeText}>
-                {settings.hiddenTabs?.workout ? 'Masqué' : 'Visible'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </GlassCard>
-
-        {/* GAMIFICATION */}
-        <GlassCard style={styles.section}>
-          <SectionHeader title="Gamification" />
-          <Text style={styles.description}>
-            Recalcule ton niveau et tes quêtes basés sur tes entrées actuelles.
-          </Text>
-          <Button
-            title="🔄 Recalculer le niveau et les quêtes"
-            variant="cta"
-            onPress={handleRecalculateQuests}
-            style={styles.recalculateButton}
+            delay={240}
           />
         </GlassCard>
 
-        {/* À PROPOS */}
-        <GlassCard style={styles.section}>
-          <SectionHeader title="À propos" />
-          <Text style={styles.aboutText}>
-            FitTrack v1.0.0{'\n'}
-            Application de suivi fitness personnelle.
-          </Text>
-          <View style={styles.futureFeatures}>
-            <Text style={styles.futureTitle}>🚀 Prochaines fonctionnalités</Text>
-            <Text style={styles.futureItem}>• Timer pendant les séances</Text>
-            <Text style={styles.futureItem}>• Sync cloud & compte</Text>
-            <Text style={styles.futureItem}>• Intégration Google Fit / Apple Health</Text>
-            <Text style={styles.futureItem}>• Notifications intelligentes</Text>
-          </View>
-        </GlassCard>
-
-        {/* DEBUG / LABS */}
-        <GlassCard style={[styles.section, styles.debugSection]}>
-          <SectionHeader title="🧪 Labs (Beta)" />
-          <Text style={styles.description}>
-            Fonctionnalités expérimentales en cours de développement.
-          </Text>
-          
-          <TouchableOpacity 
-            style={styles.debugItem}
-            onPress={() => router.push('/rep-counter')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.debugItemLeft}>
-              <View style={[styles.debugIconContainer, { backgroundColor: 'rgba(74, 222, 128, 0.15)' }]}>
-                <Activity size={20} color="#4ade80" />
-              </View>
-              <View>
-                <Text style={styles.debugItemTitle}>Compteur de reps</Text>
-                <Text style={styles.debugItemDesc}>Compte tes répétitions avec le capteur</Text>
-              </View>
-            </View>
-            <ChevronRight size={20} color={Colors.muted} />
-          </TouchableOpacity>
-
-          {/* Options caméra pour le compteur */}
-          <View style={styles.labsToggleContainer}>
-            <View style={styles.labsToggleRow}>
-              <View style={styles.debugItemLeft}>
-                <View style={[styles.debugIconContainer, { backgroundColor: 'rgba(96, 165, 250, 0.15)' }]}>
-                  <Camera size={18} color="#60a5fa" />
-                </View>
-                <View>
-                  <Text style={styles.debugItemTitle}>Mode caméra</Text>
-                  <Text style={styles.debugItemDesc}>Préférer la détection de pose</Text>
-                </View>
-              </View>
+        {/* LABS */}
+        <SectionTitle title="Labs (Beta)" delay={280} />
+        <GlassCard style={[styles.settingsCard, styles.labsCard]}>
+          <SettingItem
+            icon={<Camera size={20} color="#60a5fa" />}
+            iconColor="#60a5fa"
+            title="Mode caméra"
+            subtitle="Préférer la détection de pose"
+            showChevron={false}
+            rightElement={
               <Switch
                 value={settings.preferCameraDetection ?? false}
                 onValueChange={(value) => updateSettings({ preferCameraDetection: value })}
                 trackColor={{ false: Colors.card, true: Colors.teal }}
                 thumbColor="#fff"
               />
-            </View>
-
-            <View style={styles.labsToggleRow}>
-              <View style={styles.debugItemLeft}>
-                <View style={[styles.debugIconContainer, { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}>
-                  <Eye size={18} color="#fbbf24" />
-                </View>
-                <View>
-                  <Text style={styles.debugItemTitle}>Debug caméra</Text>
-                  <Text style={styles.debugItemDesc}>Afficher les points de tracking</Text>
-                </View>
-              </View>
+            }
+            delay={320}
+          />
+          <SettingItem
+            icon={<Eye size={20} color="#fbbf24" />}
+            iconColor="#fbbf24"
+            title="Debug caméra"
+            subtitle="Afficher les points de tracking"
+            showChevron={false}
+            rightElement={
               <Switch
                 value={settings.debugCamera ?? false}
                 onValueChange={(value) => updateSettings({ debugCamera: value })}
                 trackColor={{ false: Colors.card, true: Colors.teal }}
                 thumbColor="#fff"
               />
-            </View>
-          </View>
+            }
+            delay={340}
+          />
+        </GlassCard>
 
-          <View style={styles.debugInfo}>
-            <Database size={14} color={Colors.muted2} />
-            <Text style={styles.debugInfoText}>
-              Storage: {storageHelpers.getStorageType()}
-            </Text>
+        {/* DATA MANAGEMENT */}
+        <SectionTitle title="Données" delay={380} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Download size={20} color={Colors.cta} />}
+            iconColor={Colors.cta}
+            title="Exporter JSON"
+            subtitle="Sauvegarde tes données"
+            onPress={handleExportJSON}
+            delay={400}
+          />
+          <SettingItem
+            icon={<RefreshCw size={20} color="#a78bfa" />}
+            iconColor="#a78bfa"
+            title="Recalculer niveau"
+            subtitle="Corriger les incohérences"
+            onPress={handleRecalculateQuests}
+            delay={420}
+          />
+        </GlassCard>
+
+        {/* À PROPOS */}
+        <SectionTitle title="À propos" delay={460} />
+        <GlassCard style={styles.settingsCard}>
+          <View style={styles.aboutSection}>
+            <View style={styles.appInfo}>
+              <View style={styles.appIconContainer}>
+                <Sparkles size={28} color={Colors.cta} />
+              </View>
+              <View>
+                <Text style={styles.appName}>FitTrack</Text>
+                <Text style={styles.appVersion}>Version 2.0.0</Text>
+              </View>
+            </View>
+            
+            <View style={styles.futureFeatures}>
+              <View style={styles.futureTitleRow}>
+                <Rocket size={16} color={Colors.cta} />
+                <Text style={styles.futureTitle}>Prochainement</Text>
+              </View>
+              <Text style={styles.futureItem}>• Social et classement</Text>
+              <Text style={styles.futureItem}>• Sync cloud & compte</Text>
+              <Text style={styles.futureItem}>• Google Fit / Apple Health</Text>
+              <Text style={styles.futureItem}>• Notifications intelligentes</Text>
+              <Text style={styles.futureItem}>• Traductions en plusieurs langues</Text>
+            </View>
+
+            <View style={styles.storageInfo}>
+              <Database size={14} color={Colors.muted} />
+              <Text style={styles.storageText}>
+                Storage: {storageHelpers.getStorageType()}
+              </Text>
+            </View>
           </View>
         </GlassCard>
 
         {/* DANGER ZONE */}
-        <GlassCard style={[styles.section, styles.dangerSection]}>
-          <SectionHeader title="Zone de danger" />
-          <Text style={styles.dangerText}>
-            Cette action supprimera définitivement toutes tes données.
-          </Text>
-          <Button
-            title="🗑️ Réinitialiser toutes les données"
-            variant="ghost"
+        <SectionTitle title="Zone de danger" delay={500} />
+        <GlassCard style={[styles.settingsCard, styles.dangerCard]}>
+          <SettingItem
+            icon={<Trash2 size={20} color={Colors.error} />}
+            iconColor={Colors.error}
+            title="Réinitialiser"
+            subtitle="Supprimer toutes les données"
             onPress={handleReset}
-            style={styles.resetButton}
-            textStyle={styles.resetButtonText}
+            delay={520}
           />
         </GlassCard>
+
+        {/* Spacer pour le bottom nav */}
+        <View style={{ height: 40 }} />
       </ScrollView>
 
       {/* EXPORT MODAL */}
@@ -355,193 +460,250 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingBottom: 100,
   },
-  screenTitle: {
-    fontSize: FontSize.xxxl,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text,
-    marginBottom: Spacing.lg,
-  },
-  section: {
-    marginBottom: Spacing.lg,
-  },
-  description: {
-    fontSize: FontSize.md,
-    color: Colors.muted,
-    marginBottom: Spacing.md,
-    lineHeight: 20,
-  },
-  goalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  goalInput: {
-    width: 80,
-    marginBottom: 0,
-  },
-  goalUnit: {
-    fontSize: FontSize.md,
-    color: Colors.muted,
-  },
-  saveButton: {
-    marginTop: Spacing.md,
-  },
-  exportInfo: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: Spacing.md,
-  },
-  exportStat: {
-    alignItems: 'center',
-  },
-  exportStatValue: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
-    color: Colors.text,
-  },
-  exportStatLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.muted,
-  },
-  exportButton: {
-    marginTop: Spacing.sm,
-  },
-  recalculateButton: {
-    marginTop: Spacing.sm,
-  },
-  dataStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  dataStat: {
-    alignItems: 'center',
-  },
-  dataStatValue: {
-    fontSize: FontSize.xxxl,
-    fontWeight: FontWeight.bold,
-    color: Colors.cta,
-  },
-  dataStatLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.muted,
-    marginTop: 4,
-  },
-  toggleItem: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.stroke,
+    marginBottom: Spacing.lg,
   },
-  toggleItemLabel: {
-    fontSize: FontSize.md,
+  screenTitle: {
+    fontSize: 32,
+    fontWeight: FontWeight.extrabold,
     color: Colors.text,
+    letterSpacing: -0.5,
   },
-  toggleBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    backgroundColor: 'rgba(34, 197, 94, 0.20)',
+  headerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(215, 150, 134, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  toggleBadgeHidden: {
-    backgroundColor: 'rgba(248, 113, 113, 0.20)',
+
+  // Stats Hero
+  statsHero: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
-  toggleBadgeText: {
-    fontSize: FontSize.xs,
+  statsHeroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: Spacing.md,
+  },
+  statsHeroTitle: {
+    fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     color: Colors.text,
   },
-  aboutText: {
-    fontSize: FontSize.md,
-    color: Colors.muted,
-    lineHeight: 22,
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
   },
-  futureFeatures: {
-    marginTop: Spacing.lg,
-    backgroundColor: Colors.overlay,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
   },
-  futureTitle: {
-    fontSize: FontSize.md,
+  statValue: {
+    fontSize: 28,
     fontWeight: FontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.sm,
   },
-  futureItem: {
-    fontSize: FontSize.sm,
+  statLabel: {
+    fontSize: FontSize.xs,
     color: Colors.muted,
-    marginVertical: 2,
+    marginTop: 2,
   },
-  dangerSection: {
+  statDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+
+  // Section Title
+  sectionTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: Spacing.sm,
+    marginLeft: Spacing.xs,
+    marginTop: Spacing.sm,
+  },
+
+  // Settings Card
+  settingsCard: {
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  labsCard: {
+    borderColor: 'rgba(167, 139, 250, 0.3)',
+  },
+  dangerCard: {
     borderColor: 'rgba(248, 113, 113, 0.3)',
   },
-  dangerText: {
-    fontSize: FontSize.md,
-    color: Colors.error,
-    marginBottom: Spacing.md,
-  },
-  resetButton: {
-    borderColor: 'rgba(248, 113, 113, 0.4)',
-  },
-  resetButtonText: {
-    color: Colors.error,
-  },
-  // Debug Section
-  debugSection: {
-    borderColor: 'rgba(139, 92, 246, 0.3)',
-  },
-  debugItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.stroke,
-  },
-  debugItemLeft: {
+
+  // Setting Item
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    gap: Spacing.md,
   },
-  debugIconContainer: {
+  settingIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  debugItemTitle: {
+  settingInfo: {
+    flex: 1,
+  },
+  settingTitle: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     color: Colors.text,
   },
-  debugItemDesc: {
+  settingSubtitle: {
     fontSize: FontSize.xs,
     color: Colors.muted,
     marginTop: 2,
   },
-  debugInfo: {
+
+  // Goal Section
+  goalSection: {
+    padding: Spacing.sm,
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  goalInfo: {
+    flex: 1,
+  },
+  goalInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginLeft: 52,
+  },
+  goalInput: {
+    width: 70,
+    marginBottom: 0,
+  },
+  goalUnit: {
+    fontSize: FontSize.md,
+    color: Colors.muted,
+    flex: 1,
+  },
+  goalSaveButton: {
+    backgroundColor: Colors.cta,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  goalSaveText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.bg,
+  },
+
+  // Visibility Badge
+  visibilityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: Spacing.md,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+  },
+  visibilityBadgeHidden: {
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+  },
+  visibilityText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    color: '#4ade80',
+  },
+  visibilityTextHidden: {
+    color: Colors.error,
+  },
+
+  // Labs divider
+  labsDivider: {
+    height: 1,
+    backgroundColor: Colors.stroke,
+    marginHorizontal: Spacing.md,
+  },
+
+  // About Section
+  aboutSection: {
+    padding: Spacing.md,
+  },
+  appInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  appIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: 'rgba(215, 150, 134, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appName: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+  },
+  appVersion: {
+    fontSize: FontSize.sm,
+    color: Colors.muted,
+  },
+  futureFeatures: {
+    backgroundColor: Colors.overlay,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  futureTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: Spacing.sm,
+  },
+  futureTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+  },
+  futureItem: {
+    fontSize: FontSize.sm,
+    color: Colors.muted,
+    marginVertical: 2,
+    marginLeft: 24,
+  },
+  storageInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingTop: Spacing.sm,
   },
-  debugInfoText: {
+  storageText: {
     fontSize: FontSize.xs,
-    color: Colors.muted2,
-  },
-  labsToggleContainer: {
-    marginTop: Spacing.sm,
-  },
-  labsToggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.stroke,
+    color: Colors.muted,
   },
 });
