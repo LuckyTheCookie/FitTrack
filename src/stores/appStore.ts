@@ -6,23 +6,23 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { nanoid } from 'nanoid/non-secure';
-import type { 
-  Entry, 
-  HomeWorkoutEntry, 
-  RunEntry, 
-  BeatSaberEntry,
-  MealEntry, 
-  MeasureEntry,
-  UserSettings,
-  BadgeId,
+import type {
+    Entry,
+    HomeWorkoutEntry,
+    RunEntry,
+    BeatSaberEntry,
+    MealEntry,
+    MeasureEntry,
+    UserSettings,
+    BadgeId,
 } from '../types';
 import { zustandStorage } from '../storage';
-import { 
-  getTodayDateString, 
-  getNowISO, 
-  calculateStreak,
-  isInCurrentWeek,
-  getLastSixMonths,
+import {
+    getTodayDateString,
+    getNowISO,
+    calculateStreak,
+    isInCurrentWeek,
+    getLastSixMonths,
 } from '../utils/date';
 import { checkBadges } from '../utils/badges';
 
@@ -31,33 +31,33 @@ import { checkBadges } from '../utils/badges';
 // ============================================================================
 
 interface AppState {
-  // Données
-  entries: Entry[];
-  settings: UserSettings;
-  unlockedBadges: BadgeId[];
-  
-  // Actions - Entries
-  addHomeWorkout: (data: Omit<HomeWorkoutEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-  addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>) => void;
-  addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-  addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-  addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-  deleteEntry: (id: string) => void;
-  
-  // Actions - Settings
-  updateWeeklyGoal: (goal: number) => void;
-  updateSettings: (settings: Partial<UserSettings>) => void;
-  
-  // Actions - Data management
-  resetAllData: () => void;
-  
-  // Computed (recalculées à chaque appel)
-  getStreak: () => { current: number; best: number };
-  getWeekWorkoutsCount: () => number;
-  getRecentEntries: (limit?: number) => Entry[];
-  getSportEntries: () => (HomeWorkoutEntry | RunEntry)[];
-  getMonthlyStats: () => { month: string; count: number }[];
-  getLastMeasure: () => MeasureEntry | undefined;
+    // Données
+    entries: Entry[];
+    settings: UserSettings;
+    unlockedBadges: BadgeId[];
+
+    // Actions - Entries
+    addHomeWorkout: (data: Omit<HomeWorkoutEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
+    addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>) => void;
+    addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
+    addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
+    addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
+    deleteEntry: (id: string) => void;
+
+    // Actions - Settings
+    updateWeeklyGoal: (goal: number) => void;
+    updateSettings: (settings: Partial<UserSettings>) => void;
+
+    // Actions - Data management
+    resetAllData: () => void;
+
+    // Computed (recalculées à chaque appel)
+    getStreak: () => { current: number; best: number };
+    getWeekWorkoutsCount: () => number;
+    getRecentEntries: (limit?: number) => Entry[];
+    getSportEntries: () => (HomeWorkoutEntry | RunEntry | BeatSaberEntry)[];
+    getMonthlyStats: () => { month: string; count: number }[];
+    getLastMeasure: () => MeasureEntry | undefined;
 }
 
 // ============================================================================
@@ -65,15 +65,17 @@ interface AppState {
 // ============================================================================
 
 const defaultSettings: UserSettings = {
-  weeklyGoal: 4,
-  units: {
-    weight: 'kg',
-    distance: 'km',
-  },
-  hiddenTabs: {
-    tools: false,
-    workout: false,
-  },
+    weeklyGoal: 4,
+    units: {
+        weight: 'kg',
+        distance: 'km',
+    },
+    hiddenTabs: {
+        tools: false,
+        workout: false,
+    },
+    debugCamera: false,
+    preferCameraDetection: false,
 };
 
 // ============================================================================
@@ -81,212 +83,212 @@ const defaultSettings: UserSettings = {
 // ============================================================================
 
 export const useAppStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      // État initial
-      entries: [],
-      settings: defaultSettings,
-      unlockedBadges: [],
+    persist(
+        (set, get) => ({
+            // État initial
+            entries: [],
+            settings: defaultSettings,
+            unlockedBadges: [],
 
-      // ========================================
-      // ACTIONS - AJOUT D'ENTRÉES
-      // ========================================
+            // ========================================
+            // ACTIONS - AJOUT D'ENTRÉES
+            // ========================================
 
-      addHomeWorkout: (data) => {
-        const entry: HomeWorkoutEntry = {
-          id: nanoid(),
-          type: 'home',
-          createdAt: getNowISO(),
-          date: getTodayDateString(),
-          ...data,
-        };
-        
-        set((state) => {
-          const newEntries = [entry, ...state.entries];
-          const newBadges = checkBadges(
-            newEntries,
-            get().getStreak().current,
-            get().getStreak().best,
-            0 // TODO: calculer semaines consécutives
-          );
-          return { 
-            entries: newEntries,
-            unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
-          };
-        });
-      },
+            addHomeWorkout: (data) => {
+                const entry: HomeWorkoutEntry = {
+                    id: nanoid(),
+                    type: 'home',
+                    createdAt: getNowISO(),
+                    date: getTodayDateString(),
+                    ...data,
+                };
 
-      addRun: (data) => {
-        // Calculer la vitesse moyenne
-        const avgSpeed = data.durationMinutes > 0 
-          ? Math.round((data.distanceKm / (data.durationMinutes / 60)) * 10) / 10
-          : 0;
+                set((state) => {
+                    const newEntries = [entry, ...state.entries];
+                    const newBadges = checkBadges(
+                        newEntries,
+                        get().getStreak().current,
+                        get().getStreak().best,
+                        0 // TODO: calculer semaines consécutives
+                    );
+                    return {
+                        entries: newEntries,
+                        unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
+                    };
+                });
+            },
 
-        const entry: RunEntry = {
-          id: nanoid(),
-          type: 'run',
-          createdAt: getNowISO(),
-          date: getTodayDateString(),
-          avgSpeed,
-          ...data,
-        };
-        
-        set((state) => {
-          const newEntries = [entry, ...state.entries];
-          const newBadges = checkBadges(
-            newEntries,
-            get().getStreak().current,
-            get().getStreak().best,
-            0
-          );
-          return { 
-            entries: newEntries,
-            unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
-          };
-        });
-      },
+            addRun: (data) => {
+                // Calculer la vitesse moyenne
+                const avgSpeed = data.durationMinutes > 0
+                    ? Math.round((data.distanceKm / (data.durationMinutes / 60)) * 10) / 10
+                    : 0;
 
-      addBeatSaber: (data) => {
-        const entry: BeatSaberEntry = {
-          id: nanoid(),
-          type: 'beatsaber',
-          createdAt: getNowISO(),
-          date: getTodayDateString(),
-          ...data,
-        };
+                const entry: RunEntry = {
+                    id: nanoid(),
+                    type: 'run',
+                    createdAt: getNowISO(),
+                    date: getTodayDateString(),
+                    avgSpeed,
+                    ...data,
+                };
 
-        set((state) => {
-          const newEntries = [entry, ...state.entries];
-          const newBadges = checkBadges(
-            newEntries,
-            get().getStreak().current,
-            get().getStreak().best,
-            0
-          );
-          return { 
-            entries: newEntries,
-            unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
-          };
-        });
-      },
+                set((state) => {
+                    const newEntries = [entry, ...state.entries];
+                    const newBadges = checkBadges(
+                        newEntries,
+                        get().getStreak().current,
+                        get().getStreak().best,
+                        0
+                    );
+                    return {
+                        entries: newEntries,
+                        unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
+                    };
+                });
+            },
 
-      addMeal: (data) => {
-        const entry: MealEntry = {
-          id: nanoid(),
-          type: 'meal',
-          createdAt: getNowISO(),
-          date: getTodayDateString(),
-          ...data,
-        };
-        
-        set((state) => ({
-          entries: [entry, ...state.entries],
-        }));
-      },
+            addBeatSaber: (data) => {
+                const entry: BeatSaberEntry = {
+                    id: nanoid(),
+                    type: 'beatsaber',
+                    createdAt: getNowISO(),
+                    date: getTodayDateString(),
+                    ...data,
+                };
 
-      addMeasure: (data) => {
-        const entry: MeasureEntry = {
-          id: nanoid(),
-          type: 'measure',
-          createdAt: getNowISO(),
-          date: getTodayDateString(),
-          ...data,
-        };
-        
-        set((state) => ({
-          entries: [entry, ...state.entries],
-        }));
-      },
+                set((state) => {
+                    const newEntries = [entry, ...state.entries];
+                    const newBadges = checkBadges(
+                        newEntries,
+                        get().getStreak().current,
+                        get().getStreak().best,
+                        0
+                    );
+                    return {
+                        entries: newEntries,
+                        unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
+                    };
+                });
+            },
 
-      deleteEntry: (id) => {
-        set((state) => ({
-          entries: state.entries.filter((e) => e.id !== id),
-        }));
-      },
+            addMeal: (data) => {
+                const entry: MealEntry = {
+                    id: nanoid(),
+                    type: 'meal',
+                    createdAt: getNowISO(),
+                    date: getTodayDateString(),
+                    ...data,
+                };
 
-      // ========================================
-      // ACTIONS - SETTINGS
-      // ========================================
+                set((state) => ({
+                    entries: [entry, ...state.entries],
+                }));
+            },
 
-      updateWeeklyGoal: (goal) => {
-        set((state) => ({
-          settings: { ...state.settings, weeklyGoal: goal },
-        }));
-      },
+            addMeasure: (data) => {
+                const entry: MeasureEntry = {
+                    id: nanoid(),
+                    type: 'measure',
+                    createdAt: getNowISO(),
+                    date: getTodayDateString(),
+                    ...data,
+                };
 
-      updateSettings: (newSettings) => {
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings },
-        }));
-      },
+                set((state) => ({
+                    entries: [entry, ...state.entries],
+                }));
+            },
 
-      // ========================================
-      // ACTIONS - DATA MANAGEMENT
-      // ========================================
+            deleteEntry: (id) => {
+                set((state) => ({
+                    entries: state.entries.filter((e) => e.id !== id),
+                }));
+            },
 
-      resetAllData: () => {
-        set({
-          entries: [],
-          settings: defaultSettings,
-          unlockedBadges: [],
-        });
-      },
+            // ========================================
+            // ACTIONS - SETTINGS
+            // ========================================
 
-      // ========================================
-      // GETTERS COMPUTED
-      // ========================================
+            updateWeeklyGoal: (goal) => {
+                set((state) => ({
+                    settings: { ...state.settings, weeklyGoal: goal },
+                }));
+            },
 
-      getStreak: () => {
-        const { entries } = get();
-        const sportDates = entries
-          .filter((e) => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber')
-          .map((e) => e.date);
-        return calculateStreak(sportDates);
-      },
+            updateSettings: (newSettings) => {
+                set((state) => ({
+                    settings: { ...state.settings, ...newSettings },
+                }));
+            },
 
-      getWeekWorkoutsCount: () => {
-        const { entries } = get();
-        return entries.filter(
-          (e) => (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') && isInCurrentWeek(e.date)
-        ).length;
-      },
+            // ========================================
+            // ACTIONS - DATA MANAGEMENT
+            // ========================================
 
-      getRecentEntries: (limit = 10) => {
-        const { entries } = get();
-        return entries.slice(0, limit);
-      },
+            resetAllData: () => {
+                set({
+                    entries: [],
+                    settings: defaultSettings,
+                    unlockedBadges: [],
+                });
+            },
 
-      getSportEntries: () => {
-        const { entries } = get();
-        return entries.filter(
-          (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
-        );
-      },
+            // ========================================
+            // GETTERS COMPUTED
+            // ========================================
 
-      getMonthlyStats: () => {
-        const { entries } = get();
-        const months = getLastSixMonths();
-        
-        return months.map((month) => {
-          const count = entries.filter(
-            (e) => 
-              (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') && 
-              e.date.startsWith(month)
-          ).length;
-          return { month, count };
-        });
-      },
+            getStreak: () => {
+                const { entries } = get();
+                const sportDates = entries
+                    .filter((e) => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber')
+                    .map((e) => e.date);
+                return calculateStreak(sportDates);
+            },
 
-      getLastMeasure: () => {
-        const { entries } = get();
-        return entries.find((e): e is MeasureEntry => e.type === 'measure');
-      },
-    }),
-    {
-      name: 'fittrack-app-store',
-      storage: createJSONStorage(() => zustandStorage),
-    }
-  )
+            getWeekWorkoutsCount: () => {
+                const { entries } = get();
+                return entries.filter(
+                    (e) => (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') && isInCurrentWeek(e.date)
+                ).length;
+            },
+
+            getRecentEntries: (limit = 10) => {
+                const { entries } = get();
+                return entries.slice(0, limit);
+            },
+
+            getSportEntries: () => {
+                const { entries } = get();
+                return entries.filter(
+                    (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
+                );
+            },
+
+            getMonthlyStats: () => {
+                const { entries } = get();
+                const months = getLastSixMonths();
+
+                return months.map((month) => {
+                    const count = entries.filter(
+                        (e) =>
+                            (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') &&
+                            e.date.startsWith(month)
+                    ).length;
+                    return { month, count };
+                });
+            },
+
+            getLastMeasure: () => {
+                const { entries } = get();
+                return entries.find((e): e is MeasureEntry => e.type === 'measure');
+            },
+        }),
+        {
+            name: 'fittrack-app-store',
+            storage: createJSONStorage(() => zustandStorage),
+        }
+    )
 );
 
 // ============================================================================

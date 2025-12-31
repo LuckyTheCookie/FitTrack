@@ -10,10 +10,11 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Activity, ChevronRight, Database } from 'lucide-react-native';
+import { Activity, ChevronRight, Database, Camera, Eye } from 'lucide-react-native';
 import { 
   GlassCard, 
   SectionHeader, 
@@ -268,6 +269,45 @@ export default function SettingsScreen() {
             <ChevronRight size={20} color={Colors.muted} />
           </TouchableOpacity>
 
+          {/* Options caméra pour le compteur */}
+          <View style={styles.labsToggleContainer}>
+            <View style={styles.labsToggleRow}>
+              <View style={styles.debugItemLeft}>
+                <View style={[styles.debugIconContainer, { backgroundColor: 'rgba(96, 165, 250, 0.15)' }]}>
+                  <Camera size={18} color="#60a5fa" />
+                </View>
+                <View>
+                  <Text style={styles.debugItemTitle}>Mode caméra</Text>
+                  <Text style={styles.debugItemDesc}>Préférer la détection de pose</Text>
+                </View>
+              </View>
+              <Switch
+                value={settings.preferCameraDetection ?? false}
+                onValueChange={(value) => updateSettings({ preferCameraDetection: value })}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            <View style={styles.labsToggleRow}>
+              <View style={styles.debugItemLeft}>
+                <View style={[styles.debugIconContainer, { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}>
+                  <Eye size={18} color="#fbbf24" />
+                </View>
+                <View>
+                  <Text style={styles.debugItemTitle}>Debug caméra</Text>
+                  <Text style={styles.debugItemDesc}>Afficher les points de tracking</Text>
+                </View>
+              </View>
+              <Switch
+                value={settings.debugCamera ?? false}
+                onValueChange={(value) => updateSettings({ debugCamera: value })}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
+
           <View style={styles.debugInfo}>
             <Database size={14} color={Colors.muted2} />
             <Text style={styles.debugInfoText}>
@@ -492,5 +532,16 @@ const styles = StyleSheet.create({
   debugInfoText: {
     fontSize: FontSize.xs,
     color: Colors.muted2,
+  },
+  labsToggleContainer: {
+    marginTop: Spacing.sm,
+  },
+  labsToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.stroke,
   },
 });

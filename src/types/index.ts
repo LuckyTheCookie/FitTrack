@@ -131,6 +131,9 @@ export interface UserSettings {
     tools: boolean;
     workout: boolean;
   };
+  // Labs settings
+  debugCamera?: boolean; // Afficher les points de pose sur la caméra
+  preferCameraDetection?: boolean; // Préférer la caméra à l'accéléromètre
 }
 
 // ============================================================================
