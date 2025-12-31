@@ -1,5 +1,5 @@
 // ============================================================================
-// WORKOUT SCREEN - Historique complet des séances
+// WORKOUT SCREEN - Historique complet des séances (Redesign)
 // ============================================================================
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -10,11 +10,26 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { 
+  Home, 
+  Footprints, 
+  Gamepad2, 
+  UtensilsCrossed, 
+  Ruler, 
+  Filter,
+  Calendar,
+  Flame,
+  Clock,
+  TrendingUp,
+  Trash2,
+} from 'lucide-react-native';
 import { 
   GlassCard, 
-  SegmentedControl,
   EmptyState,
   EntryDetailModal,
 } from '../src/components/ui';
@@ -22,38 +37,93 @@ import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
-import type { Entry, EntryType, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry } from '../src/types';
+import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSaberEntry } from '../src/types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type FilterType = 'all' | 'home' | 'run' | 'beatsaber' | 'meal' | 'measure';
 
-const filterOptions: { value: FilterType; label: string }[] = [
-  { value: 'all', label: 'Tout' },
-  { value: 'home', label: '🏠' },
-  { value: 'run', label: '🏃' },
-  { value: 'beatsaber', label: '🕹️' },
-  { value: 'meal', label: '🍽️' },
-  { value: 'measure', label: '📏' },
+interface FilterOption {
+  value: FilterType;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+const filterOptions: FilterOption[] = [
+  { value: 'all', label: 'Tout', icon: <Filter size={16} color={Colors.text} />, color: Colors.text },
+  { value: 'home', label: 'Maison', icon: <Home size={16} color="#4ade80" />, color: '#4ade80' },
+  { value: 'run', label: 'Course', icon: <Footprints size={16} color="#60a5fa" />, color: '#60a5fa' },
+  { value: 'beatsaber', label: 'Beat Saber', icon: <Gamepad2 size={16} color="#f472b6" />, color: '#f472b6' },
+  { value: 'meal', label: 'Repas', icon: <UtensilsCrossed size={16} color="#fbbf24" />, color: '#fbbf24' },
+  { value: 'measure', label: 'Mesures', icon: <Ruler size={16} color="#a78bfa" />, color: '#a78bfa' },
 ];
 
+// Obtenir l'icône et la couleur selon le type
+const getEntryStyle = (type: string) => {
+  switch (type) {
+    case 'home':
+      return { icon: <Home size={20} color="#4ade80" />, color: '#4ade80', bg: 'rgba(74, 222, 128, 0.15)' };
+    case 'run':
+      return { icon: <Footprints size={20} color="#60a5fa" />, color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' };
+    case 'beatsaber':
+      return { icon: <Gamepad2 size={20} color="#f472b6" />, color: '#f472b6', bg: 'rgba(244, 114, 182, 0.15)' };
+    case 'meal':
+      return { icon: <UtensilsCrossed size={20} color="#fbbf24" />, color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' };
+    case 'measure':
+      return { icon: <Ruler size={20} color="#a78bfa" />, color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' };
+    default:
+      return { icon: <Flame size={20} color={Colors.cta} />, color: Colors.cta, bg: 'rgba(215, 150, 134, 0.15)' };
+  }
+};
+
+// Composant pour le badge de filtre
+function FilterChip({ option, isActive, onPress }: { option: FilterOption; isActive: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={[
+        styles.filterChip,
+        isActive && { backgroundColor: `${option.color}22`, borderColor: `${option.color}55` },
+      ]}
+    >
+      {option.icon}
+      {isActive && <Text style={[styles.filterChipText, { color: option.color }]}>{option.label}</Text>}
+    </TouchableOpacity>
+  );
+}
+
 // Composant pour afficher une entrée selon son type
-function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () => void; onPress?: () => void }) {
+function EntryCard({ entry, onDelete, onPress, index }: { entry: Entry; onDelete: () => void; onPress?: () => void; index: number }) {
+  const entryStyle = getEntryStyle(entry.type);
+  
   const getContent = () => {
     switch (entry.type) {
       case 'home': {
         const homeEntry = entry as HomeWorkoutEntry;
         return (
           <>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>🏠</Text>
-              <Text style={styles.cardType}>Séance maison</Text>
-            </View>
-            {homeEntry.name && <Text style={styles.cardTitle}>{homeEntry.name}</Text>}
-            <Text style={styles.cardDesc} numberOfLines={3}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {homeEntry.name || 'Séance maison'}
+            </Text>
+            <Text style={styles.cardDesc} numberOfLines={2}>
               {homeEntry.exercises}
             </Text>
-            {homeEntry.absBlock && (
-              <Text style={styles.cardAbsTag}>+ Bloc abdos</Text>
-            )}
+            <View style={styles.cardTags}>
+              {homeEntry.absBlock && (
+                <View style={styles.tag}>
+                  <Flame size={12} color={Colors.cta} />
+                  <Text style={styles.tagText}>Abdos</Text>
+                </View>
+              )}
+              {homeEntry.totalReps && (
+                <View style={styles.tag}>
+                  <TrendingUp size={12} color={Colors.muted} />
+                  <Text style={styles.tagText}>{homeEntry.totalReps} reps</Text>
+                </View>
+              )}
+            </View>
           </>
         );
       }
@@ -61,40 +131,47 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
         const runEntry = entry as RunEntry;
         return (
           <>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>🏃</Text>
-              <Text style={styles.cardType}>Course</Text>
-            </View>
             <Text style={styles.cardTitle}>
-              {runEntry.distanceKm} km en {runEntry.durationMinutes} min
+              {runEntry.distanceKm} km
             </Text>
-            <View style={styles.runStats}>
+            <View style={styles.runStatsRow}>
+              <View style={styles.runStatItem}>
+                <Clock size={14} color={Colors.muted} />
+                <Text style={styles.runStatText}>{runEntry.durationMinutes} min</Text>
+              </View>
               {runEntry.avgSpeed && (
-                <Text style={styles.runStat}>⚡ {runEntry.avgSpeed} km/h</Text>
+                <View style={styles.runStatItem}>
+                  <TrendingUp size={14} color={Colors.muted} />
+                  <Text style={styles.runStatText}>{runEntry.avgSpeed} km/h</Text>
+                </View>
               )}
               {runEntry.bpmAvg && (
-                <Text style={styles.runStat}>❤️ {runEntry.bpmAvg} bpm</Text>
+                <View style={styles.runStatItem}>
+                  <Flame size={14} color="#f87171" />
+                  <Text style={styles.runStatText}>{runEntry.bpmAvg} bpm</Text>
+                </View>
               )}
             </View>
           </>
         );
       }
-
       case 'beatsaber': {
-        const bs = entry as any;
+        const bsEntry = entry as BeatSaberEntry;
         return (
           <>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>🕹️</Text>
-              <Text style={styles.cardType}>Beat Saber</Text>
-            </View>
-            <Text style={styles.cardTitle}>{bs.durationMinutes} min</Text>
-            <View style={styles.runStats}>
-              {bs.bpmAvg && (
-                <Text style={styles.runStat}>❤️ {bs.bpmAvg} bpm</Text>
+            <Text style={styles.cardTitle}>{bsEntry.durationMinutes} minutes</Text>
+            <View style={styles.runStatsRow}>
+              {bsEntry.bpmAvg && (
+                <View style={styles.runStatItem}>
+                  <Flame size={14} color="#f87171" />
+                  <Text style={styles.runStatText}>{bsEntry.bpmAvg} bpm</Text>
+                </View>
               )}
-              {bs.cardiacLoad !== undefined && (
-                <Text style={styles.runStat}>💓 {bs.cardiacLoad}</Text>
+              {bsEntry.cardiacLoad !== undefined && (
+                <View style={styles.runStatItem}>
+                  <TrendingUp size={14} color={Colors.muted} />
+                  <Text style={styles.runStatText}>Charge: {bsEntry.cardiacLoad}</Text>
+                </View>
               )}
             </View>
           </>
@@ -104,10 +181,6 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
         const mealEntry = entry as MealEntry;
         return (
           <>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>🍽️</Text>
-              <Text style={styles.cardType}>Repas</Text>
-            </View>
             <Text style={styles.cardTitle}>{mealEntry.mealName}</Text>
             <Text style={styles.cardDesc} numberOfLines={2}>
               {mealEntry.description}
@@ -119,10 +192,7 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
         const measureEntry = entry as MeasureEntry;
         return (
           <>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>📏</Text>
-              <Text style={styles.cardType}>Mensurations</Text>
-            </View>
+            <Text style={styles.cardTitle}>Mensurations</Text>
             <View style={styles.measureGrid}>
               {measureEntry.weight && (
                 <View style={styles.measureItem}>
@@ -133,19 +203,19 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
               {measureEntry.waist && (
                 <View style={styles.measureItem}>
                   <Text style={styles.measureValue}>{measureEntry.waist}</Text>
-                  <Text style={styles.measureLabel}>taille cm</Text>
+                  <Text style={styles.measureLabel}>taille</Text>
                 </View>
               )}
               {measureEntry.arm && (
                 <View style={styles.measureItem}>
                   <Text style={styles.measureValue}>{measureEntry.arm}</Text>
-                  <Text style={styles.measureLabel}>bras cm</Text>
+                  <Text style={styles.measureLabel}>bras</Text>
                 </View>
               )}
               {measureEntry.hips && (
                 <View style={styles.measureItem}>
                   <Text style={styles.measureValue}>{measureEntry.hips}</Text>
-                  <Text style={styles.measureLabel}>hanches cm</Text>
+                  <Text style={styles.measureLabel}>hanches</Text>
                 </View>
               )}
             </View>
@@ -156,16 +226,43 @@ function EntryCard({ entry, onDelete, onPress }: { entry: Entry; onDelete: () =>
   };
 
   return (
-    <TouchableOpacity 
-      onPress={onPress}
-      onLongPress={onDelete}
-      activeOpacity={0.9}
-    >
-      <GlassCard style={styles.card}>
-        {getContent()}
-        <Text style={styles.cardDate}>{getRelativeTime(entry.createdAt)}</Text>
-      </GlassCard>
-    </TouchableOpacity>
+    <Animated.View entering={FadeInDown.delay(index * 50).duration(300)}>
+      <TouchableOpacity 
+        onPress={onPress}
+        onLongPress={onDelete}
+        activeOpacity={0.9}
+      >
+        <GlassCard style={styles.card}>
+          <View style={styles.cardRow}>
+            {/* Icon */}
+            <View style={[styles.cardIconContainer, { backgroundColor: entryStyle.bg }]}>
+              {entryStyle.icon}
+            </View>
+            
+            {/* Content */}
+            <View style={styles.cardContent}>
+              {getContent()}
+            </View>
+
+            {/* Delete button */}
+            <TouchableOpacity 
+              onPress={onDelete} 
+              style={styles.deleteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Trash2 size={18} color={Colors.muted2} />
+            </TouchableOpacity>
+          </View>
+          
+          {/* Footer avec date */}
+          <View style={styles.cardFooter}>
+            <Calendar size={12} color={Colors.muted2} />
+            <Text style={styles.cardDate}>{getRelativeTime(entry.createdAt)}</Text>
+            <Text style={styles.cardDateFull}>• {formatDisplayDate(entry.date)}</Text>
+          </View>
+        </GlassCard>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -181,6 +278,18 @@ export default function WorkoutScreen() {
     return entries.filter(e => e.type === filter);
   }, [entries, filter]);
 
+  // Stats rapides
+  const quickStats = useMemo(() => {
+    const sportEntries = entries.filter(e => ['home', 'run', 'beatsaber'].includes(e.type));
+    const today = new Date().toISOString().split('T')[0];
+    const todayEntries = entries.filter(e => e.date === today);
+    return {
+      total: entries.length,
+      sport: sportEntries.length,
+      today: todayEntries.length,
+    };
+  }, [entries]);
+
   const handleDelete = useCallback((entry: Entry) => {
     Alert.alert(
       'Supprimer cette entrée ?',
@@ -191,9 +300,7 @@ export default function WorkoutScreen() {
           text: 'Supprimer', 
           style: 'destructive',
           onPress: () => {
-            // Supprimer l'entrée
             deleteEntry(entry.id);
-            // Recalculer les quêtes avec les entrées restantes
             const remainingEntries = entries.filter(e => e.id !== entry.id);
             const totals = calculateQuestTotals(remainingEntries);
             recalculateAllQuests(totals);
@@ -203,14 +310,10 @@ export default function WorkoutScreen() {
     );
   }, [deleteEntry, entries, recalculateAllQuests]);
 
-  const handleEditEntry = useCallback((entry: Entry) => {
-    // TODO: Implémenter la navigation ou l'ouverture d'un formulaire d'édition
-    console.log('Edit entry:', entry);
-  }, []);
-
-  const renderItem = useCallback(({ item }: { item: Entry }) => (
+  const renderItem = useCallback(({ item, index }: { item: Entry; index: number }) => (
     <EntryCard 
       entry={item}
+      index={index}
       onPress={() => {
         setSelectedEntry(item);
         setDetailModalVisible(true);
@@ -221,19 +324,40 @@ export default function WorkoutScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header avec gradient */}
+      <LinearGradient
+        colors={['rgba(215, 150, 134, 0.15)', 'transparent']}
+        style={styles.headerGradient}
+      />
+      
       <View style={styles.header}>
-        <Text style={styles.screenTitle}>Workout History</Text>
-        <Text style={styles.subtitle}>{entries.length} entrées</Text>
+        <Animated.View entering={FadeIn.delay(100)}>
+          <Text style={styles.screenTitle}>Historique</Text>
+          <Text style={styles.subtitle}>
+            {quickStats.total} entrées • {quickStats.sport} séances • {quickStats.today} aujourd'hui
+          </Text>
+        </Animated.View>
       </View>
 
-      <View style={styles.filterContainer}>
-        <SegmentedControl
-          options={filterOptions}
-          value={filter}
-          onChange={setFilter}
+      {/* Filtres horizontaux */}
+      <Animated.View entering={FadeIn.delay(200)} style={styles.filterContainer}>
+        <FlatList
+          horizontal
+          data={filterOptions}
+          keyExtractor={(item) => item.value}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterList}
+          renderItem={({ item }) => (
+            <FilterChip
+              option={item}
+              isActive={filter === item.value}
+              onPress={() => setFilter(item.value)}
+            />
+          )}
         />
-      </View>
+      </Animated.View>
 
+      {/* Liste des entrées */}
       <FlatList
         data={filteredEntries}
         renderItem={renderItem}
@@ -252,16 +376,17 @@ export default function WorkoutScreen() {
         }
       />
 
-      <Text style={styles.hint}>
-        💡 Appui long pour supprimer
-      </Text>
+      {/* Hint en bas */}
+      <View style={styles.hintContainer}>
+        <Text style={styles.hint}>💡 Appui long ou icône 🗑️ pour supprimer</Text>
+      </View>
 
       {/* MODAL DÉTAILS */}
       <EntryDetailModal
         entry={selectedEntry}
         visible={detailModalVisible}
         onClose={() => setDetailModalVisible(false)}
-        onEdit={handleEditEntry}
+        onEdit={() => {}}
         onDelete={deleteEntry}
       />
     </SafeAreaView>
@@ -273,15 +398,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.bg,
   },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+  },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
   screenTitle: {
-    fontSize: FontSize.xxxl,
+    fontSize: 32,
     fontWeight: FontWeight.extrabold,
     color: Colors.text,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: FontSize.md,
@@ -289,32 +422,55 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   filterContainer: {
+    marginBottom: Spacing.sm,
+  },
+  filterList: {
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    gap: 8,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.overlay,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderColor: Colors.stroke,
+  },
+  filterChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   listContent: {
     padding: Spacing.lg,
-    paddingTop: 0,
+    paddingTop: Spacing.sm,
     paddingBottom: 100,
     gap: 12,
   },
   card: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
-  cardHeader: {
+  cardRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  cardIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    marginRight: Spacing.md,
   },
-  cardIcon: {
-    fontSize: 16,
+  cardContent: {
+    flex: 1,
   },
-  cardType: {
-    fontSize: FontSize.sm,
-    color: Colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  deleteButton: {
+    padding: 8,
+    marginTop: -4,
+    marginRight: -4,
   },
   cardTitle: {
     fontSize: FontSize.lg,
@@ -327,36 +483,50 @@ const styles = StyleSheet.create({
     color: Colors.muted,
     lineHeight: 18,
   },
-  cardAbsTag: {
-    fontSize: FontSize.xs,
-    color: Colors.cta,
-    marginTop: 6,
-  },
-  cardDate: {
-    fontSize: FontSize.xs,
-    color: Colors.muted2,
-    marginTop: Spacing.md,
-  },
-  runStats: {
+  cardTags: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 8,
     marginTop: 8,
   },
-  runStat: {
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.overlay,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: BorderRadius.full,
+  },
+  tagText: {
+    fontSize: FontSize.xs,
+    color: Colors.muted,
+  },
+  runStatsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 4,
+  },
+  runStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  runStatText: {
     fontSize: FontSize.sm,
     color: Colors.muted,
   },
   measureGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 16,
-    marginTop: 8,
+    marginTop: 4,
   },
   measureItem: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
   },
   measureValue: {
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     color: Colors.text,
   },
@@ -364,13 +534,37 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.muted,
   },
-  hint: {
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.stroke,
+  },
+  cardDate: {
+    fontSize: FontSize.xs,
+    color: Colors.muted2,
+  },
+  cardDateFull: {
+    fontSize: FontSize.xs,
+    color: Colors.muted2,
+  },
+  hintContainer: {
     position: 'absolute',
     bottom: 90,
     left: 0,
     right: 0,
-    textAlign: 'center',
+    alignItems: 'center',
+  },
+  hint: {
     fontSize: FontSize.xs,
     color: Colors.muted2,
+    backgroundColor: Colors.cardSolid,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
   },
 });
