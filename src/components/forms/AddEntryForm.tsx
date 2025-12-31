@@ -15,7 +15,10 @@ import {
     Modal,
     Pressable,
 } from 'react-native';
+import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Video } from 'lucide-react-native';
 import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui';
 import { useAppStore, useGamificationStore } from '../../stores';
 import type { EntryType } from '../../types';
@@ -31,6 +34,7 @@ interface Exercise {
 
 interface AddEntryFormProps {
     onSuccess?: () => void;
+    onDismiss?: () => void;
     initialTab?: EntryType;
     prefillExercises?: string;
     includeAbsBlock?: boolean;
@@ -66,6 +70,7 @@ const EXAMPLE_JSON = `{
 
 export function AddEntryForm({
     onSuccess,
+    onDismiss,
     initialTab = 'home',
     prefillExercises = '',
     includeAbsBlock = false,
@@ -77,6 +82,12 @@ export function AddEntryForm({
 
     // State pour l'intro step
     const [hasStarted, setHasStarted] = useState(false);
+
+    // Handler pour le tracking temps réel
+    const handleRealTimeTracking = useCallback(() => {
+        onDismiss?.();
+        router.push('/rep-counter');
+    }, [onDismiss]);
 
     // Home workout - nouveau format
     const [homeName, setHomeName] = useState('');
@@ -316,6 +327,28 @@ export function AddEntryForm({
             <View style={styles.introContainer}>
                 <Text style={styles.introTitle}>Que veux-tu ajouter ?</Text>
                 <Text style={styles.introSubtitle}>Choisis une activité</Text>
+
+                {/* Bouton Tracking temps réel en vedette */}
+                <TouchableOpacity
+                    style={styles.realTimeButton}
+                    onPress={handleRealTimeTracking}
+                    activeOpacity={0.85}
+                >
+                    <LinearGradient
+                        colors={[Colors.cta, Colors.cta2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.realTimeButtonGradient}
+                    >
+                        <Video size={24} color="#fff" />
+                        <View style={styles.realTimeButtonText}>
+                            <Text style={styles.realTimeButtonTitle}>Tracking temps réel</Text>
+                            <Text style={styles.realTimeButtonSubtitle}>Détection IA par caméra</Text>
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
+
+                <Text style={styles.orText}>— ou ajoute manuellement —</Text>
 
                 <View style={styles.activityGrid}>
                     {tabs.map((tab) => (
@@ -825,7 +858,44 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         color: Colors.muted,
         textAlign: 'center',
-        marginBottom: Spacing.xxl,
+        marginBottom: Spacing.lg,
+    },
+    realTimeButton: {
+        width: '100%',
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        marginBottom: Spacing.lg,
+        shadowColor: Colors.cta,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    realTimeButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: Spacing.lg,
+        paddingHorizontal: Spacing.xl,
+        gap: Spacing.md,
+    },
+    realTimeButtonText: {
+        flex: 1,
+    },
+    realTimeButtonTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.bold,
+        color: '#fff',
+    },
+    realTimeButtonSubtitle: {
+        fontSize: FontSize.sm,
+        color: 'rgba(255,255,255,0.8)',
+        marginTop: 2,
+    },
+    orText: {
+        fontSize: FontSize.sm,
+        color: Colors.muted,
+        textAlign: 'center',
+        marginBottom: Spacing.lg,
     },
     activityGrid: {
         flexDirection: 'row',

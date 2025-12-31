@@ -52,6 +52,10 @@ export const AddEntryBottomSheet = forwardRef<AddEntryBottomSheetRef, AddEntryBo
             []
         );
 
+        const handleDismiss = useCallback(() => {
+            bottomSheetRef.current?.close();
+        }, []);
+
         return (
             <BottomSheet
                 ref={bottomSheetRef}
@@ -65,7 +69,7 @@ export const AddEntryBottomSheet = forwardRef<AddEntryBottomSheetRef, AddEntryBo
             >
                 <BottomSheetView style={styles.contentContainer}>
                     <Text style={styles.title}>Nouvelle entrée</Text>
-                    <AddEntryForm key={formKey} onSuccess={handleSuccess} />
+                    <AddEntryForm key={formKey} onSuccess={handleSuccess} onDismiss={handleDismiss} />
                 </BottomSheetView>
             </BottomSheet>
         );
