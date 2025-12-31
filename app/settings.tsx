@@ -12,15 +12,14 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Clipboard from 'expo-clipboard';
 import { 
   GlassCard, 
   SectionHeader, 
   Button,
   InputField,
+  ExportModal,
 } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
-import { generateWeeklyExport, exportToJSON, getWeekDisplayRange } from '../src/utils/export';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
@@ -37,6 +36,7 @@ export default function SettingsScreen() {
   const { recalculateFromScratch } = useGamificationStore();
 
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
+  const [exportModalVisible, setExportModalVisible] = useState(false);
   const streak = getStreak();
 
   // Sauvegarder l'objectif hebdo
@@ -50,18 +50,10 @@ export default function SettingsScreen() {
     Alert.alert('Sauvegardé !', `Objectif hebdo: ${goal} séances`);
   }, [weeklyGoalInput, updateWeeklyGoal]);
 
-  // Export JSON
-  const handleExportJSON = useCallback(async () => {
-    const exportData = generateWeeklyExport(entries, streak);
-    const json = exportToJSON(exportData);
-    
-    await Clipboard.setStringAsync(json);
-    Alert.alert(
-      'Export copié ! 📋',
-      `Semaine du ${getWeekDisplayRange()}\n\n${exportData.stats.totalWorkouts} séances, ${exportData.entries.meals.length} repas, ${exportData.entries.measures.length} mesures`,
-      [{ text: 'OK' }]
-    );
-  }, [entries, streak]);
+  // Export JSON - Ouvre le modal
+  const handleExportJSON = useCallback(() => {
+    setExportModalVisible(true);
+  }, []);
 
   // Reset
   const handleReset = useCallback(() => {
@@ -141,18 +133,13 @@ export default function SettingsScreen() {
 
         {/* EXPORT */}
         <GlassCard style={styles.section}>
-          <SectionHeader title="Export JSON hebdomadaire" />
+          <SectionHeader title="Export JSON" />
           <Text style={styles.description}>
-            Exporte les données de la semaine courante ({getWeekDisplayRange()}) au format JSON.
+            Exporte tes données au format JSON. Choisis la période et les catégories à exporter.
           </Text>
-          <View style={styles.exportInfo}>
-            <View style={styles.exportStat}>
-              <Text style={styles.exportStatValue}>{entries.length}</Text>
-              <Text style={styles.exportStatLabel}>entrées totales</Text>
-            </View>
-          </View>
+          
           <Button
-            title="📋 Copier JSON de la semaine"
+            title="📋 Exporter les données"
             variant="cta"
             onPress={handleExportJSON}
             style={styles.exportButton}
@@ -269,6 +256,14 @@ export default function SettingsScreen() {
           />
         </GlassCard>
       </ScrollView>
+
+      {/* EXPORT MODAL */}
+      <ExportModal
+        visible={exportModalVisible}
+        onClose={() => setExportModalVisible(false)}
+        entries={entries}
+        streak={streak}
+      />
     </SafeAreaView>
   );
 }
