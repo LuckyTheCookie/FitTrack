@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Activity, ChevronRight, Database } from 'lucide-react-native';
 import { 
   GlassCard, 
   SectionHeader, 
@@ -21,6 +23,7 @@ import {
 } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
+import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
 export default function SettingsScreen() {
@@ -241,6 +244,38 @@ export default function SettingsScreen() {
           </View>
         </GlassCard>
 
+        {/* DEBUG / LABS */}
+        <GlassCard style={[styles.section, styles.debugSection]}>
+          <SectionHeader title="🧪 Labs (Beta)" />
+          <Text style={styles.description}>
+            Fonctionnalités expérimentales en cours de développement.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.debugItem}
+            onPress={() => router.push('/rep-counter')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.debugItemLeft}>
+              <View style={[styles.debugIconContainer, { backgroundColor: 'rgba(74, 222, 128, 0.15)' }]}>
+                <Activity size={20} color="#4ade80" />
+              </View>
+              <View>
+                <Text style={styles.debugItemTitle}>Compteur de reps</Text>
+                <Text style={styles.debugItemDesc}>Compte tes répétitions avec le capteur</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={Colors.muted} />
+          </TouchableOpacity>
+
+          <View style={styles.debugInfo}>
+            <Database size={14} color={Colors.muted2} />
+            <Text style={styles.debugInfoText}>
+              Storage: {storageHelpers.getStorageType()}
+            </Text>
+          </View>
+        </GlassCard>
+
         {/* DANGER ZONE */}
         <GlassCard style={[styles.section, styles.dangerSection]}>
           <SectionHeader title="Zone de danger" />
@@ -412,5 +447,50 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     color: Colors.error,
+  },
+  // Debug Section
+  debugSection: {
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  debugItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.stroke,
+  },
+  debugItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  debugIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  debugItemTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.text,
+  },
+  debugItemDesc: {
+    fontSize: FontSize.xs,
+    color: Colors.muted,
+    marginTop: 2,
+  },
+  debugInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+  },
+  debugInfoText: {
+    fontSize: FontSize.xs,
+    color: Colors.muted2,
   },
 });
