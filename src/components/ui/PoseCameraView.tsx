@@ -1,6 +1,6 @@
 // ============================================================================
-// POSE CAMERA VIEW - Camera with MLKit Pose Detection
-// Uses react-native-vision-camera with vision-camera-pose-detector plugin
+// POSE CAMERA VIEW - Camera with MediaPipe Pose Detection
+// Uses react-native-vision-camera with vision-camera-pose-landmarks-plugin
 // ============================================================================
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -19,15 +19,8 @@ import {
     useFrameProcessor,
     CameraPosition,
 } from 'react-native-vision-camera';
-import { detectPose } from 'vision-camera-pose-detector';
-import { Worklets } from 'react-native-worklets-core';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-    withSequence,
-    withTiming,
-} from 'react-native-reanimated';
+import { usePoseLandmarksPlugin } from 'vision-camera-pose-landmarks-plugin';
+import { useRunOnJS } from 'react-native-worklets-core';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Line } from 'react-native-svg';
 
@@ -35,8 +28,7 @@ import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../const
 import { 
     ExerciseType, 
     PoseLandmarks, 
-    countRepsFromPose, 
-    convertMLKitPose,
+    countRepsFromPose,
     resetExerciseState 
 } from '../../utils/poseDetection';
 
@@ -95,6 +87,9 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     const countRef = useRef(currentCount);
     const exerciseTypeRef = useRef(exerciseType);
 
+    // Get the pose detection plugin
+    const { detectPoseLandmarks } = usePoseLandmarksPlugin();
+
     // Update refs when props change
     useEffect(() => {
         countRef.current = currentCount;
@@ -106,15 +101,8 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     }, [exerciseType]);
 
     // JS callback for pose processing
-    const processPose = Worklets.createRunOnJS((poseData: any, width: number, height: number) => {
-        if (!poseData || !poseData.landmarks) {
-            setCurrentPose(null);
-            onPoseDetected?.(null);
-            return;
-        }
-
+    const processPose = useRunOnJS((landmarks: PoseLandmarks | null, width: number, height: number) => {
         setFrameSize({ width, height });
-        const landmarks = convertMLKitPose(poseData.landmarks);
         setCurrentPose(landmarks);
         onPoseDetected?.(landmarks);
 
@@ -127,18 +115,54 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                 onRepDetected?.(result.count, result.feedback);
             }
         }
-    });
+    }, [onPoseDetected, onRepDetected]);
 
     // Frame processor for pose detection
     const frameProcessor = useFrameProcessor((frame) => {
         'worklet';
         try {
-            const pose = detectPose(frame);
-            processPose(pose, frame.width, frame.height);
+            // The plugin returns an array of Poses (Landmarks[])
+            const poses = detectPoseLandmarks(frame);
+            
+            // Get the first detected pose (if any)
+            const detectedLandmarks = poses && poses.length > 0 ? poses[0] : null;
+            
+            // Convert the landmarks to our format
+            const landmarks: PoseLandmarks | null = detectedLandmarks ? {
+                nose: detectedLandmarks.nose,
+                leftEye: detectedLandmarks.leftEye,
+                rightEye: detectedLandmarks.rightEye,
+                leftEar: detectedLandmarks.leftEar,
+                rightEar: detectedLandmarks.rightEar,
+                leftShoulder: detectedLandmarks.leftShoulder,
+                rightShoulder: detectedLandmarks.rightShoulder,
+                leftElbow: detectedLandmarks.leftElbow,
+                rightElbow: detectedLandmarks.rightElbow,
+                leftWrist: detectedLandmarks.leftWrist,
+                rightWrist: detectedLandmarks.rightWrist,
+                leftHip: detectedLandmarks.leftHip,
+                rightHip: detectedLandmarks.rightHip,
+                leftKnee: detectedLandmarks.leftKnee,
+                rightKnee: detectedLandmarks.rightKnee,
+                leftAnkle: detectedLandmarks.leftAnkle,
+                rightAnkle: detectedLandmarks.rightAnkle,
+                leftPinky: detectedLandmarks.leftPinky,
+                rightPinky: detectedLandmarks.rightPinky,
+                leftIndex: detectedLandmarks.leftIndex,
+                rightIndex: detectedLandmarks.rightIndex,
+                leftThumb: detectedLandmarks.leftThumb,
+                rightThumb: detectedLandmarks.rightThumb,
+                leftHeel: detectedLandmarks.leftHeel,
+                rightHeel: detectedLandmarks.rightHeel,
+                leftFootIndex: detectedLandmarks.leftFootIndex,
+                rightFootIndex: detectedLandmarks.rightFootIndex,
+            } : null;
+            
+            processPose(landmarks, frame.width, frame.height);
         } catch (e) {
             // Silently handle frame processing errors
         }
-    }, [processPose]);
+    }, [detectPoseLandmarks, processPose]);
 
     const handleCameraReady = useCallback(() => {
         console.log('[PoseCamera] Camera ready');

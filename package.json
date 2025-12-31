@@ -41,7 +41,7 @@
     "react-native-svg": "^15.15.1",
     "react-native-vision-camera": "^4.7.3",
     "react-native-worklets-core": "^1.6.2",
-    "vision-camera-pose-detector": "^1.1.0",
+    "vision-camera-pose-landmarks-plugin": "^0.1.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
