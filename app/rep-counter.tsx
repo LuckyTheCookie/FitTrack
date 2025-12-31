@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { router, useFocusEffect } from 'expo-router';
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
 import { Audio } from 'expo-av';
@@ -61,19 +62,50 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/cons
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Messages motivants pour la gamification
-const MOTIVATIONAL_MESSAGES = [
-    { text: 'Continue comme ça!', emoji: '💪' },
-    { text: 'Tu gères!', emoji: '🔥' },
-    { text: 'Excellent!', emoji: '⭐' },
-    { text: 'Incroyable!', emoji: '🚀' },
-    { text: 'Champion!', emoji: '🏆' },
-    { text: 'Bravo!', emoji: '👏' },
-    { text: 'Super forme!', emoji: '⚡' },
-    { text: 'Yeah!', emoji: '🎉' },
-    { text: 'Tu es en feu!', emoji: '🔥' },
-    { text: 'Parfait!', emoji: '✨' },
-];
+// Messages motivants pour la gamification par exercice
+const MOTIVATIONAL_MESSAGES: Record<ExerciseType, Array<{ text: string; emoji: string }>> = {
+    pushups: [
+        { text: 'Continue comme ça!', emoji: '💪' },
+        { text: 'Pecs en feu!', emoji: '🔥' },
+        { text: 'Excellent!', emoji: '⭐' },
+        { text: 'Force!', emoji: '💥' },
+        { text: 'Champion!', emoji: '🏆' },
+        { text: 'Bravo!', emoji: '👏' },
+        { text: 'Super forme!', emoji: '⚡' },
+        { text: 'Solide!', emoji: '🦾' },
+        { text: 'Puissant!', emoji: '💪' },
+    ],
+    squats: [
+        { text: 'Jambes en acier!', emoji: '🦵' },
+        { text: 'Tu gères!', emoji: '🔥' },
+        { text: 'Excellent squat!', emoji: '⭐' },
+        { text: 'Puissance!', emoji: '💥' },
+        { text: 'Incroyable!', emoji: '🚀' },
+        { text: 'Continue!', emoji: '💪' },
+        { text: 'Solides cuisses!', emoji: '⚡' },
+        { text: 'Top!', emoji: '🏆' },
+    ],
+    situps: [
+        { text: 'Abdos en feu!', emoji: '🔥' },
+        { text: 'Tablette de chocolat!', emoji: '💪' },
+        { text: 'Continue!', emoji: '⚡' },
+        { text: 'Excellent!', emoji: '⭐' },
+        { text: 'Core solide!', emoji: '💥' },
+        { text: 'Bravo!', emoji: '👏' },
+        { text: 'Force!', emoji: '🚀' },
+        { text: 'Tu gères!', emoji: '🏆' },
+    ],
+    jumping_jacks: [
+        { text: 'Cardio à fond!', emoji: '❤️' },
+        { text: 'Continue!', emoji: '⚡' },
+        { text: 'Excellent!', emoji: '⭐' },
+        { text: 'Énergie!', emoji: '🔋' },
+        { text: 'Tu es en feu!', emoji: '🔥' },
+        { text: 'Dynamique!', emoji: '💫' },
+        { text: 'Super!', emoji: '🎉' },
+        { text: 'Explosif!', emoji: '💥' },
+    ],
+};
 
 // Types d'exercices supportés
 type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks';
@@ -442,8 +474,11 @@ export default function RepCounterScreen() {
     const showMotivationalMessage = useCallback((feedback?: string) => {
         if (feedback) {
             setAiFeedback(feedback);
-        } else {
-            const randomMessage = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+        }
+        // Toujours afficher un message motivant adapté à l'exercice
+        if (selectedExercise) {
+            const messages = MOTIVATIONAL_MESSAGES[selectedExercise.id];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
             setMotivationalMessage(randomMessage);
         }
         messageOpacity.value = withSequence(
@@ -455,7 +490,7 @@ export default function RepCounterScreen() {
             setMotivationalMessage(null);
             setAiFeedback(null);
         }, 2000);
-    }, []);
+    }, [selectedExercise]);
 
     const messageStyle = useAnimatedStyle(() => ({
         opacity: messageOpacity.value,
@@ -924,13 +959,18 @@ export default function RepCounterScreen() {
                             {/* Motivational Message */}
                             {motivationalMessage && (
                                 <Animated.View style={[styles.motivationalContainer, messageStyle]}>
-                                    <Text style={styles.motivationalEmoji}>{motivationalMessage.emoji}</Text>
-                                    <Text style={styles.motivationalText}>{motivationalMessage.text}</Text>
-                                    {aiFeedback && (
-                                        <Text style={[styles.aiFeedbackText, { color: selectedExercise.color }]}>
-                                            {aiFeedback}
-                                        </Text>
-                                    )}
+                                    <BlurView intensity={20} tint="dark" style={styles.motivationalBlur} />
+                                    <View style={styles.motivationalContent}>
+                                        <View style={styles.motivationalEmojiCircle}>
+                                            <Text style={styles.motivationalEmoji}>{motivationalMessage.emoji}</Text>
+                                        </View>
+                                        <Text style={styles.motivationalText}>{motivationalMessage.text}</Text>
+                                        {aiFeedback && (
+                                            <Text style={[styles.aiFeedbackText, { color: selectedExercise.color }]}>
+                                                {aiFeedback}
+                                            </Text>
+                                        )}
+                                    </View>
                                 </Animated.View>
                             )}
                         </Animated.View>
@@ -1525,24 +1565,62 @@ const styles = StyleSheet.create({
     // Motivational messages
     motivationalContainer: {
         alignItems: 'center',
-        marginTop: Spacing.md,
+        marginTop: Spacing.lg,
+        marginHorizontal: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+        shadowColor: Colors.cta,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 8,
+        minHeight: 110,
+    },
+    motivationalBlur: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    motivationalContent: {
+        alignItems: 'center',
+        paddingVertical: Spacing.lg,
         paddingHorizontal: Spacing.xl,
+        width: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)', // Fallback pour Android
+    },
+    motivationalEmojiCircle: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
     },
     motivationalEmoji: {
         fontSize: 32,
-        marginBottom: Spacing.xs,
     },
     motivationalText: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
+        fontSize: FontSize.xxl,
+        fontWeight: FontWeight.extrabold,
         color: Colors.text,
         textAlign: 'center',
+        letterSpacing: 0.5,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
     },
     aiFeedbackText: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.medium,
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
         textAlign: 'center',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.sm,
+        opacity: 0.9,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
 
     // Camera hint
