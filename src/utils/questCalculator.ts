@@ -30,6 +30,10 @@ export function calculateQuestTotals(entries: Entry[]): QuestTotals {
                 if ((entry as HomeWorkoutEntry).totalReps) {
                     exercises += (entry as HomeWorkoutEntry).totalReps!;
                 }
+                // Ajouter la durée si disponible
+                if ((entry as HomeWorkoutEntry).durationMinutes) {
+                    duration += (entry as HomeWorkoutEntry).durationMinutes!;
+                }
                 break;
             case 'run':
                 workouts += 1;

@@ -27,6 +27,7 @@ export interface HomeWorkoutEntry extends BaseEntry {
   exercises: string; // Texte libre: "Pompes: 3x10\nSquats: 3x20"
   absBlock?: string; // Bloc abdos optionnel
   totalReps?: number; // Total des répétitions pour le tracking des quêtes
+  durationMinutes?: number; // Durée de la séance en minutes
 }
 
 // Course

@@ -91,6 +91,7 @@ export function AddEntryForm({
 
     // Home workout - nouveau format
     const [homeName, setHomeName] = useState('');
+    const [homeDuration, setHomeDuration] = useState('');
     const [exercises, setExercises] = useState<Exercise[]>([
         { id: nanoid(), name: '', reps: '', sets: '3' }
     ]);
@@ -193,11 +194,13 @@ export function AddEntryForm({
                     }
                     const exercisesText = formatExercisesToText(validExercises);
                     const homeTotalReps = validExercises.reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
+                    const homeDurationMinutes = homeDuration ? parseInt(homeDuration, 10) : undefined;
                     addHomeWorkout({
                         name: homeName.trim() || undefined,
                         exercises: exercisesText,
                         absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
                         totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
+                        durationMinutes: homeDurationMinutes && homeDurationMinutes > 0 ? homeDurationMinutes : undefined,
                     });
                     break;
 
@@ -285,6 +288,7 @@ export function AddEntryForm({
 
             // Reset form
             setHomeName('');
+            setHomeDuration('');
             setExercises([{ id: nanoid(), name: '', reps: '', sets: '3' }]);
             setWithAbsBlock(false);
             setRunKm('');
@@ -391,12 +395,23 @@ export function AddEntryForm({
                 {/* HOME WORKOUT - Nouveau format */}
                 {activeTab === 'home' && (
                     <View>
-                        <InputField
-                            label="Nom de la séance (optionnel)"
-                            placeholder="Séance chambre"
-                            value={homeName}
-                            onChangeText={setHomeName}
-                        />
+                        <View style={styles.rowInputs}>
+                            <InputField
+                                label="Nom de la séance (optionnel)"
+                                placeholder="Séance chambre"
+                                value={homeName}
+                                onChangeText={setHomeName}
+                                containerStyle={styles.flexInput}
+                            />
+                            <InputField
+                                label="Durée (min)"
+                                placeholder="30"
+                                value={homeDuration}
+                                onChangeText={setHomeDuration}
+                                keyboardType="number-pad"
+                                containerStyle={styles.durationInput}
+                            />
+                        </View>
 
                         <Text style={styles.sectionLabel}>Exercices</Text>
                         {exercises.map((ex, index) => (
@@ -690,6 +705,17 @@ const styles = StyleSheet.create({
         color: Colors.muted,
         marginBottom: 8,
         marginTop: Spacing.md,
+    },
+    rowInputs: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        alignItems: 'flex-end',
+    },
+    flexInput: {
+        flex: 1,
+    },
+    durationInput: {
+        width: 80,
     },
     exerciseRow: {
         flexDirection: 'row',

@@ -653,20 +653,29 @@ export default function RepCounterScreen() {
 
         const exerciseName = selectedExercise.name;
         const exerciseText = `${exerciseName}: ${repCount} reps`;
+        const durationMinutes = Math.floor(elapsedTime / 60);
 
         addHomeWorkout({
             name: `Track ${exerciseName}`,
             exercises: exerciseText,
             totalReps: repCount,
+            durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
         });
-
-        // Recalculate quests after adding workout
-        const totals = calculateQuestTotals(entries);
-        recalculateAllQuests(totals);
 
         // Marquer comme sauvegardé pour reset au retour
         setWorkoutSaved(true);
-    }, [selectedExercise, repCount, addHomeWorkout, entries, recalculateAllQuests]);
+    }, [selectedExercise, repCount, elapsedTime, addHomeWorkout]);
+
+    // Recalculer les quêtes après sauvegarde (quand workoutSaved devient true)
+    useEffect(() => {
+        if (workoutSaved) {
+            // Attendre un tick pour que le store soit à jour
+            setTimeout(() => {
+                const totals = calculateQuestTotals(entries);
+                recalculateAllQuests(totals);
+            }, 100);
+        }
+    }, [workoutSaved, entries, recalculateAllQuests]);
 
     const finishWorkout = useCallback(() => {
         stopTracking();
