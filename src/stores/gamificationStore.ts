@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { nanoid } from 'nanoid/non-secure';
 import { zustandStorage } from '../storage';
+import { getWeek, getYear, startOfWeek } from 'date-fns';
 
 // Types
 export interface Quest {
@@ -13,6 +14,7 @@ export interface Quest {
     rewardXp: number;
     completed: boolean;
     type: 'exercises' | 'workouts' | 'distance' | 'duration'; // Type de quête
+    weekId?: string; // Identifiant de la semaine (YYYY-WW)
 }
 
 export interface GamificationState {
@@ -20,6 +22,7 @@ export interface GamificationState {
     level: number;
     rank: string;
     quests: Quest[];
+    lastQuestWeek?: string; // Dernière semaine où les quêtes ont été générées
 
     // History
     history: GamificationLog[];
@@ -33,6 +36,7 @@ export interface GamificationState {
     recalculateAllQuests: (totals: { exercises: number; workouts: number; duration: number; distance: number }) => void;
     recalculateFromScratch: (totals: { exercises: number; workouts: number; duration: number; distance: number; totalWorkouts: number }) => void;
     generateWeeklyQuests: () => void;
+    checkAndRefreshQuests: () => void; // Vérifie si on doit régénérer les quêtes
 }
 
 export interface GamificationLog {
@@ -64,6 +68,7 @@ export const useGamificationStore = create<GamificationState>()(
             rank: 'Novice',
             quests: [],
             history: [],
+            lastQuestWeek: undefined,
 
             addXp: (amount, reason) => {
                 const { xp, level, history } = get();
@@ -295,38 +300,84 @@ export const useGamificationStore = create<GamificationState>()(
             },
 
             generateWeeklyQuests: () => {
-                // Exemple simple de génération
+                const now = new Date();
+                const weekNum = getWeek(now, { weekStartsOn: 1 });
+                const yearNum = getYear(now);
+                const weekId = `${yearNum}-W${weekNum.toString().padStart(2, '0')}`;
+                
+                // Pool de quêtes variées
+                const questPool = {
+                    exercises: [
+                        { description: 'Faire 50 exercices', target: 50, rewardXp: 50 },
+                        { description: 'Faire 80 exercices', target: 80, rewardXp: 75 },
+                        { description: 'Faire 100 exercices', target: 100, rewardXp: 100 },
+                        { description: 'Faire 30 exercices', target: 30, rewardXp: 35 },
+                        { description: 'Atteindre 120 exercices', target: 120, rewardXp: 125 },
+                    ],
+                    workouts: [
+                        { description: 'Compléter 3 séances', target: 3, rewardXp: 100 },
+                        { description: 'Compléter 4 séances', target: 4, rewardXp: 125 },
+                        { description: 'Compléter 5 séances', target: 5, rewardXp: 150 },
+                        { description: '2 séances cette semaine', target: 2, rewardXp: 75 },
+                        { description: 'Atteindre 6 séances', target: 6, rewardXp: 175 },
+                    ],
+                    duration: [
+                        { description: '60 minutes de sport', target: 60, rewardXp: 75 },
+                        { description: '90 minutes de sport', target: 90, rewardXp: 100 },
+                        { description: '45 minutes de sport', target: 45, rewardXp: 60 },
+                        { description: '120 minutes de sport', target: 120, rewardXp: 130 },
+                        { description: '30 minutes de sport', target: 30, rewardXp: 40 },
+                    ],
+                    distance: [
+                        { description: 'Courir 5 km', target: 5, rewardXp: 80 },
+                        { description: 'Courir 10 km', target: 10, rewardXp: 120 },
+                        { description: 'Courir 3 km', target: 3, rewardXp: 50 },
+                        { description: 'Courir 7 km', target: 7, rewardXp: 100 },
+                        { description: 'Parcourir 15 km', target: 15, rewardXp: 150 },
+                    ],
+                };
+
+                // Sélection basée sur le numéro de semaine pour la variété
+                const seed = weekNum + yearNum;
+                const selectQuest = (pool: typeof questPool.exercises, type: Quest['type']) => {
+                    const index = (seed + type.length) % pool.length;
+                    const quest = pool[index];
+                    return {
+                        id: `q-${type}-${weekId}`,
+                        type,
+                        ...quest,
+                        current: 0,
+                        completed: false,
+                        weekId,
+                    };
+                };
+
                 const newQuests: Quest[] = [
-                    {
-                        id: 'q1',
-                        type: 'exercises',
-                        description: 'Faire 50 exercices',
-                        target: 50,
-                        current: 0,
-                        rewardXp: 50,
-                        completed: false
-                    },
-                    {
-                        id: 'q2',
-                        type: 'workouts',
-                        description: 'Compléter 3 séances',
-                        target: 3,
-                        current: 0,
-                        rewardXp: 100,
-                        completed: false
-                    },
-                    {
-                        id: 'q3',
-                        type: 'duration',
-                        description: '60 minutes de sport',
-                        target: 60,
-                        current: 0,
-                        rewardXp: 75,
-                        completed: false
-                    }
+                    selectQuest(questPool.exercises, 'exercises'),
+                    selectQuest(questPool.workouts, 'workouts'),
+                    selectQuest(questPool.duration, 'duration'),
                 ];
-                set({ quests: newQuests });
-            }
+
+                // Ajouter une quête de distance 50% du temps
+                if (seed % 2 === 0) {
+                    newQuests.push(selectQuest(questPool.distance, 'distance'));
+                }
+
+                set({ quests: newQuests, lastQuestWeek: weekId });
+            },
+
+            checkAndRefreshQuests: () => {
+                const { lastQuestWeek, generateWeeklyQuests } = get();
+                const now = new Date();
+                const weekNum = getWeek(now, { weekStartsOn: 1 });
+                const yearNum = getYear(now);
+                const currentWeekId = `${yearNum}-W${weekNum.toString().padStart(2, '0')}`;
+
+                // Si la semaine a changé, régénérer les quêtes
+                if (lastQuestWeek !== currentWeekId) {
+                    generateWeeklyQuests();
+                }
+            },
         }),
         {
             name: 'fittrack-gamification-store',

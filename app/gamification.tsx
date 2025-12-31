@@ -190,7 +190,7 @@ const HistoryItem = ({ item, index, isLast }: { item: any; index: number; isLast
 };
 
 export default function GamificationScreen() {
-    const { xp, level, rank, quests, history, generateWeeklyQuests } = useGamificationStore();
+    const { xp, level, rank, quests, history, checkAndRefreshQuests } = useGamificationStore();
     const scale = useSharedValue(1);
     const glow = useSharedValue(0.2);
 
@@ -214,9 +214,8 @@ export default function GamificationScreen() {
             true
         );
 
-        if (quests.length === 0) {
-            generateWeeklyQuests();
-        }
+        // Vérifie et rafraîchit les quêtes si nécessaire (nouvelle semaine)
+        checkAndRefreshQuests();
     }, []);
 
     const animatedStyle = useAnimatedStyle(() => ({
