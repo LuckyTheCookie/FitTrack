@@ -12,11 +12,13 @@ import {
     Dimensions,
     Vibration,
     Alert,
+    Modal,
+    BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useNavigation } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
@@ -307,7 +309,6 @@ const PositionScreen = ({
 export default function RepCounterScreen() {
     const { settings, addHomeWorkout, entries } = useAppStore();
     const { recalculateAllQuests } = useGamificationStore();
-    const navigation = useNavigation();
 
     const [step, setStep] = useState<TutorialStep>('select');
     const [selectedExercise, setSelectedExercise] = useState<ExerciseConfig | null>(null);
@@ -362,12 +363,69 @@ export default function RepCounterScreen() {
         };
     }, []);
 
-    // Hide tab bar when tracking
-    useEffect(() => {
-        navigation.setOptions({
-            tabBarStyle: step === 'counting' ? { display: 'none' } : undefined,
-        });
-    }, [step, navigation]);
+    // State pour le modal de confirmation de sortie
+    const [showExitModal, setShowExitModal] = useState(false);
+    const [workoutSaved, setWorkoutSaved] = useState(false);
+
+    // Gérer le bouton retour Android et reset quand on arrive sur l'écran
+    useFocusEffect(
+        useCallback(() => {
+            // Reset au focus si le workout est terminé et sauvegardé
+            if (workoutSaved) {
+                setStep('select');
+                setSelectedExercise(null);
+                setRepCount(0);
+                setElapsedTime(0);
+                setIsTracking(false);
+                setWorkoutSaved(false);
+            }
+
+            // Gérer le bouton retour Android
+            const onBackPress = () => {
+                if (step === 'counting' || step === 'position') {
+                    setShowExitModal(true);
+                    return true; // Empêcher le retour par défaut
+                }
+                return false; // Laisser le comportement par défaut
+            };
+
+            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+            return () => subscription.remove();
+        }, [step, workoutSaved])
+    );
+
+    // Fonction pour quitter avec confirmation
+    const handleExitConfirm = useCallback(() => {
+        // Arrêter le tracking manuellement
+        setIsTracking(false);
+        if (subscriptionRef.current) {
+            subscriptionRef.current.remove();
+            subscriptionRef.current = null;
+        }
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+        // Reset de l'état
+        setShowExitModal(false);
+        setStep('select');
+        setSelectedExercise(null);
+        setRepCount(0);
+        setElapsedTime(0);
+    }, []);
+
+    const handleExitCancel = useCallback(() => {
+        setShowExitModal(false);
+    }, []);
+
+    // Gérer le bouton retour (header)
+    const handleBackPress = useCallback(() => {
+        if (step === 'counting' || step === 'position') {
+            setShowExitModal(true);
+        } else {
+            router.back();
+        }
+    }, [step]);
 
     // Play sound
     const playRepSound = useCallback(async () => {
@@ -570,6 +628,9 @@ export default function RepCounterScreen() {
         // Recalculate quests after adding workout
         const totals = calculateQuestTotals(entries);
         recalculateAllQuests(totals);
+
+        // Marquer comme sauvegardé pour reset au retour
+        setWorkoutSaved(true);
     }, [selectedExercise, repCount, addHomeWorkout, entries, recalculateAllQuests]);
 
     const finishWorkout = useCallback(() => {
@@ -640,7 +701,7 @@ export default function RepCounterScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
                         <ArrowLeft size={24} color={Colors.text} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>
@@ -944,6 +1005,37 @@ export default function RepCounterScreen() {
                     )}
                 </View>
             </SafeAreaView>
+
+            {/* Modal de confirmation de sortie */}
+            <Modal
+                visible={showExitModal}
+                transparent
+                animationType="fade"
+                onRequestClose={handleExitCancel}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Quitter le tracking ?</Text>
+                        <Text style={styles.modalSubtitle}>
+                            Ta progression ne sera pas sauvegardée.
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                onPress={handleExitCancel}
+                                style={styles.modalButtonSecondary}
+                            >
+                                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleExitConfirm}
+                                style={styles.modalButtonPrimary}
+                            >
+                                <Text style={styles.modalButtonPrimaryText}>Quitter</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -1125,11 +1217,11 @@ const styles = StyleSheet.create({
     // Counting Screen
     countingContainer: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
+        paddingTop: Spacing.xl,
     },
     countingContent: {
-        flex: 1,
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
@@ -1469,5 +1561,64 @@ const styles = StyleSheet.create({
         fontSize: FontSize.xs,
         color: Colors.muted,
         textAlign: 'center',
+    },
+
+    // Exit Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.lg,
+    },
+    modalContent: {
+        backgroundColor: Colors.card,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        width: '100%',
+        maxWidth: 340,
+        borderWidth: 1,
+        borderColor: Colors.stroke,
+    },
+    modalTitle: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        textAlign: 'center',
+        marginBottom: Spacing.sm,
+    },
+    modalSubtitle: {
+        fontSize: FontSize.md,
+        color: Colors.muted,
+        textAlign: 'center',
+        marginBottom: Spacing.xl,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+    },
+    modalButtonSecondary: {
+        flex: 1,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: Colors.overlay,
+        alignItems: 'center',
+    },
+    modalButtonSecondaryText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
+        color: Colors.text,
+    },
+    modalButtonPrimary: {
+        flex: 1,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: '#ef4444',
+        alignItems: 'center',
+    },
+    modalButtonPrimaryText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
+        color: '#fff',
     },
 });
