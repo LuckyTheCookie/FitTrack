@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import React, { useEffect } from 'react';
 import { useSettings } from '../src/stores';
 import { View, StyleSheet, Pressable } from 'react-native';
@@ -90,6 +90,12 @@ const TabButton = ({ route, descriptor, isFocused, navigation, config }: any) =>
 
 function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
     const insets = useSafeAreaInsets();
+    const pathname = usePathname();
+
+    // Cacher la tab bar sur l'écran rep-counter
+    if (pathname === '/rep-counter') {
+        return null;
+    }
 
     // Ne montrer que les onglets visibles
     const visibleRoutes = state.routes.filter((route: any) => 
