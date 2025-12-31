@@ -236,23 +236,25 @@ export const countRepsFromPose = (
 
         case 'jumping_jacks': {
             // Jumping jacks: Track arm position relative to body
+            // On utilise les angles des bras plutôt que les positions absolues
             const leftShoulder = getLandmark(landmarks, KnownPoseLandmarks.leftShoulder);
             const rightShoulder = getLandmark(landmarks, KnownPoseLandmarks.rightShoulder);
             const leftWrist = getLandmark(landmarks, KnownPoseLandmarks.leftWrist);
             const rightWrist = getLandmark(landmarks, KnownPoseLandmarks.rightWrist);
             const leftElbow = getLandmark(landmarks, KnownPoseLandmarks.leftElbow);
             const rightElbow = getLandmark(landmarks, KnownPoseLandmarks.rightElbow);
+            const leftHip = getLandmark(landmarks, KnownPoseLandmarks.leftHip);
+            const rightHip = getLandmark(landmarks, KnownPoseLandmarks.rightHip);
 
-            if (leftShoulder && rightShoulder && leftWrist && rightWrist) {
-                // Calculate horizontal arm spread for better detection
-                const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
-                const wristSpread = Math.abs(rightWrist.x - leftWrist.x);
-                const armsSpreadWide = wristSpread > shoulderWidth * 1.5;
+            if (leftShoulder && rightShoulder && leftWrist && rightWrist && leftHip && rightHip) {
+                // Calculer l'angle des bras par rapport au corps (hip-shoulder-wrist)
+                const leftArmAngle = calculateAngle(leftHip, leftShoulder, leftWrist);
+                const rightArmAngle = calculateAngle(rightHip, rightShoulder, rightWrist);
                 
-                // Arms up: wrists above or near shoulder level AND spread wide
-                const armsUp = (leftWrist.y < leftShoulder.y + 0.1 && rightWrist.y < rightShoulder.y + 0.1) && armsSpreadWide;
-                // Arms down: wrists below shoulders and close to body
-                const armsDown = leftWrist.y > leftShoulder.y + 0.1 && rightWrist.y > rightShoulder.y + 0.1;
+                // Arms up: angle > 120 (bras levés au-dessus de la tête ou sur les côtés)
+                const armsUp = leftArmAngle > 100 && rightArmAngle > 100;
+                // Arms down: angle < 60 (bras le long du corps)
+                const armsDown = leftArmAngle < 70 && rightArmAngle < 70;
 
                 if (armsUp) {
                     if (state.stage === 'down') {
