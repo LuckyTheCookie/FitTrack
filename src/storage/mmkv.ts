@@ -5,24 +5,33 @@
 
 import { StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MMKV } from 'react-native-mmkv';
 
-// Tentative d'import MMKV de manière sécurisée
-let mmkvInstance: any = null;
+// Tentative d'initialisation MMKV
+let mmkvInstance: MMKV | null = null;
 let useMMKV = false;
 
-try {
-  const { MMKV } = require('react-native-mmkv');
-  if (MMKV) {
+// Initialisation différée pour éviter les problèmes de chargement
+function initializeMMKV(): boolean {
+  if (mmkvInstance) return true;
+  
+  try {
     mmkvInstance = new MMKV({
       id: 'fittrack-storage',
     });
     useMMKV = true;
-    console.log('[Storage] MMKV initialized successfully');
+    console.log('[Storage] ✅ MMKV initialized successfully');
+    return true;
+  } catch (error) {
+    console.log('[Storage] ⚠️ MMKV initialization failed:', error);
+    console.log('[Storage] Falling back to AsyncStorage');
+    useMMKV = false;
+    return false;
   }
-} catch (error) {
-  console.log('[Storage] MMKV not available, falling back to AsyncStorage');
-  useMMKV = false;
 }
+
+// Essayer d'initialiser au démarrage
+initializeMMKV();
 
 // Adapter pour Zustand persist - utilise MMKV si disponible, sinon AsyncStorage
 export const zustandStorage: StateStorage = {
@@ -86,4 +95,5 @@ export const storageHelpers = {
     return AsyncStorage.getAllKeys();
   },
   isUsingMMKV: () => useMMKV,
+  getStorageType: () => useMMKV ? 'MMKV' : 'AsyncStorage',
 };
