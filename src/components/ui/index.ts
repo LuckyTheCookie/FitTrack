@@ -16,3 +16,4 @@ export { EmptyState } from './EmptyState';
 export { BadgeWithProgress } from './BadgeWithProgress';
 export { EntryDetailModal } from './EntryDetailModal';
 export { TabBar } from './TabBar';
+export { ExportModal } from './ExportModal';
