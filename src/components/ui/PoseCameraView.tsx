@@ -187,6 +187,17 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
 
         const { width, height } = cameraLayout;
 
+        // Transform landmark coordinates based on camera orientation
+        // MediaPipe returns normalized coords [0-1], we need to map to view coords
+        // For front camera in portrait mode, we may need to swap/mirror coordinates
+        const transformPoint = (landmark: { x: number; y: number }) => {
+            // The landmarks from MediaPipe are already in the correct orientation
+            // Just mirror X for front camera (selfie mode)
+            const x = facing === 'front' ? width * (1 - landmark.x) : width * landmark.x;
+            const y = height * landmark.y;
+            return { x, y };
+        };
+
         return (
             <Svg style={StyleSheet.absoluteFill} viewBox={`0 0 ${width} ${height}`}>
                 {/* Draw skeleton lines */}
@@ -197,17 +208,16 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                     if (!start || !end) return null;
                     if ((start.visibility ?? 1) < 0.5 || (end.visibility ?? 1) < 0.5) return null;
 
-                    // Mirror X for front camera
-                    const startX = facing === 'front' ? width * (1 - start.x) : width * start.x;
-                    const endX = facing === 'front' ? width * (1 - end.x) : width * end.x;
+                    const startPoint = transformPoint(start);
+                    const endPoint = transformPoint(end);
 
                     return (
                         <Line
                             key={`line-${index}`}
-                            x1={startX}
-                            y1={height * start.y}
-                            x2={endX}
-                            y2={height * end.y}
+                            x1={startPoint.x}
+                            y1={startPoint.y}
+                            x2={endPoint.x}
+                            y2={endPoint.y}
                             stroke={Colors.cta}
                             strokeWidth={3}
                             strokeLinecap="round"
@@ -219,16 +229,15 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                 {currentPose.map((landmark, index) => {
                     if (!landmark || (landmark.visibility ?? 1) < 0.5) return null;
 
-                    // Mirror X for front camera
-                    const x = facing === 'front' ? width * (1 - landmark.x) : width * landmark.x;
+                    const point = transformPoint(landmark);
 
                     return (
                         <Circle
                             key={`point-${index}`}
-                            cx={x}
-                            cy={height * landmark.y}
-                            r={6}
-                            fill={Colors.teal}
+                            cx={point.x}
+                            cy={point.y}
+                            r={5}
+                            fill={Colors.cta}
                             stroke="#fff"
                             strokeWidth={2}
                         />

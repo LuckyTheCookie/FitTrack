@@ -26,10 +26,10 @@ export interface RepState {
 }
 
 // Minimum confidence threshold for considering a landmark valid
-const VISIBILITY_THRESHOLD = 0.5;
+const VISIBILITY_THRESHOLD = 0.3; // Lowered for better detection
 
 // Cooldown between reps in milliseconds
-const REP_COOLDOWN = 500;
+const REP_COOLDOWN = 400; // Faster response
 
 // Internal state tracking per exercise
 const exerciseStates: Record<string, RepState> = {};
@@ -147,6 +147,14 @@ export const countRepsFromPose = (
         return { count: newCount, stage: state.stage };
     }
 
+    // Motivational feedbacks for variety
+    const pushupFeedbacks = ['Bien joué! 💪', 'Continue! 🔥', 'Parfait! ⚡', 'Excellent! 🎯', 'Tu gères! 💥'];
+    const squatFeedbacks = ['Squat parfait! 🦵', 'Belle forme! 💪', 'Continue! 🔥', 'Top! ⭐', 'Bravo! 🎉'];
+    const situpFeedbacks = ['Super! 🔥', 'Les abdos brûlent! 💪', 'Continue! ⚡', 'Excellent! 🎯', 'Tu gères! 💥'];
+    const jumpingFeedbacks = ['Jumping Jack! ⭐', 'Excellent! 🌟', 'Continue! 💫', 'Super! ✨', 'Yeah! 🎉'];
+
+    const getRandomFeedback = (feedbacks: string[]) => feedbacks[Math.floor(Math.random() * feedbacks.length)];
+
     switch (exerciseType) {
         case 'pushups': {
             // Pushups: Track elbow angle (shoulder - elbow - wrist)
@@ -157,17 +165,17 @@ export const countRepsFromPose = (
             );
 
             if (elbowAngle > 0) {
-                // Arms extended (up position): angle > 150
-                if (elbowAngle > 150) {
+                // Arms extended (up position): angle > 140 (relaxed from 150)
+                if (elbowAngle > 140) {
                     if (state.stage === 'down') {
                         newCount++;
-                        feedback = 'Bien joué! 💪';
+                        feedback = getRandomFeedback(pushupFeedbacks);
                         state.lastUpdate = now;
                     }
                     state.stage = 'up';
                 }
-                // Arms bent (down position): angle < 90
-                else if (elbowAngle < 90) {
+                // Arms bent (down position): angle < 100 (relaxed from 90)
+                else if (elbowAngle < 100) {
                     state.stage = 'down';
                 }
             }
@@ -183,17 +191,17 @@ export const countRepsFromPose = (
             );
 
             if (kneeAngle > 0) {
-                // Standing (up position): angle > 160
-                if (kneeAngle > 160) {
+                // Standing (up position): angle > 150 (relaxed from 160)
+                if (kneeAngle > 150) {
                     if (state.stage === 'down') {
                         newCount++;
-                        feedback = 'Squat parfait! 🦵';
+                        feedback = getRandomFeedback(squatFeedbacks);
                         state.lastUpdate = now;
                     }
                     state.stage = 'up';
                 }
-                // Deep squat (down position): angle < 100
-                else if (kneeAngle < 100) {
+                // Deep squat (down position): angle < 120 (relaxed from 100)
+                else if (kneeAngle < 120) {
                     state.stage = 'down';
                 }
             }
@@ -209,17 +217,17 @@ export const countRepsFromPose = (
             );
 
             if (hipAngle > 0) {
-                // Up position (sitting up): angle < 90
-                if (hipAngle < 90) {
+                // Up position (sitting up): angle < 100 (relaxed from 90)
+                if (hipAngle < 100) {
                     if (state.stage === 'down') {
                         newCount++;
-                        feedback = 'Super! 🔥';
+                        feedback = getRandomFeedback(situpFeedbacks);
                         state.lastUpdate = now;
                     }
                     state.stage = 'up';
                 }
-                // Lying down position: angle > 140
-                else if (hipAngle > 140) {
+                // Lying down position: angle > 130 (relaxed from 140)
+                else if (hipAngle > 130) {
                     state.stage = 'down';
                 }
             }
@@ -232,17 +240,24 @@ export const countRepsFromPose = (
             const rightShoulder = getLandmark(landmarks, KnownPoseLandmarks.rightShoulder);
             const leftWrist = getLandmark(landmarks, KnownPoseLandmarks.leftWrist);
             const rightWrist = getLandmark(landmarks, KnownPoseLandmarks.rightWrist);
+            const leftElbow = getLandmark(landmarks, KnownPoseLandmarks.leftElbow);
+            const rightElbow = getLandmark(landmarks, KnownPoseLandmarks.rightElbow);
 
             if (leftShoulder && rightShoulder && leftWrist && rightWrist) {
-                // Arms up: wrists above shoulders
-                const armsUp = leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y;
-                // Arms down: wrists below shoulders and relatively close to body
-                const armsDown = leftWrist.y > leftShoulder.y && rightWrist.y > rightShoulder.y;
+                // Calculate horizontal arm spread for better detection
+                const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+                const wristSpread = Math.abs(rightWrist.x - leftWrist.x);
+                const armsSpreadWide = wristSpread > shoulderWidth * 1.5;
+                
+                // Arms up: wrists above or near shoulder level AND spread wide
+                const armsUp = (leftWrist.y < leftShoulder.y + 0.1 && rightWrist.y < rightShoulder.y + 0.1) && armsSpreadWide;
+                // Arms down: wrists below shoulders and close to body
+                const armsDown = leftWrist.y > leftShoulder.y + 0.1 && rightWrist.y > rightShoulder.y + 0.1;
 
                 if (armsUp) {
                     if (state.stage === 'down') {
                         newCount++;
-                        feedback = 'Jumping Jack! ⭐';
+                        feedback = getRandomFeedback(jumpingFeedbacks);
                         state.lastUpdate = now;
                     }
                     state.stage = 'up';

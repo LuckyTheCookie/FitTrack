@@ -16,8 +16,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
+import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import Animated, {
     useSharedValue,
@@ -49,12 +50,28 @@ import {
     Zap,
     Camera,
     Activity,
+    Video,
 } from 'lucide-react-native';
 import { GlassCard, PoseCameraView } from '../src/components/ui';
-import { useAppStore } from '../src/stores';
+import { useAppStore, useGamificationStore } from '../src/stores';
+import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Messages motivants pour la gamification
+const MOTIVATIONAL_MESSAGES = [
+    { text: 'Continue comme ça!', emoji: '💪' },
+    { text: 'Tu gères!', emoji: '🔥' },
+    { text: 'Excellent!', emoji: '⭐' },
+    { text: 'Incroyable!', emoji: '🚀' },
+    { text: 'Champion!', emoji: '🏆' },
+    { text: 'Bravo!', emoji: '👏' },
+    { text: 'Super forme!', emoji: '⚡' },
+    { text: 'Yeah!', emoji: '🎉' },
+    { text: 'Tu es en feu!', emoji: '🔥' },
+    { text: 'Parfait!', emoji: '✨' },
+];
 
 // Types d'exercices supportés
 type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks';
@@ -288,7 +305,9 @@ const PositionScreen = ({
 
 // Écran principal
 export default function RepCounterScreen() {
-    const { settings } = useAppStore();
+    const { settings, addHomeWorkout, entries } = useAppStore();
+    const { recalculateAllQuests } = useGamificationStore();
+    const navigation = useNavigation();
 
     const [step, setStep] = useState<TutorialStep>('select');
     const [selectedExercise, setSelectedExercise] = useState<ExerciseConfig | null>(null);
@@ -299,6 +318,11 @@ export default function RepCounterScreen() {
         settings.preferCameraDetection ? 'camera' : 'sensor'
     );
     const [currentPhase, setCurrentPhase] = useState<'up' | 'down' | 'neutral'>('neutral');
+    const [motivationalMessage, setMotivationalMessage] = useState<{ text: string; emoji: string } | null>(null);
+    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+
+    // Sound effect
+    const soundRef = useRef<Audio.Sound | null>(null);
 
     // Pour la détection de mouvement améliorée
     const lastRepTime = useRef(0);
@@ -314,6 +338,71 @@ export default function RepCounterScreen() {
     // Animations
     const countScale = useSharedValue(1);
     const pulseOpacity = useSharedValue(0);
+    const messageOpacity = useSharedValue(0);
+
+    // Load sound on mount
+    useEffect(() => {
+        const loadSound = async () => {
+            try {
+                const { sound } = await Audio.Sound.createAsync(
+                    require('../assets/rep.mp3'),
+                    { shouldPlay: false, volume: 0.7 }
+                );
+                soundRef.current = sound;
+            } catch (error) {
+                console.log('[RepCounter] Could not load sound:', error);
+            }
+        };
+        loadSound();
+
+        return () => {
+            if (soundRef.current) {
+                soundRef.current.unloadAsync();
+            }
+        };
+    }, []);
+
+    // Hide tab bar when tracking
+    useEffect(() => {
+        navigation.setOptions({
+            tabBarStyle: step === 'counting' ? { display: 'none' } : undefined,
+        });
+    }, [step, navigation]);
+
+    // Play sound
+    const playRepSound = useCallback(async () => {
+        try {
+            if (soundRef.current) {
+                await soundRef.current.replayAsync();
+            }
+        } catch (error) {
+            // Ignore sound errors
+        }
+    }, []);
+
+    // Show motivational message
+    const showMotivationalMessage = useCallback((feedback?: string) => {
+        if (feedback) {
+            setAiFeedback(feedback);
+        } else {
+            const randomMessage = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+            setMotivationalMessage(randomMessage);
+        }
+        messageOpacity.value = withSequence(
+            withTiming(1, { duration: 200 }),
+            withTiming(1, { duration: 1500 }),
+            withTiming(0, { duration: 300 })
+        );
+        setTimeout(() => {
+            setMotivationalMessage(null);
+            setAiFeedback(null);
+        }, 2000);
+    }, []);
+
+    const messageStyle = useAnimatedStyle(() => ({
+        opacity: messageOpacity.value,
+        transform: [{ scale: interpolate(messageOpacity.value, [0, 1], [0.8, 1]) }],
+    }));
 
     // Animation du compteur quand on fait une rep
     const animateRep = useCallback(() => {
@@ -358,19 +447,21 @@ export default function RepCounterScreen() {
     const incrementRep = useCallback(() => {
         setRepCount(prev => prev + 1);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        playRepSound();
+        showMotivationalMessage();
         animateRep();
-    }, [animateRep]);
+    }, [animateRep, playRepSound, showMotivationalMessage]);
 
     // Callback pour la détection de rep par caméra IA
     const handleCameraRepDetected = useCallback((newCount: number, feedback?: string) => {
         if (isTracking && newCount > repCount) {
             setRepCount(newCount);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            playRepSound();
+            showMotivationalMessage(feedback);
             animateRep();
-            if (feedback) {
-                console.log('[RepCounter] AI Feedback:', feedback);
-            }
         }
-    }, [isTracking, repCount, animateRep]);
+    }, [isTracking, repCount, animateRep, playRepSound, showMotivationalMessage]);
 
     // Démarrer le tracking
     const startTracking = useCallback(async () => {
@@ -463,6 +554,24 @@ export default function RepCounterScreen() {
     }, []);
 
     // Terminer et sauvegarder
+    // Save workout to store
+    const saveWorkout = useCallback(() => {
+        if (!selectedExercise || repCount === 0) return;
+
+        const exerciseName = selectedExercise.name;
+        const exerciseText = `${exerciseName}: ${repCount} reps`;
+
+        addHomeWorkout({
+            name: `Track ${exerciseName}`,
+            exercises: exerciseText,
+            totalReps: repCount,
+        });
+
+        // Recalculate quests after adding workout
+        const totals = calculateQuestTotals(entries);
+        recalculateAllQuests(totals);
+    }, [selectedExercise, repCount, addHomeWorkout, entries, recalculateAllQuests]);
+
     const finishWorkout = useCallback(() => {
         stopTracking();
         setStep('done');
@@ -687,8 +796,8 @@ export default function RepCounterScreen() {
                                 </Text>
                             )}
 
-                            {/* Camera Preview (only shown if camera mode AND debugCamera is on) */}
-                            {detectionMode === 'camera' && (
+                            {/* Camera Preview - Debug mode shows full preview, otherwise hidden with active detection */}
+                            {detectionMode === 'camera' && settings.debugCamera && (
                                 <View style={styles.cameraPreviewContainer}>
                                     <PoseCameraView
                                         facing="front"
@@ -699,12 +808,21 @@ export default function RepCounterScreen() {
                                         isActive={isTracking}
                                         style={styles.cameraPreview}
                                     />
-                                    {!settings.debugCamera && (
-                                        <View style={styles.cameraPreviewOverlay}>
-                                            <Camera size={24} color="#fff" />
-                                            <Text style={styles.cameraPreviewText}>Caméra active</Text>
-                                        </View>
-                                    )}
+                                </View>
+                            )}
+
+                            {/* Hidden camera for detection when debug is off */}
+                            {detectionMode === 'camera' && !settings.debugCamera && (
+                                <View style={styles.hiddenCameraContainer}>
+                                    <PoseCameraView
+                                        facing="front"
+                                        showDebugOverlay={false}
+                                        exerciseType={selectedExercise.id}
+                                        currentCount={repCount}
+                                        onRepDetected={handleCameraRepDetected}
+                                        isActive={isTracking}
+                                        style={styles.hiddenCamera}
+                                    />
                                 </View>
                             )}
 
@@ -741,6 +859,19 @@ export default function RepCounterScreen() {
                                     <Check size={24} color={Colors.success} />
                                 </TouchableOpacity>
                             </View>
+
+                            {/* Motivational Message */}
+                            {motivationalMessage && (
+                                <Animated.View style={[styles.motivationalContainer, messageStyle]}>
+                                    <Text style={styles.motivationalEmoji}>{motivationalMessage.emoji}</Text>
+                                    <Text style={styles.motivationalText}>{motivationalMessage.text}</Text>
+                                    {aiFeedback && (
+                                        <Text style={[styles.aiFeedbackText, { color: selectedExercise.color }]}>
+                                            {aiFeedback}
+                                        </Text>
+                                    )}
+                                </Animated.View>
+                            )}
                         </Animated.View>
                     )}
 
@@ -791,7 +922,10 @@ export default function RepCounterScreen() {
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    onPress={() => router.back()}
+                                    onPress={() => {
+                                        saveWorkout();
+                                        router.back();
+                                    }}
                                     activeOpacity={0.9}
                                     style={styles.doneButtonPrimary}
                                 >
@@ -1272,6 +1406,17 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
+    hiddenCameraContainer: {
+        position: 'absolute',
+        width: 1,
+        height: 1,
+        opacity: 0,
+        overflow: 'hidden',
+    },
+    hiddenCamera: {
+        width: 320,
+        height: 240,
+    },
     cameraPreviewOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.5)',
@@ -1283,6 +1428,29 @@ const styles = StyleSheet.create({
         fontSize: FontSize.sm,
         color: 'rgba(255,255,255,0.8)',
         fontWeight: FontWeight.semibold,
+    },
+
+    // Motivational messages
+    motivationalContainer: {
+        alignItems: 'center',
+        marginTop: Spacing.md,
+        paddingHorizontal: Spacing.xl,
+    },
+    motivationalEmoji: {
+        fontSize: 32,
+        marginBottom: Spacing.xs,
+    },
+    motivationalText: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        textAlign: 'center',
+    },
+    aiFeedbackText: {
+        fontSize: FontSize.sm,
+        fontWeight: FontWeight.medium,
+        textAlign: 'center',
+        marginTop: Spacing.xs,
     },
 
     // Camera hint
