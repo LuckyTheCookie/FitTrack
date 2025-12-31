@@ -180,11 +180,18 @@ export function getDaysInMonth(monthString: string): number {
 // Relative time
 export function getRelativeTime(isoString: string): string {
   const date = parseISO(isoString);
-  const now = new Date();
-  const diffDays = differenceInDays(now, date);
+  const today = new Date();
   
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return 'Hier';
+  // Compare dates by day only (not time)
+  const dateDay = format(date, 'yyyy-MM-dd');
+  const todayDay = format(today, 'yyyy-MM-dd');
+  const yesterdayDay = format(addDays(today, -1), 'yyyy-MM-dd');
+  
+  if (dateDay === todayDay) return "Aujourd'hui";
+  if (dateDay === yesterdayDay) return 'Hier';
+  
+  const diffDays = differenceInDays(today, date);
+  
   if (diffDays < 7) return `Il y a ${diffDays} jours`;
   if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} sem.`;
   return formatShortDate(isoString);
