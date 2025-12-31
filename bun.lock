@@ -29,6 +29,7 @@
         "react": "19.1.0",
         "react-native": "0.81.5",
         "react-native-gesture-handler": "^2.30.0",
+        "react-native-mediapipe-posedetection": "0.2.0",
         "react-native-mmkv": "^4.1.0",
         "react-native-nitro-modules": "^0.32.0",
         "react-native-reanimated": "^4.2.1",
@@ -37,7 +38,6 @@
         "react-native-svg": "^15.15.1",
         "react-native-vision-camera": "^4.7.3",
         "react-native-worklets-core": "^1.6.2",
-        "vision-camera-pose-landmarks-plugin": "^0.1.0",
         "zustand": "^5.0.9",
       },
       "devDependencies": {
@@ -1063,6 +1063,8 @@
 
     "react-native-is-edge-to-edge": ["react-native-is-edge-to-edge@1.2.1", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-FLbPWl/MyYQWz+KwqOZsSyj2JmLKglHatd3xLZWskXOpRaio4LfEDEz8E/A6uD8QoTHW6Aobw1jbEwK7KMgR7Q=="],
 
+    "react-native-mediapipe-posedetection": ["react-native-mediapipe-posedetection@0.2.0", "", { "peerDependencies": { "react": "*", "react-native": ">=0.74.0", "react-native-vision-camera": "*", "react-native-worklets-core": "*" } }, "sha512-ZB7aoIyVdXE3XLKz8RMKpcEsnbdcznXOPCl9jhWz/WJ1LgEqq6on1a1e4zWFkxHFJqp42xJgjF/ioQ+V4pyyyw=="],
+
     "react-native-mmkv": ["react-native-mmkv@4.1.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-ia76WnU6dkLZxFkSSflxqFgHT2pIaML763aucEu7nMglF41oEWTdTtBu0o8a1cxbhZOaONk6KF8RQp5fLvPitA=="],
 
     "react-native-nitro-modules": ["react-native-nitro-modules@0.32.0", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-nLDsmi/H9/cLcYxArYxcTDL641JiWnAH3u2LmsFETgyqSEHvukswDTdmX6AHBRIAwXu/iUDppZyjsaRpTG6WMg=="],
@@ -1274,8 +1276,6 @@
     "vary": ["vary@1.1.2", "", {}, "sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg=="],
 
     "vaul": ["vaul@1.1.2", "", { "dependencies": { "@radix-ui/react-dialog": "^1.1.1" }, "peerDependencies": { "react": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc" } }, "sha512-ZFkClGpWyI2WUQjdLJ/BaGuV6AVQiJ3uELGk3OYtP+B6yCO7Cmn9vPFXVJkRaGkOJu3m8bQMgtyzNHixULceQA=="],
-
-    "vision-camera-pose-landmarks-plugin": ["vision-camera-pose-landmarks-plugin@0.1.0", "", { "peerDependencies": { "react-native": ">=0.76.0", "react-native-vision-camera": ">=4.5.0", "react-native-worklets-core": ">=1.6.0" } }, "sha512-tR4uouHLdFUrEY6Sm4BLbpMiL2QCHD5C9t1jxqGOGWd8nszsTl9SQm3npYvhedD7uwryZa8aZYnayJmxEag95w=="],
 
     "vlq": ["vlq@1.0.1", "", {}, "sha512-gQpnTgkubC6hQgdIcRdYGDSDc+SaujOdyesZQMv6JlfQee/9Mp0Qhnys6WxDWvQnL5WZdT7o2Ul187aSt0Rq+w=="],
 

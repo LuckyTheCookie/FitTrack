@@ -1,46 +1,23 @@
 // ============================================================================
-// POSE DETECTION UTILS - Using MLKit via vision-camera-pose-detector
+// POSE DETECTION UTILS - Using react-native-mediapipe-posedetection
 // ============================================================================
+
+import { KnownPoseLandmarks } from 'react-native-mediapipe-posedetection';
 
 // Types for pose detection
 export type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks';
 
+// MediaPipe landmark structure (from the package)
 export interface Landmark {
-    x: number;
-    y: number;
-    z?: number;
-    visibility?: number;
+    x: number;  // Normalized 0-1
+    y: number;  // Normalized 0-1
+    z: number;  // Depth (relative)
+    visibility?: number;  // Confidence 0-1
+    presence?: number;    // Presence confidence 0-1
 }
 
-export interface PoseLandmarks {
-    nose?: Landmark;
-    leftEye?: Landmark;
-    rightEye?: Landmark;
-    leftEar?: Landmark;
-    rightEar?: Landmark;
-    leftShoulder?: Landmark;
-    rightShoulder?: Landmark;
-    leftElbow?: Landmark;
-    rightElbow?: Landmark;
-    leftWrist?: Landmark;
-    rightWrist?: Landmark;
-    leftHip?: Landmark;
-    rightHip?: Landmark;
-    leftKnee?: Landmark;
-    rightKnee?: Landmark;
-    leftAnkle?: Landmark;
-    rightAnkle?: Landmark;
-    leftPinky?: Landmark;
-    rightPinky?: Landmark;
-    leftIndex?: Landmark;
-    rightIndex?: Landmark;
-    leftThumb?: Landmark;
-    rightThumb?: Landmark;
-    leftHeel?: Landmark;
-    rightHeel?: Landmark;
-    leftFootIndex?: Landmark;
-    rightFootIndex?: Landmark;
-}
+// A pose is an array of 33 landmarks indexed by KnownPoseLandmarks
+export type PoseLandmarks = Landmark[];
 
 export interface RepState {
     count: number;
@@ -49,7 +26,7 @@ export interface RepState {
 }
 
 // Minimum confidence threshold for considering a landmark valid
-const CONFIDENCE_THRESHOLD = 0.5;
+const VISIBILITY_THRESHOLD = 0.5;
 
 // Cooldown between reps in milliseconds
 const REP_COOLDOWN = 500;
@@ -58,17 +35,28 @@ const REP_COOLDOWN = 500;
 const exerciseStates: Record<string, RepState> = {};
 
 /**
+ * Get a landmark from the pose array with confidence check
+ */
+export const getLandmark = (
+    landmarks: PoseLandmarks,
+    index: number
+): Landmark | null => {
+    const lm = landmarks[index];
+    if (!lm) return null;
+    if ((lm.visibility ?? 1) < VISIBILITY_THRESHOLD) return null;
+    return lm;
+};
+
+/**
  * Calculate the angle between three points (A, B, C) where B is the vertex
+ * Returns angle in degrees
  */
 export const calculateAngle = (
-    a: Landmark | undefined,
-    b: Landmark | undefined,
-    c: Landmark | undefined
+    a: Landmark | null,
+    b: Landmark | null,
+    c: Landmark | null
 ): number => {
     if (!a || !b || !c) return 0;
-    if ((a.visibility ?? 1) < CONFIDENCE_THRESHOLD) return 0;
-    if ((b.visibility ?? 1) < CONFIDENCE_THRESHOLD) return 0;
-    if ((c.visibility ?? 1) < CONFIDENCE_THRESHOLD) return 0;
 
     const radians =
         Math.atan2(c.y - b.y, c.x - b.x) -
@@ -84,18 +72,27 @@ export const calculateAngle = (
 };
 
 /**
- * Get the better angle from left or right side
+ * Get the better angle from left or right side (average or best available)
  */
 const getBestAngle = (
-    leftA: Landmark | undefined,
-    leftB: Landmark | undefined,
-    leftC: Landmark | undefined,
-    rightA: Landmark | undefined,
-    rightB: Landmark | undefined,
-    rightC: Landmark | undefined
+    landmarks: PoseLandmarks,
+    leftA: number,
+    leftB: number,
+    leftC: number,
+    rightA: number,
+    rightB: number,
+    rightC: number
 ): number => {
-    const leftAngle = calculateAngle(leftA, leftB, leftC);
-    const rightAngle = calculateAngle(rightA, rightB, rightC);
+    const leftAngle = calculateAngle(
+        getLandmark(landmarks, leftA),
+        getLandmark(landmarks, leftB),
+        getLandmark(landmarks, leftC)
+    );
+    const rightAngle = calculateAngle(
+        getLandmark(landmarks, rightA),
+        getLandmark(landmarks, rightB),
+        getLandmark(landmarks, rightC)
+    );
     
     if (leftAngle > 0 && rightAngle > 0) {
         return (leftAngle + rightAngle) / 2;
@@ -108,7 +105,22 @@ const getBestAngle = (
 };
 
 /**
+ * Reset the exercise state (call when switching exercises)
+ */
+export const resetExerciseState = (exerciseType?: ExerciseType): void => {
+    if (exerciseType) {
+        delete exerciseStates[exerciseType];
+    } else {
+        Object.keys(exerciseStates).forEach((key) => delete exerciseStates[key]);
+    }
+};
+
+/**
  * Process pose landmarks to count reps based on exercise type
+ * @param landmarks - Array of 33 MediaPipe landmarks
+ * @param exerciseType - Type of exercise being performed
+ * @param currentCount - Current rep count
+ * @returns Updated count, optional feedback, and current stage
  */
 export const countRepsFromPose = (
     landmarks: PoseLandmarks,
@@ -130,12 +142,18 @@ export const countRepsFromPose = (
         return { count: newCount, stage: state.stage };
     }
 
+    // Verify we have enough landmarks
+    if (!landmarks || landmarks.length < 33) {
+        return { count: newCount, stage: state.stage };
+    }
+
     switch (exerciseType) {
         case 'pushups': {
             // Pushups: Track elbow angle (shoulder - elbow - wrist)
             const elbowAngle = getBestAngle(
-                landmarks.leftShoulder, landmarks.leftElbow, landmarks.leftWrist,
-                landmarks.rightShoulder, landmarks.rightElbow, landmarks.rightWrist
+                landmarks,
+                KnownPoseLandmarks.leftShoulder, KnownPoseLandmarks.leftElbow, KnownPoseLandmarks.leftWrist,
+                KnownPoseLandmarks.rightShoulder, KnownPoseLandmarks.rightElbow, KnownPoseLandmarks.rightWrist
             );
 
             if (elbowAngle > 0) {
@@ -159,8 +177,9 @@ export const countRepsFromPose = (
         case 'squats': {
             // Squats: Track knee angle (hip - knee - ankle)
             const kneeAngle = getBestAngle(
-                landmarks.leftHip, landmarks.leftKnee, landmarks.leftAnkle,
-                landmarks.rightHip, landmarks.rightKnee, landmarks.rightAnkle
+                landmarks,
+                KnownPoseLandmarks.leftHip, KnownPoseLandmarks.leftKnee, KnownPoseLandmarks.leftAnkle,
+                KnownPoseLandmarks.rightHip, KnownPoseLandmarks.rightKnee, KnownPoseLandmarks.rightAnkle
             );
 
             if (kneeAngle > 0) {
@@ -184,22 +203,23 @@ export const countRepsFromPose = (
         case 'situps': {
             // Situps: Track hip angle (shoulder - hip - knee)
             const hipAngle = getBestAngle(
-                landmarks.leftShoulder, landmarks.leftHip, landmarks.leftKnee,
-                landmarks.rightShoulder, landmarks.rightHip, landmarks.rightKnee
+                landmarks,
+                KnownPoseLandmarks.leftShoulder, KnownPoseLandmarks.leftHip, KnownPoseLandmarks.leftKnee,
+                KnownPoseLandmarks.rightShoulder, KnownPoseLandmarks.rightHip, KnownPoseLandmarks.rightKnee
             );
 
             if (hipAngle > 0) {
-                // Sitting up (small angle): < 70
-                if (hipAngle < 70) {
+                // Up position (sitting up): angle < 90
+                if (hipAngle < 90) {
                     if (state.stage === 'down') {
                         newCount++;
-                        feedback = 'Abdos en feu! 🔥';
+                        feedback = 'Super! 🔥';
                         state.lastUpdate = now;
                     }
                     state.stage = 'up';
                 }
-                // Laying down (large angle): > 120
-                else if (hipAngle > 120) {
+                // Lying down position: angle > 140
+                else if (hipAngle > 140) {
                     state.stage = 'down';
                 }
             }
@@ -207,29 +227,26 @@ export const countRepsFromPose = (
         }
 
         case 'jumping_jacks': {
-            // Jumping jacks: Track arm position relative to shoulders
-            const leftWrist = landmarks.leftWrist;
-            const rightWrist = landmarks.rightWrist;
-            const leftShoulder = landmarks.leftShoulder;
-            const rightShoulder = landmarks.rightShoulder;
-            const leftHip = landmarks.leftHip;
-            const rightHip = landmarks.rightHip;
+            // Jumping jacks: Track arm position relative to body
+            const leftShoulder = getLandmark(landmarks, KnownPoseLandmarks.leftShoulder);
+            const rightShoulder = getLandmark(landmarks, KnownPoseLandmarks.rightShoulder);
+            const leftWrist = getLandmark(landmarks, KnownPoseLandmarks.leftWrist);
+            const rightWrist = getLandmark(landmarks, KnownPoseLandmarks.rightWrist);
 
-            if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-                // Hands above shoulders (up position)
-                const handsUp = leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y;
-                // Hands at/below hips (down position)  
-                const handsDown = leftHip && rightHip && 
-                    leftWrist.y > leftHip.y && rightWrist.y > rightHip.y;
+            if (leftShoulder && rightShoulder && leftWrist && rightWrist) {
+                // Arms up: wrists above shoulders
+                const armsUp = leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y;
+                // Arms down: wrists below shoulders and relatively close to body
+                const armsDown = leftWrist.y > leftShoulder.y && rightWrist.y > rightShoulder.y;
 
-                if (handsUp) {
+                if (armsUp) {
                     if (state.stage === 'down') {
                         newCount++;
-                        feedback = 'Super saut! ⭐';
+                        feedback = 'Jumping Jack! ⭐';
                         state.lastUpdate = now;
                     }
                     state.stage = 'up';
-                } else if (handsDown) {
+                } else if (armsDown) {
                     state.stage = 'down';
                 }
             }
@@ -237,93 +254,40 @@ export const countRepsFromPose = (
         }
     }
 
-    // Update internal state count
+    // Sync the state count with actual count
     state.count = newCount;
-    
+
     return { count: newCount, feedback, stage: state.stage };
 };
 
 /**
- * Reset exercise state
+ * Get the current stage for an exercise
  */
-export const resetExerciseState = (exerciseType: ExerciseType): void => {
-    if (exerciseStates[exerciseType]) {
-        exerciseStates[exerciseType] = { count: 0, stage: null, lastUpdate: 0 };
-    }
+export const getExerciseStage = (exerciseType: ExerciseType): 'up' | 'down' | null => {
+    return exerciseStates[exerciseType]?.stage ?? null;
 };
 
 /**
- * Reset all exercise states
+ * Check if a pose is valid (has enough visible landmarks)
  */
-export const resetAllExerciseStates = (): void => {
-    Object.keys(exerciseStates).forEach(key => {
-        exerciseStates[key] = { count: 0, stage: null, lastUpdate: 0 };
-    });
-};
+export const isPoseValid = (landmarks: PoseLandmarks | null | undefined): boolean => {
+    if (!landmarks || landmarks.length < 33) return false;
+    
+    // Check critical landmarks are visible
+    const criticalIndices = [
+        KnownPoseLandmarks.leftShoulder,
+        KnownPoseLandmarks.rightShoulder,
+        KnownPoseLandmarks.leftHip,
+        KnownPoseLandmarks.rightHip,
+    ];
 
-/**
- * Convert MLKit pose array to our PoseLandmarks format
- * MLKit returns 33 landmarks in a specific order
- */
-export const convertMLKitPose = (mlkitLandmarks: any[]): PoseLandmarks | null => {
-    if (!mlkitLandmarks || mlkitLandmarks.length < 25) {
-        return null;
+    let visibleCount = 0;
+    for (const idx of criticalIndices) {
+        const lm = landmarks[idx];
+        if (lm && (lm.visibility ?? 1) >= VISIBILITY_THRESHOLD) {
+            visibleCount++;
+        }
     }
 
-    // MLKit Pose landmark indices
-    // 0: nose, 1: left eye inner, 2: left eye, 3: left eye outer
-    // 4: right eye inner, 5: right eye, 6: right eye outer
-    // 7: left ear, 8: right ear, 9: mouth left, 10: mouth right
-    // 11: left shoulder, 12: right shoulder
-    // 13: left elbow, 14: right elbow
-    // 15: left wrist, 16: right wrist
-    // 17: left pinky, 18: right pinky
-    // 19: left index, 20: right index
-    // 21: left thumb, 22: right thumb
-    // 23: left hip, 24: right hip
-    // 25: left knee, 26: right knee
-    // 27: left ankle, 28: right ankle
-    // 29: left heel, 30: right heel
-    // 31: left foot index, 32: right foot index
-
-    const getLandmark = (index: number): Landmark | undefined => {
-        const lm = mlkitLandmarks[index];
-        if (!lm) return undefined;
-        return {
-            x: lm.x ?? lm.position?.x ?? 0,
-            y: lm.y ?? lm.position?.y ?? 0,
-            z: lm.z ?? lm.position?.z,
-            visibility: lm.inFrameLikelihood ?? lm.visibility ?? 1,
-        };
-    };
-
-    return {
-        nose: getLandmark(0),
-        leftEye: getLandmark(2),
-        rightEye: getLandmark(5),
-        leftEar: getLandmark(7),
-        rightEar: getLandmark(8),
-        leftShoulder: getLandmark(11),
-        rightShoulder: getLandmark(12),
-        leftElbow: getLandmark(13),
-        rightElbow: getLandmark(14),
-        leftWrist: getLandmark(15),
-        rightWrist: getLandmark(16),
-        leftHip: getLandmark(23),
-        rightHip: getLandmark(24),
-        leftKnee: getLandmark(25),
-        rightKnee: getLandmark(26),
-        leftAnkle: getLandmark(27),
-        rightAnkle: getLandmark(28),
-        leftPinky: getLandmark(17),
-        rightPinky: getLandmark(18),
-        leftIndex: getLandmark(19),
-        rightIndex: getLandmark(20),
-        leftThumb: getLandmark(21),
-        rightThumb: getLandmark(22),
-        leftHeel: getLandmark(29),
-        rightHeel: getLandmark(30),
-        leftFootIndex: getLandmark(31),
-        rightFootIndex: getLandmark(32),
-    };
+    return visibleCount >= 3; // At least 3 of 4 critical points visible
 };

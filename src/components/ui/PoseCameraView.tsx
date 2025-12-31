@@ -1,6 +1,6 @@
 // ============================================================================
 // POSE CAMERA VIEW - Camera with MediaPipe Pose Detection
-// Uses react-native-vision-camera with vision-camera-pose-landmarks-plugin
+// Uses react-native-mediapipe-posedetection with react-native-vision-camera
 // ============================================================================
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -16,47 +16,51 @@ import {
     Camera,
     useCameraDevice,
     useCameraPermission,
-    useFrameProcessor,
-    CameraPosition,
 } from 'react-native-vision-camera';
-import { usePoseLandmarksPlugin } from 'vision-camera-pose-landmarks-plugin';
-import { useRunOnJS } from 'react-native-worklets-core';
+import {
+    usePoseDetection,
+    RunningMode,
+    Delegate,
+    KnownPoseLandmarks,
+    type PoseDetectionResultBundle,
+} from 'react-native-mediapipe-posedetection';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Line } from 'react-native-svg';
 
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../constants';
 import { 
     ExerciseType, 
-    PoseLandmarks, 
+    PoseLandmarks,
     countRepsFromPose,
-    resetExerciseState 
+    resetExerciseState,
+    isPoseValid,
 } from '../../utils/poseDetection';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Skeleton connections for visualization
-const SKELETON_CONNECTIONS = [
+// Skeleton connections for visualization (indices from KnownPoseLandmarks)
+const SKELETON_CONNECTIONS: [number, number][] = [
     // Torso
-    ['leftShoulder', 'rightShoulder'],
-    ['leftShoulder', 'leftHip'],
-    ['rightShoulder', 'rightHip'],
-    ['leftHip', 'rightHip'],
+    [KnownPoseLandmarks.leftShoulder, KnownPoseLandmarks.rightShoulder],
+    [KnownPoseLandmarks.leftShoulder, KnownPoseLandmarks.leftHip],
+    [KnownPoseLandmarks.rightShoulder, KnownPoseLandmarks.rightHip],
+    [KnownPoseLandmarks.leftHip, KnownPoseLandmarks.rightHip],
     // Left arm
-    ['leftShoulder', 'leftElbow'],
-    ['leftElbow', 'leftWrist'],
+    [KnownPoseLandmarks.leftShoulder, KnownPoseLandmarks.leftElbow],
+    [KnownPoseLandmarks.leftElbow, KnownPoseLandmarks.leftWrist],
     // Right arm
-    ['rightShoulder', 'rightElbow'],
-    ['rightElbow', 'rightWrist'],
+    [KnownPoseLandmarks.rightShoulder, KnownPoseLandmarks.rightElbow],
+    [KnownPoseLandmarks.rightElbow, KnownPoseLandmarks.rightWrist],
     // Left leg
-    ['leftHip', 'leftKnee'],
-    ['leftKnee', 'leftAnkle'],
+    [KnownPoseLandmarks.leftHip, KnownPoseLandmarks.leftKnee],
+    [KnownPoseLandmarks.leftKnee, KnownPoseLandmarks.leftAnkle],
     // Right leg
-    ['rightHip', 'rightKnee'],
-    ['rightKnee', 'rightAnkle'],
+    [KnownPoseLandmarks.rightHip, KnownPoseLandmarks.rightKnee],
+    [KnownPoseLandmarks.rightKnee, KnownPoseLandmarks.rightAnkle],
 ];
 
 interface PoseCameraViewProps {
-    facing?: CameraPosition;
+    facing?: 'front' | 'back';
     showDebugOverlay?: boolean;
     exerciseType?: ExerciseType;
     onRepDetected?: (newCount: number, feedback?: string) => void;
@@ -68,7 +72,7 @@ interface PoseCameraViewProps {
 }
 
 export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
-    facing = 'back',
+    facing = 'front', // Use front camera by default
     showDebugOverlay = false,
     exerciseType = 'squats',
     onRepDetected,
@@ -82,13 +86,11 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     const device = useCameraDevice(facing);
     const [isReady, setIsReady] = useState(false);
     const [currentPose, setCurrentPose] = useState<PoseLandmarks | null>(null);
-    const [frameSize, setFrameSize] = useState({ width: 1, height: 1 });
+    const [cameraLayout, setCameraLayout] = useState({ width: 1, height: 1 });
+    const [poseStatus, setPoseStatus] = useState<'detecting' | 'pose' | 'no-pose'>('detecting');
     
     const countRef = useRef(currentCount);
     const exerciseTypeRef = useRef(exerciseType);
-
-    // Get the pose detection plugin
-    const { detectPoseLandmarks } = usePoseLandmarksPlugin();
 
     // Update refs when props change
     useEffect(() => {
@@ -100,75 +102,56 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
         resetExerciseState(exerciseType);
     }, [exerciseType]);
 
-    // JS callback for pose processing
-    const processPose = useRunOnJS((landmarks: PoseLandmarks | null, width: number, height: number) => {
-        setFrameSize({ width, height });
-        setCurrentPose(landmarks);
-        onPoseDetected?.(landmarks);
+    // Pose detection using MediaPipe
+    const poseDetection = usePoseDetection(
+        {
+            onResults: useCallback((result: PoseDetectionResultBundle) => {
+                // Get the first detected pose (if any)
+                // Structure: result.results[0]?.landmarks[0] -> Landmark[]
+                const poseResult = result.results?.[0];
+                const landmarks = poseResult?.landmarks?.[0] as PoseLandmarks | undefined;
+                
+                if (landmarks && isPoseValid(landmarks)) {
+                    setCurrentPose(landmarks);
+                    setPoseStatus('pose');
+                    onPoseDetected?.(landmarks);
 
-        if (landmarks && exerciseTypeRef.current) {
-            const result = countRepsFromPose(landmarks, exerciseTypeRef.current, countRef.current);
-            
-            if (result.count > countRef.current) {
-                countRef.current = result.count;
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onRepDetected?.(result.count, result.feedback);
-            }
+                    // Count reps
+                    if (exerciseTypeRef.current) {
+                        const repResult = countRepsFromPose(
+                            landmarks, 
+                            exerciseTypeRef.current, 
+                            countRef.current
+                        );
+                        
+                        if (repResult.count > countRef.current) {
+                            countRef.current = repResult.count;
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            onRepDetected?.(repResult.count, repResult.feedback);
+                        }
+                    }
+                } else {
+                    setCurrentPose(null);
+                    setPoseStatus('no-pose');
+                    onPoseDetected?.(null);
+                }
+            }, [onPoseDetected, onRepDetected]),
+            onError: useCallback((error: any) => {
+                console.error('[PoseCamera] Detection error:', error.message);
+                setPoseStatus('no-pose');
+            }, []),
+        },
+        RunningMode.LIVE_STREAM,
+        'pose_landmarker_lite.task',
+        {
+            numPoses: 1,
+            minPoseDetectionConfidence: 0.5,
+            minPosePresenceConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+            delegate: Delegate.GPU,
+            mirrorMode: facing === 'front' ? 'mirror-front-only' : 'no-mirror',
         }
-    }, [onPoseDetected, onRepDetected]);
-
-    // Frame processor for pose detection
-    const frameProcessor = useFrameProcessor((frame) => {
-        'worklet';
-        try {
-            // The plugin returns an array of Poses (Landmarks[])
-            const poses = detectPoseLandmarks(frame);
-            
-            // Get the first detected pose (if any)
-            const detectedLandmarks = poses && poses.length > 0 ? poses[0] : null;
-            
-            // Convert the landmarks to our format
-            const landmarks: PoseLandmarks | null = detectedLandmarks ? {
-                nose: detectedLandmarks.nose,
-                leftEye: detectedLandmarks.leftEye,
-                rightEye: detectedLandmarks.rightEye,
-                leftEar: detectedLandmarks.leftEar,
-                rightEar: detectedLandmarks.rightEar,
-                leftShoulder: detectedLandmarks.leftShoulder,
-                rightShoulder: detectedLandmarks.rightShoulder,
-                leftElbow: detectedLandmarks.leftElbow,
-                rightElbow: detectedLandmarks.rightElbow,
-                leftWrist: detectedLandmarks.leftWrist,
-                rightWrist: detectedLandmarks.rightWrist,
-                leftHip: detectedLandmarks.leftHip,
-                rightHip: detectedLandmarks.rightHip,
-                leftKnee: detectedLandmarks.leftKnee,
-                rightKnee: detectedLandmarks.rightKnee,
-                leftAnkle: detectedLandmarks.leftAnkle,
-                rightAnkle: detectedLandmarks.rightAnkle,
-                leftPinky: detectedLandmarks.leftPinky,
-                rightPinky: detectedLandmarks.rightPinky,
-                leftIndex: detectedLandmarks.leftIndex,
-                rightIndex: detectedLandmarks.rightIndex,
-                leftThumb: detectedLandmarks.leftThumb,
-                rightThumb: detectedLandmarks.rightThumb,
-                leftHeel: detectedLandmarks.leftHeel,
-                rightHeel: detectedLandmarks.rightHeel,
-                leftFootIndex: detectedLandmarks.leftFootIndex,
-                rightFootIndex: detectedLandmarks.rightFootIndex,
-            } : null;
-            
-            processPose(landmarks, frame.width, frame.height);
-        } catch (e) {
-            // Silently handle frame processing errors
-        }
-    }, [detectPoseLandmarks, processPose]);
-
-    const handleCameraReady = useCallback(() => {
-        console.log('[PoseCamera] Camera ready');
-        setIsReady(true);
-        onCameraReady?.();
-    }, [onCameraReady]);
+    );
 
     // Request permission on mount
     useEffect(() => {
@@ -177,61 +160,76 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
         }
     }, [hasPermission, requestPermission]);
 
+    // Notify pose detection when device changes
+    useEffect(() => {
+        if (device) {
+            poseDetection.cameraDeviceChangeHandler(device);
+        }
+    }, [device, poseDetection.cameraDeviceChangeHandler]);
+
+    // Handle camera ready
+    const handleCameraReady = useCallback(() => {
+        console.log('[PoseCamera] Camera ready');
+        setIsReady(true);
+        onCameraReady?.();
+    }, [onCameraReady]);
+
+    // Handle layout change
+    const handleLayout = useCallback((event: any) => {
+        const { width, height } = event.nativeEvent.layout;
+        setCameraLayout({ width, height });
+        poseDetection.cameraViewLayoutChangeHandler(event);
+    }, [poseDetection.cameraViewLayoutChangeHandler]);
+
     // Render skeleton overlay
-    const renderSkeleton = () => {
-        if (!showDebugOverlay || !currentPose) return null;
+    const renderSkeletonOverlay = () => {
+        if (!currentPose || !showDebugOverlay) return null;
 
-        const containerWidth = style?.width || SCREEN_WIDTH;
-        const containerHeight = style?.height || 400;
-
-        const scaleX = containerWidth / frameSize.width;
-        const scaleY = containerHeight / frameSize.height;
-
-        const getPoint = (name: keyof PoseLandmarks) => {
-            const lm = currentPose[name];
-            if (!lm || (lm.visibility ?? 1) < 0.5) return null;
-            return {
-                x: facing === 'front' 
-                    ? containerWidth - (lm.x * scaleX)
-                    : lm.x * scaleX,
-                y: lm.y * scaleY,
-            };
-        };
+        const { width, height } = cameraLayout;
 
         return (
-            <Svg style={StyleSheet.absoluteFill}>
+            <Svg style={StyleSheet.absoluteFill} viewBox={`0 0 ${width} ${height}`}>
                 {/* Draw skeleton lines */}
-                {SKELETON_CONNECTIONS.map(([from, to], idx) => {
-                    const p1 = getPoint(from as keyof PoseLandmarks);
-                    const p2 = getPoint(to as keyof PoseLandmarks);
-                    if (!p1 || !p2) return null;
+                {SKELETON_CONNECTIONS.map(([startIdx, endIdx], index) => {
+                    const start = currentPose[startIdx];
+                    const end = currentPose[endIdx];
+                    
+                    if (!start || !end) return null;
+                    if ((start.visibility ?? 1) < 0.5 || (end.visibility ?? 1) < 0.5) return null;
+
+                    // Mirror X for front camera
+                    const startX = facing === 'front' ? width * (1 - start.x) : width * start.x;
+                    const endX = facing === 'front' ? width * (1 - end.x) : width * end.x;
+
                     return (
                         <Line
-                            key={`line-${idx}`}
-                            x1={p1.x}
-                            y1={p1.y}
-                            x2={p2.x}
-                            y2={p2.y}
-                            stroke="#00ff00"
-                            strokeWidth={2}
-                            opacity={0.8}
+                            key={`line-${index}`}
+                            x1={startX}
+                            y1={height * start.y}
+                            x2={endX}
+                            y2={height * end.y}
+                            stroke={Colors.cta}
+                            strokeWidth={3}
+                            strokeLinecap="round"
                         />
                     );
                 })}
 
                 {/* Draw landmark points */}
-                {Object.entries(currentPose).map(([name, lm]) => {
-                    if (!lm || (lm.visibility ?? 1) < 0.5) return null;
-                    const point = getPoint(name as keyof PoseLandmarks);
-                    if (!point) return null;
+                {currentPose.map((landmark, index) => {
+                    if (!landmark || (landmark.visibility ?? 1) < 0.5) return null;
+
+                    // Mirror X for front camera
+                    const x = facing === 'front' ? width * (1 - landmark.x) : width * landmark.x;
+
                     return (
                         <Circle
-                            key={name}
-                            cx={point.x}
-                            cy={point.y}
+                            key={`point-${index}`}
+                            cx={x}
+                            cy={height * landmark.y}
                             r={6}
-                            fill="#00ff00"
-                            stroke="#ffffff"
+                            fill={Colors.teal}
+                            stroke="#fff"
                             strokeWidth={2}
                         />
                     );
@@ -240,59 +238,78 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
         );
     };
 
-    // Permission not granted
+    // No permission
     if (!hasPermission) {
         return (
-            <View style={[styles.container, styles.noPermission, style]}>
-                <Text style={styles.noPermissionText}>Permission caméra requise</Text>
-                <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-                    <Text style={styles.permissionButtonText}>Autoriser</Text>
-                </TouchableOpacity>
+            <View style={[styles.container, style]}>
+                <View style={styles.permissionContainer}>
+                    <Text style={styles.permissionText}>
+                        Permission caméra requise
+                    </Text>
+                    <TouchableOpacity 
+                        style={styles.permissionButton}
+                        onPress={requestPermission}
+                    >
+                        <Text style={styles.permissionButtonText}>
+                            Autoriser la caméra
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }
 
-    // No camera device
+    // No device
     if (!device) {
         return (
-            <View style={[styles.container, styles.noPermission, style]}>
-                <Text style={styles.noPermissionText}>Caméra non disponible</Text>
+            <View style={[styles.container, style]}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.cta} />
+                    <Text style={styles.loadingText}>Recherche de caméra...</Text>
+                </View>
             </View>
         );
     }
 
     return (
-        <View style={[styles.container, style]}>
-            <Camera
-                style={StyleSheet.absoluteFill}
-                device={device}
-                isActive={isActive}
-                frameProcessor={frameProcessor}
-                onInitialized={handleCameraReady}
-                pixelFormat="yuv"
-            />
+        <View style={[styles.container, style]} onLayout={handleLayout}>
+            {isActive && (
+                <Camera
+                    style={StyleSheet.absoluteFill}
+                    device={device}
+                    isActive={isActive}
+                    frameProcessor={poseDetection.frameProcessor}
+                    onStarted={handleCameraReady}
+                    onError={(error) => console.error('[PoseCamera] Camera error:', error)}
+                    onOutputOrientationChanged={poseDetection.cameraOrientationChangedHandler}
+                    pixelFormat="rgb"
+                    photo={true}
+                />
+            )}
+
+            {/* Skeleton overlay */}
+            {renderSkeletonOverlay()}
+
+            {/* Status indicator */}
+            {showDebugOverlay && (
+                <View style={styles.statusContainer}>
+                    <View style={[
+                        styles.statusDot,
+                        { backgroundColor: poseStatus === 'pose' ? Colors.success : 
+                                          poseStatus === 'no-pose' ? Colors.error : Colors.warning }
+                    ]} />
+                    <Text style={styles.statusText}>
+                        {poseStatus === 'pose' ? 'Pose détectée' : 
+                         poseStatus === 'no-pose' ? 'Aucune pose' : 'Détection...'}
+                    </Text>
+                </View>
+            )}
 
             {/* Loading overlay */}
             {!isReady && (
                 <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color={Colors.cta} />
-                    <Text style={styles.loadingText}>Initialisation caméra...</Text>
-                </View>
-            )}
-
-            {/* Pose skeleton overlay */}
-            {renderSkeleton()}
-
-            {/* Gradient overlays for better UI visibility */}
-            <View style={styles.gradientTop} />
-            <View style={styles.gradientBottom} />
-
-            {/* Debug badge */}
-            {showDebugOverlay && (
-                <View style={styles.debugBadge}>
-                    <Text style={styles.debugBadgeText}>
-                        {currentPose ? '🟢 POSE' : '🔴 NO POSE'}
-                    </Text>
+                    <Text style={styles.loadingText}>Initialisation...</Text>
                 </View>
             )}
         </View>
@@ -302,105 +319,69 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        minHeight: 350,
-        backgroundColor: '#000',
+        backgroundColor: Colors.bg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
     },
-    camera: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    noPermission: {
+    permissionContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Colors.card,
         padding: Spacing.xl,
     },
-    noPermissionText: {
+    permissionText: {
         fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
         color: Colors.text,
-        marginBottom: Spacing.sm,
         textAlign: 'center',
+        marginBottom: Spacing.lg,
     },
     permissionButton: {
         backgroundColor: Colors.cta,
         paddingHorizontal: Spacing.xl,
         paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.full,
-        marginTop: Spacing.md,
+        borderRadius: BorderRadius.lg,
     },
     permissionButtonText: {
-        color: '#fff',
-        fontWeight: FontWeight.bold,
         fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
+        color: Colors.text,
     },
-    gradientTop: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, height: 80,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    gradientBottom: {
-        position: 'absolute',
-        bottom: 0, left: 0, right: 0, height: 120,
-        backgroundColor: 'rgba(0,0,0,0.4)',
-    },
-    counterContainer: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
+    loadingContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    counterInner: {
-        alignItems: 'center',
-    },
-    repCount: {
-        fontSize: 96,
-        fontWeight: '900',
-        textShadowColor: 'rgba(0,0,0,0.8)',
-        textShadowOffset: { width: 0, height: 4 },
-        textShadowRadius: 20,
-        textAlign: 'center',
-    },
-    repLabel: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
-        color: 'rgba(255,255,255,0.9)',
-        textTransform: 'uppercase',
-        letterSpacing: 3,
-        textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 10,
-        textAlign: 'center',
-    },
-    pulseCircle: {
-        position: 'absolute',
-        top: '50%', left: '50%',
-        width: 200, height: 200,
-        marginLeft: -100, marginTop: -100,
-        borderRadius: 100,
-        borderWidth: 4,
-    },
-    debugBadge: {
-        position: 'absolute',
-        top: Spacing.md, right: Spacing.md,
-        backgroundColor: '#f97316',
-        paddingHorizontal: Spacing.sm, paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
-    },
-    debugBadgeText: {
-        fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: '#fff', letterSpacing: 1,
-    },
     loadingOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        justifyContent: 'center', alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     loadingText: {
-        color: '#fff', fontSize: FontSize.md, fontWeight: FontWeight.bold, marginTop: Spacing.md,
+        fontSize: FontSize.md,
+        color: Colors.muted,
+        marginTop: Spacing.md,
+    },
+    statusContainer: {
+        position: 'absolute',
+        top: Spacing.md,
+        left: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.lg,
+    },
+    statusDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginRight: Spacing.sm,
+    },
+    statusText: {
+        fontSize: FontSize.sm,
+        color: Colors.text,
     },
 });
 

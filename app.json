@@ -30,7 +30,15 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "$(PRODUCT_NAME) a besoin de la caméra pour détecter vos mouvements",
+          "enableFrameProcessors": true
+        }
+      ],
+      "./plugins/withMediaPipeModel.js"
     ],
     "experiments": {
       "typedRoutes": true

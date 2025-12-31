@@ -691,7 +691,7 @@ export default function RepCounterScreen() {
                             {detectionMode === 'camera' && (
                                 <View style={styles.cameraPreviewContainer}>
                                     <PoseCameraView
-                                        facing={selectedExercise.preferredCameraView === 'front' ? 'front' : 'back'}
+                                        facing="front"
                                         showDebugOverlay={settings.debugCamera}
                                         exerciseType={selectedExercise.id}
                                         currentCount={repCount}
