@@ -43,6 +43,7 @@ interface AppState {
     addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
     addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
     deleteEntry: (id: string) => void;
+    updateEntry: (id: string, updates: Partial<Entry>) => void;
 
     // Actions - Settings
     updateWeeklyGoal: (goal: number) => void;
@@ -203,6 +204,14 @@ export const useAppStore = create<AppState>()(
             deleteEntry: (id) => {
                 set((state) => ({
                     entries: state.entries.filter((e) => e.id !== id),
+                }));
+            },
+
+            updateEntry: (id, updates) => {
+                set((state) => ({
+                    entries: state.entries.map((e) => 
+                        e.id === id ? { ...e, ...updates } : e
+                    ),
                 }));
             },
 

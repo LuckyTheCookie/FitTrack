@@ -86,8 +86,11 @@ export default function TodayScreen() {
   }, [deleteEntry, entries, recalculateAllQuests]);
 
   const handleEditEntry = useCallback((entry: Entry) => {
-    // TODO: Implémenter la navigation ou l'ouverture d'un formulaire d'édition
-    console.log('Edit entry:', entry);
+    setDetailModalVisible(false);
+    // Petit délai pour laisser le modal se fermer
+    setTimeout(() => {
+      bottomSheetRef.current?.edit(entry);
+    }, 100);
   }, []);
 
   return (

@@ -21,7 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Video } from 'lucide-react-native';
 import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui';
 import { useAppStore, useGamificationStore } from '../../stores';
-import type { EntryType } from '../../types';
+import type { EntryType, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import { nanoid } from 'nanoid/non-secure';
 
@@ -38,6 +38,7 @@ interface AddEntryFormProps {
     initialTab?: EntryType;
     prefillExercises?: string;
     includeAbsBlock?: boolean;
+    editEntry?: Entry | null;
 }
 
 type TabOption = { value: EntryType; label: string };
@@ -74,14 +75,16 @@ export function AddEntryForm({
     initialTab = 'home',
     prefillExercises = '',
     includeAbsBlock = false,
+    editEntry = null,
 }: AddEntryFormProps) {
-    const [activeTab, setActiveTab] = useState<EntryType>(initialTab);
+    const isEditMode = editEntry !== null;
+    const [activeTab, setActiveTab] = useState<EntryType>(editEntry?.type || initialTab);
     const [loading, setLoading] = useState(false);
     const [importModalVisible, setImportModalVisible] = useState(false);
     const [jsonInput, setJsonInput] = useState('');
 
-    // State pour l'intro step
-    const [hasStarted, setHasStarted] = useState(false);
+    // State pour l'intro step - skip intro in edit mode
+    const [hasStarted, setHasStarted] = useState(isEditMode);
 
     // Handler pour le tracking temps réel
     const handleRealTimeTracking = useCallback(() => {
@@ -89,38 +92,123 @@ export function AddEntryForm({
         router.push('/rep-counter');
     }, [onDismiss]);
 
+    // Parse exercises text to Exercise array for edit mode
+    const parseExercisesText = (text: string): Exercise[] => {
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length === 0) return [{ id: nanoid(), name: '', reps: '', sets: '3' }];
+        return lines.map(line => {
+            const match = line.match(/^([^:]+):\s*(\d+)x(\d+)/);
+            if (match) {
+                return {
+                    id: nanoid(),
+                    name: match[1].trim(),
+                    sets: match[2],
+                    reps: match[3],
+                };
+            }
+            return { id: nanoid(), name: line.trim(), reps: '', sets: '3' };
+        });
+    };
+
+    // Initialize values based on editEntry
+    const getInitialHomeWorkout = () => {
+        if (editEntry?.type === 'home') {
+            const e = editEntry as HomeWorkoutEntry;
+            return {
+                name: e.name || '',
+                duration: e.durationMinutes?.toString() || '',
+                exercises: parseExercisesText(e.exercises),
+                absBlock: !!e.absBlock,
+            };
+        }
+        return { name: '', duration: '', exercises: [{ id: nanoid(), name: '', reps: '', sets: '3' }], absBlock: includeAbsBlock };
+    };
+
+    const getInitialRun = () => {
+        if (editEntry?.type === 'run') {
+            const e = editEntry as RunEntry;
+            return {
+                km: e.distanceKm.toString(),
+                minutes: e.durationMinutes.toString(),
+                bpmAvg: e.bpmAvg?.toString() || '',
+                bpmMax: e.bpmMax?.toString() || '',
+                cardiacLoad: e.cardiacLoad?.toString() || '',
+            };
+        }
+        return { km: '', minutes: '', bpmAvg: '', bpmMax: '', cardiacLoad: '' };
+    };
+
+    const getInitialBeatSaber = () => {
+        if (editEntry?.type === 'beatsaber') {
+            const e = editEntry as BeatSaberEntry;
+            return {
+                duration: e.durationMinutes.toString(),
+                cardiacLoad: e.cardiacLoad?.toString() || '',
+                bpmAvg: e.bpmAvg?.toString() || '',
+                bpmMax: e.bpmMax?.toString() || '',
+            };
+        }
+        return { duration: '', cardiacLoad: '', bpmAvg: '', bpmMax: '' };
+    };
+
+    const getInitialMeal = () => {
+        if (editEntry?.type === 'meal') {
+            const e = editEntry as MealEntry;
+            const mealTimeKey = (Object.entries(mealTimeLabels).find(([_, v]) => v === e.mealName)?.[0] || 'lunch') as MealTime;
+            return { time: mealTimeKey, description: e.description };
+        }
+        return { time: 'lunch' as MealTime, description: '' };
+    };
+
+    const getInitialMeasure = () => {
+        if (editEntry?.type === 'measure') {
+            const e = editEntry as MeasureEntry;
+            return {
+                weight: e.weight?.toString() || '',
+                waist: e.waist?.toString() || '',
+                arm: e.arm?.toString() || '',
+                hips: e.hips?.toString() || '',
+            };
+        }
+        return { weight: '', waist: '', arm: '', hips: '' };
+    };
+
+    const initialHome = getInitialHomeWorkout();
+    const initialRun = getInitialRun();
+    const initialBs = getInitialBeatSaber();
+    const initialMeal = getInitialMeal();
+    const initialMeasure = getInitialMeasure();
+
     // Home workout - nouveau format
-    const [homeName, setHomeName] = useState('');
-    const [homeDuration, setHomeDuration] = useState('');
-    const [exercises, setExercises] = useState<Exercise[]>([
-        { id: nanoid(), name: '', reps: '', sets: '3' }
-    ]);
-    const [withAbsBlock, setWithAbsBlock] = useState(includeAbsBlock);
+    const [homeName, setHomeName] = useState(initialHome.name);
+    const [homeDuration, setHomeDuration] = useState(initialHome.duration);
+    const [exercises, setExercises] = useState<Exercise[]>(initialHome.exercises);
+    const [withAbsBlock, setWithAbsBlock] = useState(initialHome.absBlock);
 
     // Run
-    const [runKm, setRunKm] = useState('');
-    const [runMinutes, setRunMinutes] = useState('');
-    const [runBpmAvg, setRunBpmAvg] = useState('');
-    const [runBpmMax, setRunBpmMax] = useState('');
-    const [runCardiacLoad, setRunCardiacLoad] = useState('');
+    const [runKm, setRunKm] = useState(initialRun.km);
+    const [runMinutes, setRunMinutes] = useState(initialRun.minutes);
+    const [runBpmAvg, setRunBpmAvg] = useState(initialRun.bpmAvg);
+    const [runBpmMax, setRunBpmMax] = useState(initialRun.bpmMax);
+    const [runCardiacLoad, setRunCardiacLoad] = useState(initialRun.cardiacLoad);
 
     // Beat Saber
-    const [bsDuration, setBsDuration] = useState('');
-    const [bsCardiacLoad, setBsCardiacLoad] = useState('');
-    const [bsBpmAvg, setBsBpmAvg] = useState('');
-    const [bsBpmMax, setBsBpmMax] = useState('');
+    const [bsDuration, setBsDuration] = useState(initialBs.duration);
+    const [bsCardiacLoad, setBsCardiacLoad] = useState(initialBs.cardiacLoad);
+    const [bsBpmAvg, setBsBpmAvg] = useState(initialBs.bpmAvg);
+    const [bsBpmMax, setBsBpmMax] = useState(initialBs.bpmMax);
 
     // Meal
-    const [mealTime, setMealTime] = useState<MealTime>('lunch');
-    const [mealDescription, setMealDescription] = useState('');
+    const [mealTime, setMealTime] = useState<MealTime>(initialMeal.time);
+    const [mealDescription, setMealDescription] = useState(initialMeal.description);
 
     // Measure
-    const [weight, setWeight] = useState('');
-    const [waist, setWaist] = useState('');
-    const [arm, setArm] = useState('');
-    const [hips, setHips] = useState('');
+    const [weight, setWeight] = useState(initialMeasure.weight);
+    const [waist, setWaist] = useState(initialMeasure.waist);
+    const [arm, setArm] = useState(initialMeasure.arm);
+    const [hips, setHips] = useState(initialMeasure.hips);
 
-    const { addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure } = useAppStore();
+    const { addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, updateEntry } = useAppStore();
     const { addXp, updateQuestProgress } = useGamificationStore();
 
     // Ajouter un exercice
@@ -195,13 +283,24 @@ export function AddEntryForm({
                     const exercisesText = formatExercisesToText(validExercises);
                     const homeTotalReps = validExercises.reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
                     const homeDurationMinutes = homeDuration ? parseInt(homeDuration, 10) : undefined;
-                    addHomeWorkout({
-                        name: homeName.trim() || undefined,
-                        exercises: exercisesText,
-                        absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
-                        totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
-                        durationMinutes: homeDurationMinutes && homeDurationMinutes > 0 ? homeDurationMinutes : undefined,
-                    });
+                    
+                    if (isEditMode && editEntry) {
+                        updateEntry(editEntry.id, {
+                            name: homeName.trim() || undefined,
+                            exercises: exercisesText,
+                            absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
+                            totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
+                            durationMinutes: homeDurationMinutes && homeDurationMinutes > 0 ? homeDurationMinutes : undefined,
+                        });
+                    } else {
+                        addHomeWorkout({
+                            name: homeName.trim() || undefined,
+                            exercises: exercisesText,
+                            absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
+                            totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
+                            durationMinutes: homeDurationMinutes && homeDurationMinutes > 0 ? homeDurationMinutes : undefined,
+                        });
+                    }
                     break;
 
                 case 'run':
@@ -215,13 +314,26 @@ export function AddEntryForm({
                         Alert.alert('Erreur', 'Durée invalide');
                         return;
                     }
-                    addRun({
-                        distanceKm: km,
-                        durationMinutes: minutes,
-                        bpmAvg: runBpmAvg ? parseInt(runBpmAvg, 10) : undefined,
-                        bpmMax: runBpmMax ? parseInt(runBpmMax, 10) : undefined,
-                        cardiacLoad: runCardiacLoad ? parseInt(runCardiacLoad, 10) : undefined,
-                    });
+                    const avgSpeed = minutes > 0 ? Math.round((km / (minutes / 60)) * 10) / 10 : 0;
+                    
+                    if (isEditMode && editEntry) {
+                        updateEntry(editEntry.id, {
+                            distanceKm: km,
+                            durationMinutes: minutes,
+                            avgSpeed,
+                            bpmAvg: runBpmAvg ? parseInt(runBpmAvg, 10) : undefined,
+                            bpmMax: runBpmMax ? parseInt(runBpmMax, 10) : undefined,
+                            cardiacLoad: runCardiacLoad ? parseInt(runCardiacLoad, 10) : undefined,
+                        });
+                    } else {
+                        addRun({
+                            distanceKm: km,
+                            durationMinutes: minutes,
+                            bpmAvg: runBpmAvg ? parseInt(runBpmAvg, 10) : undefined,
+                            bpmMax: runBpmMax ? parseInt(runBpmMax, 10) : undefined,
+                            cardiacLoad: runCardiacLoad ? parseInt(runCardiacLoad, 10) : undefined,
+                        });
+                    }
                     break;
 
                 case 'beatsaber':
@@ -235,16 +347,25 @@ export function AddEntryForm({
                     // Store rounded minutes (at least 1)
                     const bsMinutesRounded = Math.max(1, Math.round(bsMinutes));
 
-                    addBeatSaber({
-                        durationMinutes: bsMinutesRounded,
-                        cardiacLoad: bsCardiacLoad ? parseInt(bsCardiacLoad, 10) : undefined,
-                        bpmAvg: bsBpmAvg ? parseInt(bsBpmAvg, 10) : undefined,
-                        bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
-                    });
+                    if (isEditMode && editEntry) {
+                        updateEntry(editEntry.id, {
+                            durationMinutes: bsMinutesRounded,
+                            cardiacLoad: bsCardiacLoad ? parseInt(bsCardiacLoad, 10) : undefined,
+                            bpmAvg: bsBpmAvg ? parseInt(bsBpmAvg, 10) : undefined,
+                            bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
+                        });
+                    } else {
+                        addBeatSaber({
+                            durationMinutes: bsMinutesRounded,
+                            cardiacLoad: bsCardiacLoad ? parseInt(bsCardiacLoad, 10) : undefined,
+                            bpmAvg: bsBpmAvg ? parseInt(bsBpmAvg, 10) : undefined,
+                            bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
+                        });
 
-                    addXp(15 + Math.floor(bsMinutesRounded / 5), `Beat Saber (${bsMinutesRounded}min)`); // 15 XP base + 1 XP / 5min
-                    updateQuestProgress('duration', bsMinutesRounded);
-                    updateQuestProgress('workouts', 1);
+                        addXp(15 + Math.floor(bsMinutesRounded / 5), `Beat Saber (${bsMinutesRounded}min)`);
+                        updateQuestProgress('duration', bsMinutesRounded);
+                        updateQuestProgress('workouts', 1);
+                    }
                     break;
 
                 case 'meal':
@@ -252,10 +373,17 @@ export function AddEntryForm({
                         Alert.alert('Erreur', 'Décris ce que tu as mangé');
                         return;
                     }
-                    addMeal({
-                        mealName: mealTimeLabels[mealTime],
-                        description: mealDescription.trim(),
-                    });
+                    if (isEditMode && editEntry) {
+                        updateEntry(editEntry.id, {
+                            mealName: mealTimeLabels[mealTime],
+                            description: mealDescription.trim(),
+                        });
+                    } else {
+                        addMeal({
+                            mealName: mealTimeLabels[mealTime],
+                            description: mealDescription.trim(),
+                        });
+                    }
                     break;
 
                 case 'measure':
@@ -264,26 +392,37 @@ export function AddEntryForm({
                         Alert.alert('Erreur', 'Ajoute au moins une mesure');
                         return;
                     }
-                    addMeasure({
-                        weight: weight ? parseFloat(weight) : undefined,
-                        waist: waist ? parseFloat(waist) : undefined,
-                        arm: arm ? parseFloat(arm) : undefined,
-                        hips: hips ? parseFloat(hips) : undefined,
-                    });
+                    if (isEditMode && editEntry) {
+                        updateEntry(editEntry.id, {
+                            weight: weight ? parseFloat(weight) : undefined,
+                            waist: waist ? parseFloat(waist) : undefined,
+                            arm: arm ? parseFloat(arm) : undefined,
+                            hips: hips ? parseFloat(hips) : undefined,
+                        });
+                    } else {
+                        addMeasure({
+                            weight: weight ? parseFloat(weight) : undefined,
+                            waist: waist ? parseFloat(waist) : undefined,
+                            arm: arm ? parseFloat(arm) : undefined,
+                            hips: hips ? parseFloat(hips) : undefined,
+                        });
+                    }
                     break;
             }
 
-            // XP Reward generic for other types
-            if (activeTab === 'home') {
-                addXp(50, `Séance maison : ${homeName || 'Workout'}`); // Base XP for workout
-                updateQuestProgress('workouts', 1);
-                // Use validExercises calculated above
-                const reps = exercises.filter(ex => ex.name.trim()).reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
-                if (reps > 0) updateQuestProgress('exercises', reps);
-            } else if (activeTab === 'run') {
-                const km = parseFloat(runKm);
-                addXp(30 + Math.floor(km * 5), `Running (${km}km)`);
-                updateQuestProgress('workouts', 1);
+            // XP Reward generic for other types (only in add mode, not edit)
+            if (!isEditMode) {
+                if (activeTab === 'home') {
+                    addXp(50, `Séance maison : ${homeName || 'Workout'}`); // Base XP for workout
+                    updateQuestProgress('workouts', 1);
+                    // Use validExercises calculated above
+                    const reps = exercises.filter(ex => ex.name.trim()).reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
+                    if (reps > 0) updateQuestProgress('exercises', reps);
+                } else if (activeTab === 'run') {
+                    const km = parseFloat(runKm);
+                    addXp(30 + Math.floor(km * 5), `Running (${km}km)`);
+                    updateQuestProgress('workouts', 1);
+                }
             }
 
             // Reset form
@@ -641,7 +780,7 @@ export function AddEntryForm({
                 )}
 
                 <Button
-                    title="Sauvegarder"
+                    title={isEditMode ? "Mettre à jour" : "Sauvegarder"}
                     variant="primary"
                     onPress={handleSubmit}
                     loading={loading}

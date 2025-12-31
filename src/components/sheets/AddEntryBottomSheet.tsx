@@ -8,10 +8,12 @@ import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/botto
 import { AddEntryForm } from '../forms';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import type { Entry } from '../../types';
 
 export interface AddEntryBottomSheetRef {
     present: () => void;
     dismiss: () => void;
+    edit: (entry: Entry) => void;
 }
 
 interface AddEntryBottomSheetProps {
@@ -23,20 +25,30 @@ export const AddEntryBottomSheet = forwardRef<AddEntryBottomSheetRef, AddEntryBo
         const bottomSheetRef = useRef<BottomSheet>(null);
         const snapPoints = useMemo(() => ['85%'], []);
         const [formKey, setFormKey] = useState(0);
+        const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
 
         useImperativeHandle(ref, () => ({
-            present: () => bottomSheetRef.current?.expand(),
+            present: () => {
+                setEditingEntry(null);
+                bottomSheetRef.current?.expand();
+            },
             dismiss: () => bottomSheetRef.current?.close(),
+            edit: (entry: Entry) => {
+                setEditingEntry(entry);
+                bottomSheetRef.current?.expand();
+            },
         }));
 
         const handleSuccess = useCallback(() => {
             bottomSheetRef.current?.close();
+            setEditingEntry(null);
             onSuccess?.();
         }, [onSuccess]);
 
         const handleSheetChanges = useCallback((index: number) => {
             if (index === -1) {
                 setFormKey(prev => prev + 1);
+                setEditingEntry(null);
             }
         }, []);
 
@@ -54,6 +66,7 @@ export const AddEntryBottomSheet = forwardRef<AddEntryBottomSheetRef, AddEntryBo
 
         const handleDismiss = useCallback(() => {
             bottomSheetRef.current?.close();
+            setEditingEntry(null);
         }, []);
 
         return (
@@ -68,8 +81,15 @@ export const AddEntryBottomSheet = forwardRef<AddEntryBottomSheetRef, AddEntryBo
                 onChange={handleSheetChanges}
             >
                 <BottomSheetView style={styles.contentContainer}>
-                    <Text style={styles.title}>Nouvelle entrée</Text>
-                    <AddEntryForm key={formKey} onSuccess={handleSuccess} onDismiss={handleDismiss} />
+                    <Text style={styles.title}>
+                        {editingEntry ? 'Modifier l\'entrée' : 'Nouvelle entrée'}
+                    </Text>
+                    <AddEntryForm 
+                        key={formKey} 
+                        onSuccess={handleSuccess} 
+                        onDismiss={handleDismiss}
+                        editEntry={editingEntry}
+                    />
                 </BottomSheetView>
             </BottomSheet>
         );
