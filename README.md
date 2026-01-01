@@ -1,196 +1,59 @@
-# FitTrack - Application de Suivi Fitness
+# 🏋️‍♂️ FitTrack
 
-Application React Native / Expo pour tracker tes séances de sport, courses, repas et mensurations avec gamification.
+> **Votre compagnon fitness personnel, élégant et respectueux de votre vie privée.**
+>
+> *Construit avec React Native 0.81, Expo & TypeScript.*
 
-## 🚀 Démarrage
+[![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-000020.svg?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React_Native-0.81-61DAFB.svg?style=for-the-badge&logo=react&logoColor=white)](https://reactnative.dev)
+[![Offline First](https://img.shields.io/badge/Offline-First-orange.svg?style=for-the-badge&logo=rss&logoColor=white)]()
+[![Privacy](https://img.shields.io/badge/Privacy-100%25-green.svg?style=for-the-badge&logo=shield&logoColor=white)]()
+[![Health Connect](https://img.shields.io/badge/Health_Connect-Android-3DDC84.svg?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/health-and-fitness/guides/health-connect)
 
-```bash
-# Installation des dépendances
-bun install
+**FitTrack** est une application de suivi fitness moderne conçue avec une philosophie simple : **vos données vous appartiennent**. Elle combine un design *Glassmorphism* sombre ultra-soigné, une gamification motivante et des fonctionnalités avancées (Health Connect, AI Rep Counter) tout en fonctionnant parfaitement **hors ligne**.
 
-# Lancer l'app en mode développement
-bunx expo start
+---
 
-# Lancer sur Android (dev build)
-bunx expo run:android
+## 🔒 Vie Privée & Philosophie "Clean App"
 
-# Lancer sur iOS
-bunx expo run:ios
-```
+**Parce que votre santé ne regarde que VOUS**, FitTrack a été pensée pour être totalement transparente :
 
-## 📱 Fonctionnalités
+- **🏠 100% Local & Offline** : L'application fonctionne sans internet. Vos données sont stockées localement sur votre appareil.
+- **📷 Caméra Sécurisée** : L'utilisation de la caméra pour le *Rep Counter* sert uniquement à la détection de mouvement en temps réel. **Aucune image n'est enregistrée ni envoyée sur un serveur.**
+- **🛡️ Alternative Accéléromètre** : Soucieux de votre vie privée ? Un mode "Capteurs uniquement" permet de compter vos répétitions sans jamais activer la caméra.
+- **👻 Social (Optionnel)** : Les fonctionnalités sociales sont facultatives et en Bêta. Si vous créez un compte, vous gardez le contrôle total.
+- **🗑️ Suppression Totale** : Un bouton "Delete Account" supprime instantanément votre compte et toutes vos données associées en un clic.
+- **💸 Pas de vente de données** : Jamais. C'est un projet passion, pas un produit commercial.
 
-### MVP Implémenté
+---
 
-- **Today Screen**
-  - Weekly goal avec progress ring
-  - Best streak affiché
-  - Vue semaine avec jours cochés
-  - Bouton CTA "Start New Workout"
-  - Séances récentes en scroll horizontal
-  - Progress mensuel en grille
+## 📱 Fonctionnalités Principales
 
-- **Ajout d'entrées** (4 types)
-  - 🏠 **Séance maison** : nom, exercices (texte libre), bloc abdos
-  - 🏃 **Course** : distance, durée, vitesse calculée, BPM
-  - 🍽️ **Repas** : nom + description libre
-  - 📏 **Mensurations** : poids, taille, bras, hanches
+### 🎯 Tableau de Bord & Suivi
+- **Today Screen** : Vue synthétique avec anneau de progression hebdo et calendrier.
+- **Suivi Complet** : 4 modes dédiés (Maison, Course, Repas, Mensurations).
+- **Historique** : Journal complet avec filtres et suppression rapide.
+- **Health Connect (Android)** : Importation automatique et intelligente de vos séances depuis d'autres apps.
 
-- **Progress Screen**
-  - Streak actuel et meilleur
-  - Stats globales (total séances, km, etc.)
-  - Graphique séances/mois (SVG)
-  - Évolution du poids
-  - Badges débloqués
+### 🤖 Rep Counter Intelligent
+Posez votre téléphone et laissez l'IA travailler pour vous :
+- **Détection** : Analyse via Caméra (Pose Detection locale) ou Accéléromètre.
+- **Exercices** : Support des Pompes, Squats, Abdos, Jumping Jacks.
+- **Feedback** : Animations fluides et coaching visuel.
 
-- **Tools Screen**
-  - Générateur de séance "chambre"
-  - Paramètres : durée (10/20/30), focus (haut/abdos/jambes/full), intensité
-  - Génère une liste d'exercices avec sets/reps
-  - Bloc abdos optionnel
-  - Bouton "Démarrer cette séance" qui crée l'entrée
+### ⚡ Outils & Gamification
+- **Générateur de Séances** : Créez des entraînements sur mesure (Durée, Focus, Intensité).
+- **Streak System** : Maintenez votre série pour débloquer des récompenses visuelles.
+- **Badges** : Plus de 10 trophées à décrocher (Du "Premier Pas" à la "Légende").
+- **Statistiques** : Graphiques interactifs pour visualiser votre évolution (Poids, Activité).
 
-- **Workout Screen**
-  - Historique complet de toutes les entrées
-  - Filtres par type (sport/repas/mesures)
-  - Suppression par appui long
+---
 
-- **Settings Screen**
-  - Modifier l'objectif hebdomadaire
-  - Export JSON de la semaine (copie dans le clipboard)
-  - Stats des données
-  - Réinitialisation complète
+## 🔮 État du Projet
 
-### Gamification
+⚠️ Note : Cette application, initialement développée pour un usage personnel, est en phase bêta. Certaines fonctionnalités peuvent être incomplètes ou instables. Votre feedback est précieux !
+Contributions et suggestions sont les bienvenues via les issues ou PRs sur GitHub.
 
-- **Streak** : jours consécutifs avec activité sport
-- **Badges** :
-  - Premier pas (1ère séance)
-  - Semaine de feu (7 jours)
-  - Mois de fer (30 jours)
-  - Régulier (10 séances)
-  - Déterminé (50 séances)
-  - Légende (100 séances)
-  - Coureur (10km)
-  - Marathon (50km)
-  - Constant (4 semaines objectif atteint)
+--- 
 
-## 🏗️ Architecture
-
-```
-fittrack-app/
-├── app/                    # Expo Router - Écrans
-│   ├── _layout.tsx         # Layout avec tabs
-│   ├── index.tsx           # Today Screen
-│   ├── progress.tsx        # Progress Screen
-│   ├── tools.tsx           # Tools Screen (générateur)
-│   ├── workout.tsx         # Historique
-│   └── settings.tsx        # Paramètres
-│
-├── src/
-│   ├── components/
-│   │   ├── ui/             # Composants UI réutilisables
-│   │   │   ├── GlassCard.tsx
-│   │   │   ├── ProgressRing.tsx
-│   │   │   ├── Button.tsx
-│   │   │   ├── InputField.tsx
-│   │   │   ├── SegmentedControl.tsx
-│   │   │   ├── DayBadge.tsx
-│   │   │   ├── WorkoutCard.tsx
-│   │   │   ├── MonthCard.tsx
-│   │   │   ├── SectionHeader.tsx
-│   │   │   ├── BadgeDisplay.tsx
-│   │   │   └── EmptyState.tsx
-│   │   └── forms/
-│   │       └── AddEntryForm.tsx
-│   │
-│   ├── stores/
-│   │   └── appStore.ts     # Zustand store avec persistence
-│   │
-│   ├── storage/
-│   │   └── mmkv.ts         # AsyncStorage adapter
-│   │
-│   ├── utils/
-│   │   ├── date.ts         # Helpers date (date-fns)
-│   │   ├── workoutGenerator.ts
-│   │   ├── badges.ts
-│   │   └── export.ts
-│   │
-│   ├── constants/
-│   │   └── theme.ts        # Couleurs, spacing, etc.
-│   │
-│   └── types/
-│       └── index.ts        # Types TypeScript
-│
-└── assets/                 # Images, icônes
-```
-
-## 🎨 Design
-
-- **Thème sombre** avec effet glassmorphism
-- **Couleurs principales** :
-  - Background: `#0b0c0f`
-  - Cards: `rgba(26, 27, 34, 0.8)`
-  - CTA: `#d79686` → `#e3a090` (gradient)
-  - Teal accent: `#1f6a66`
-- **Typo** : System fonts (SF Pro, Roboto, etc.)
-- **Bordures arrondies** : 14-24px
-
-## 🛠️ Stack Technique
-
-| Outil | Usage |
-|-------|-------|
-| **Expo SDK 54** | Framework React Native |
-| **Expo Router** | Navigation file-based |
-| **TypeScript** | Typage statique |
-| **Zustand** | State management |
-| **AsyncStorage** | Persistence locale |
-| **date-fns** | Manipulation de dates |
-| **react-native-svg** | Graphiques |
-| **expo-linear-gradient** | Dégradés |
-| **expo-clipboard** | Export JSON |
-
-## 📋 Choix Techniques
-
-### Pourquoi AsyncStorage vs MMKV ?
-AsyncStorage est compatible Expo Go sans build natif. Pour une app en production, MMKV serait plus performant mais nécessite un dev build.
-
-### Pourquoi Zustand ?
-- Léger (~1kb)
-- API simple (hooks)
-- Persistence facile
-- Pas de boilerplate
-
-### Pourquoi pas de base d'aliments ?
-MVP : texte libre pour les repas. Une base de données nutritionnelle peut être ajoutée en V2.
-
-## 🚀 Next Steps (V2)
-
-### Timer pendant les séances
-- Compte à rebours pour les repos
-- Timer pour les exercices en durée
-- Mode "séance guidée"
-
-### Coaching léger
-- Suggestions basées sur l'historique
-- Alertes si streak en danger
-- Recommandations progression
-
-### Intégrations santé
-- Google Fit / Apple Health
-- Import automatique des courses
-- Sync des données sommeil/pas
-
-### Sync & Compte
-- Backend (Supabase, Firebase)
-- Authentification
-- Multi-device
-
-### Notifications intelligentes
-- Rappels séances
-- Félicitations streak
-- Suggestions horaires
-
-## 📄 License
-
-MIT - Usage personnel, publiable sur stores.
+Développé avec ❤️, de la whey et zéro tracker publicitaire par Lucky 💪

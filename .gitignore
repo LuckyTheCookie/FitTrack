@@ -13,6 +13,7 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
@@ -42,3 +43,4 @@ yarn-error.*
 .env
 supabase/
 google-services.json
+pushgithub.js
