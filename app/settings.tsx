@@ -33,13 +33,15 @@ import {
   Zap,
   History,
   Sparkles,
+  Users,
 } from 'lucide-react-native';
 import { 
   GlassCard, 
   InputField,
   ExportModal,
 } from '../src/components/ui';
-import { useAppStore, useGamificationStore } from '../src/stores';
+import { useAppStore, useGamificationStore, useSocialStore } from '../src/stores';
+import { isSocialAvailable } from '../src/services/supabase';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
@@ -147,6 +149,7 @@ export default function SettingsScreen() {
   } = useAppStore();
 
   const { recalculateFromScratch } = useGamificationStore();
+  const { socialEnabled, setSocialEnabled, isAuthenticated } = useSocialStore();
 
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
   const [exportModalVisible, setExportModalVisible] = useState(false);
@@ -364,6 +367,47 @@ export default function SettingsScreen() {
           />
         </GlassCard>
 
+        {/* SOCIAL */}
+        {isSocialAvailable() && (
+          <>
+            <SectionTitle title="Social" delay={360} />
+            <GlassCard style={styles.settingsCard}>
+              <SettingItem
+                icon={<Users size={20} color="#22d3ee" />}
+                iconColor="#22d3ee"
+                title="Fonctions sociales"
+                subtitle={socialEnabled ? 'Classement et amis activés' : 'Mode hors-ligne'}
+                showChevron={false}
+                rightElement={
+                  <Switch
+                    value={socialEnabled}
+                    onValueChange={setSocialEnabled}
+                    trackColor={{ false: Colors.card, true: Colors.teal }}
+                    thumbColor="#fff"
+                  />
+                }
+                delay={380}
+              />
+              {isAuthenticated && (
+                <SettingItem
+                  icon={<Eye size={20} color="#a78bfa" />}
+                  iconColor="#a78bfa"
+                  title="Profil public"
+                  subtitle="Visible dans le classement global"
+                  showChevron={false}
+                  rightElement={
+                    <View style={styles.visibilityBadge}>
+                      <Eye size={14} color="#4ade80" />
+                      <Text style={styles.visibilityText}>Public</Text>
+                    </View>
+                  }
+                  delay={400}
+                />
+              )}
+            </GlassCard>
+          </>
+        )}
+
         {/* DATA MANAGEMENT */}
         <SectionTitle title="Données" delay={380} />
         <GlassCard style={styles.settingsCard}>
@@ -404,7 +448,6 @@ export default function SettingsScreen() {
                 <Rocket size={16} color={Colors.cta} />
                 <Text style={styles.futureTitle}>Prochainement</Text>
               </View>
-              <Text style={styles.futureItem}>• Social et classement</Text>
               <Text style={styles.futureItem}>• Sync cloud & compte</Text>
               <Text style={styles.futureItem}>• Google Fit / Apple Health</Text>
               <Text style={styles.futureItem}>• Notifications intelligentes</Text>

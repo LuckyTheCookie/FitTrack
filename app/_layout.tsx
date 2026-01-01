@@ -5,7 +5,7 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
-import { LayoutDashboard, Dumbbell, ChartBar, Wrench, Settings, Trophy } from 'lucide-react-native';
+import { LayoutDashboard, Dumbbell, ChartBar, Wrench, Settings, Trophy, Users } from 'lucide-react-native';
 import { Colors, Spacing } from '../src/constants';
 
 // Configuration des icônes
@@ -13,6 +13,7 @@ const TAB_CONFIG = [
     { name: 'index', label: 'Today', Icon: LayoutDashboard },
     { name: 'workout', label: 'Workout', Icon: Dumbbell },
     { name: 'gamification', label: 'Ploppy', Icon: Trophy },
+    { name: 'social', label: 'Social', Icon: Users },
     { name: 'progress', label: 'Progress', Icon: ChartBar },
     { name: 'tools', label: 'Tools', Icon: Wrench },
     { name: 'settings', label: 'Settings', Icon: Settings },
@@ -157,6 +158,7 @@ export default function Layout() {
                 }} 
             />
             <Tabs.Screen name="gamification" options={{ title: "Ploppy" }} />
+            <Tabs.Screen name="social" options={{ title: "Social" }} />
             <Tabs.Screen name="progress" options={{ title: "Progress" }} />
             <Tabs.Screen 
                 name="tools" 

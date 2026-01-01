@@ -210,7 +210,7 @@ export const useAppStore = create<AppState>()(
             updateEntry: (id, updates) => {
                 set((state) => ({
                     entries: state.entries.map((e) => 
-                        e.id === id ? { ...e, ...updates } : e
+                        e.id === id ? { ...e, ...updates } as Entry : e
                     ),
                 }));
             },

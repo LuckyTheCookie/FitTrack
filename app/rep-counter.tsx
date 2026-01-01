@@ -21,7 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { router, useFocusEffect } from 'expo-router';
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
-import { Audio } from 'expo-av';
+import { useAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import Animated, {
     useSharedValue,
@@ -354,8 +354,8 @@ export default function RepCounterScreen() {
     const [motivationalMessage, setMotivationalMessage] = useState<{ text: string; emoji: string } | null>(null);
     const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
-    // Sound effect
-    const soundRef = useRef<Audio.Sound | null>(null);
+    // Sound effect avec expo-audio
+    const repSound = useAudioPlayer(require('../assets/rep.mp3'));
 
     // Pour la détection de mouvement améliorée
     const lastRepTime = useRef(0);
@@ -372,28 +372,6 @@ export default function RepCounterScreen() {
     const countScale = useSharedValue(1);
     const pulseOpacity = useSharedValue(0);
     const messageOpacity = useSharedValue(0);
-
-    // Load sound on mount
-    useEffect(() => {
-        const loadSound = async () => {
-            try {
-                const { sound } = await Audio.Sound.createAsync(
-                    require('../assets/rep.mp3'),
-                    { shouldPlay: false, volume: 0.7 }
-                );
-                soundRef.current = sound;
-            } catch (error) {
-                console.log('[RepCounter] Could not load sound:', error);
-            }
-        };
-        loadSound();
-
-        return () => {
-            if (soundRef.current) {
-                soundRef.current.unloadAsync();
-            }
-        };
-    }, []);
 
     // State pour le modal de confirmation de sortie
     const [showExitModal, setShowExitModal] = useState(false);
@@ -460,15 +438,15 @@ export default function RepCounterScreen() {
     }, [step]);
 
     // Play sound
-    const playRepSound = useCallback(async () => {
+    const playRepSound = useCallback(() => {
         try {
-            if (soundRef.current) {
-                await soundRef.current.replayAsync();
-            }
+            // Seek to beginning and play
+            repSound.seekTo(0);
+            repSound.play();
         } catch (error) {
             // Ignore sound errors
         }
-    }, []);
+    }, [repSound]);
 
     // Show motivational message
     const showMotivationalMessage = useCallback((feedback?: string) => {
