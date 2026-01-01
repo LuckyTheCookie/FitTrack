@@ -44,3 +44,4 @@ yarn-error.*
 supabase/
 google-services.json
 pushgithub.js
+scripts/release.js
