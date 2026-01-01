@@ -37,6 +37,7 @@ export interface GamificationState {
     recalculateFromScratch: (totals: { exercises: number; workouts: number; duration: number; distance: number; totalWorkouts: number }) => void;
     generateWeeklyQuests: () => void;
     checkAndRefreshQuests: () => void; // Vérifie si on doit régénérer les quêtes
+    restoreFromBackup: (data: { xp: number; level: number; history: GamificationLog[]; quests: Quest[] }) => void;
 }
 
 export interface GamificationLog {
@@ -377,6 +378,16 @@ export const useGamificationStore = create<GamificationState>()(
                 if (lastQuestWeek !== currentWeekId) {
                     generateWeeklyQuests();
                 }
+            },
+
+            restoreFromBackup: (data) => {
+                set({
+                    xp: data.xp || 0,
+                    level: data.level || 1,
+                    rank: getRank(data.level || 1),
+                    history: data.history || [],
+                    quests: data.quests || [],
+                });
             },
         }),
         {

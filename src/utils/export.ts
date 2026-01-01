@@ -2,9 +2,117 @@
 // EXPORT JSON HEBDOMADAIRE - FitTrack App
 // ============================================================================
 
-import type { Entry, WeeklyExport, StreakInfo, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../types';
+import type { Entry, WeeklyExport, StreakInfo, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry, BadgeId } from '../types';
+import type { GamificationLog, Quest } from '../stores/gamificationStore';
 import { getWeekExportRange, getCurrentWeekStart, getCurrentWeekEnd } from './date';
 import { format } from 'date-fns';
+
+// ============================================================================
+// FULL BACKUP TYPES
+// ============================================================================
+
+export interface FullBackup {
+    version: number;
+    exportedAt: string;
+    app: {
+        entries: Entry[];
+        settings: {
+            weeklyGoal: number;
+            includeAbsBlock?: boolean;
+            hiddenTabs: {
+                workout: boolean;
+                tools: boolean;
+            };
+            preferCameraDetection?: boolean;
+            debugCamera?: boolean;
+            units?: {
+                weight: 'kg' | 'lbs';
+                distance: 'km' | 'miles';
+            };
+        };
+        unlockedBadges: BadgeId[];
+    };
+    gamification: {
+        xp: number;
+        level: number;
+        history: GamificationLog[];
+        quests: Quest[];
+    };
+}
+
+// ============================================================================
+// FULL BACKUP/RESTORE
+// ============================================================================
+
+export function generateFullBackup(
+    appState: {
+        entries: Entry[];
+        settings: any;
+        unlockedBadges: BadgeId[];
+    },
+    gamificationState: {
+        xp: number;
+        level: number;
+        history: GamificationLog[];
+        quests: Quest[];
+    }
+): FullBackup {
+    return {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        app: {
+            entries: appState.entries,
+            settings: {
+                weeklyGoal: appState.settings?.weeklyGoal ?? 4,
+                hiddenTabs: {
+                    workout: appState.settings?.hiddenTabs?.workout ?? false,
+                    tools: appState.settings?.hiddenTabs?.tools ?? false,
+                },
+                preferCameraDetection: appState.settings?.preferCameraDetection,
+                debugCamera: appState.settings?.debugCamera,
+                units: appState.settings?.units,
+            },
+            unlockedBadges: appState.unlockedBadges,
+        },
+        gamification: {
+            xp: gamificationState.xp,
+            level: gamificationState.level,
+            history: gamificationState.history,
+            quests: gamificationState.quests,
+        },
+    };
+}
+
+export function exportFullBackup(backup: FullBackup): string {
+    return JSON.stringify(backup, null, 2);
+}
+
+export function parseBackup(jsonString: string): FullBackup | null {
+    try {
+        const data = JSON.parse(jsonString);
+        
+        // Validate structure
+        if (!data.version || !data.app || !data.gamification) {
+            console.error('Invalid backup format: missing required fields');
+            return null;
+        }
+        
+        // Validate entries array
+        if (!Array.isArray(data.app.entries)) {
+            console.error('Invalid backup format: entries is not an array');
+            return null;
+        }
+        
+        return data as FullBackup;
+    } catch (error) {
+        console.error('Failed to parse backup:', error);
+        return null;
+    }
+}
+
+// ============================================================================
+// WEEKLY EXPORT (existing functionality)
+// ============================================================================
 
 export function generateWeeklyExport(
   entries: Entry[],

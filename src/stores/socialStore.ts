@@ -48,6 +48,10 @@ interface SocialState {
     // Actions - Social toggle
     setSocialEnabled: (enabled: boolean) => void;
     
+    // Actions - RGPD
+    disableSocialAndDeleteData: () => Promise<void>;
+    updateLeaderboardVisibility: (isPublic: boolean) => Promise<void>;
+    
     // Actions - Sync
     syncStats: (stats: {
         workouts: number;
@@ -191,6 +195,42 @@ export const useSocialStore = create<SocialState>()(
                 // Also update profile if authenticated
                 if (get().isAuthenticated) {
                     SocialService.updateProfile({ social_enabled: enabled });
+                }
+            },
+
+            // ========================================
+            // RGPD - DATA DELETION
+            // ========================================
+
+            disableSocialAndDeleteData: async () => {
+                try {
+                    // Delete all user data from Supabase
+                    await SocialService.deleteAllUserData();
+                    
+                    // Reset local state
+                    set({ 
+                        isAuthenticated: false, 
+                        profile: null,
+                        socialEnabled: false,
+                        globalLeaderboard: [],
+                        friendsLeaderboard: [],
+                        friends: [],
+                        pendingRequests: [],
+                        unreadEncouragements: [],
+                        recentEncouragements: [],
+                    });
+                } catch (error) {
+                    console.error('Failed to delete user data:', error);
+                    throw error;
+                }
+            },
+
+            updateLeaderboardVisibility: async (isPublic) => {
+                await SocialService.updateLeaderboardVisibility(isPublic);
+                // Update local profile
+                const profile = get().profile;
+                if (profile) {
+                    set({ profile: { ...profile, is_public: isPublic } });
                 }
             },
 

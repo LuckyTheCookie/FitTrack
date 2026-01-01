@@ -15,6 +15,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Constants from 'expo-constants';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as DocumentPicker from 'expo-document-picker';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { 
@@ -38,6 +41,9 @@ import {
   FileText,
   Globe,
   UserX,
+  Heart,
+  Upload,
+  Save,
 } from 'lucide-react-native';
 import { 
   GlassCard, 
@@ -47,6 +53,7 @@ import {
 import { useAppStore, useGamificationStore, useSocialStore } from '../src/stores';
 import { isSocialAvailable } from '../src/services/supabase';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
+import { generateFullBackup, exportFullBackup, parseBackup } from '../src/utils/export';
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
@@ -150,9 +157,15 @@ export default function SettingsScreen() {
     updateSettings,
     resetAllData,
     getStreak,
+    unlockedBadges,
+    restoreFromBackup: restoreAppFromBackup,
   } = useAppStore();
 
-  const { recalculateFromScratch } = useGamificationStore();
+  const gamificationState = useGamificationStore();
+  const { 
+    recalculateFromScratch,
+    restoreFromBackup: restoreGamificationFromBackup,
+  } = gamificationState;
   const { 
     socialEnabled, 
     setSocialEnabled, 
@@ -230,6 +243,111 @@ export default function SettingsScreen() {
       ]
     );
   }, [entries, recalculateFromScratch]);
+
+  // Sauvegarde complète
+  const handleFullBackup = useCallback(async () => {
+    try {
+      const backup = generateFullBackup(
+        { entries, settings, unlockedBadges },
+        {
+          xp: gamificationState.xp,
+          level: gamificationState.level,
+          history: gamificationState.history,
+          quests: gamificationState.quests,
+        }
+      );
+      
+      const jsonString = exportFullBackup(backup);
+      const filename = `fittrack-backup-${new Date().toISOString().split('T')[0]}.json`;
+      const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+      
+      await FileSystem.writeAsStringAsync(fileUri, jsonString, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/json',
+          dialogTitle: 'Sauvegarder FitTrack',
+        });
+      } else {
+        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      Alert.alert('Erreur', 'Impossible de créer la sauvegarde');
+    }
+  }, [entries, settings, unlockedBadges, gamificationState]);
+
+  // Restauration depuis fichier
+  const handleRestore = useCallback(async () => {
+    Alert.alert(
+      '⚠️ Restaurer une sauvegarde ?',
+      'Cette action remplacera TOUTES tes données actuelles par celles de la sauvegarde. Cette action est irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Choisir un fichier',
+          onPress: async () => {
+            try {
+              const result = await DocumentPicker.getDocumentAsync({
+                type: 'application/json',
+                copyToCacheDirectory: true,
+              });
+              
+              if (result.canceled || !result.assets?.[0]) {
+                return;
+              }
+              
+              const fileUri = result.assets[0].uri;
+              const jsonString = await FileSystem.readAsStringAsync(fileUri, {
+                encoding: FileSystem.EncodingType.UTF8,
+              });
+              
+              const backup = parseBackup(jsonString);
+              
+              if (!backup) {
+                Alert.alert('Erreur', 'Le fichier de sauvegarde est invalide ou corrompu');
+                return;
+              }
+              
+              // Restore app state with proper defaults
+              restoreAppFromBackup({
+                entries: backup.app.entries,
+                settings: {
+                  weeklyGoal: backup.app.settings.weeklyGoal,
+                  hiddenTabs: {
+                    workout: backup.app.settings.hiddenTabs?.workout ?? false,
+                    tools: backup.app.settings.hiddenTabs?.tools ?? false,
+                  },
+                  debugCamera: backup.app.settings.debugCamera,
+                  preferCameraDetection: backup.app.settings.preferCameraDetection,
+                  units: backup.app.settings.units,
+                },
+                unlockedBadges: backup.app.unlockedBadges,
+              });
+              
+              // Restore gamification state
+              restoreGamificationFromBackup({
+                xp: backup.gamification.xp,
+                level: backup.gamification.level,
+                history: backup.gamification.history,
+                quests: backup.gamification.quests,
+              });
+              
+              Alert.alert(
+                '✅ Restauration réussie',
+                `${backup.app.entries.length} entrées restaurées.\nNiveau ${backup.gamification.level} avec ${backup.gamification.xp} XP.`
+              );
+            } catch (error) {
+              console.error('Restore error:', error);
+              Alert.alert('Erreur', 'Impossible de restaurer la sauvegarde');
+            }
+          },
+        },
+      ]
+    );
+  }, [restoreAppFromBackup, restoreGamificationFromBackup]);
 
   // Handler pour désactiver les fonctionnalités sociales avec suppression RGPD
   const handleDisableSocial = useCallback(() => {
@@ -525,10 +643,26 @@ export default function SettingsScreen() {
         <SectionTitle title="Données" delay={500} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
+            icon={<Save size={20} color="#22d3ee" />}
+            iconColor="#22d3ee"
+            title="Sauvegarde complète"
+            subtitle="Exporter toutes les données + XP"
+            onPress={handleFullBackup}
+            delay={395}
+          />
+          <SettingItem
+            icon={<Upload size={20} color="#fbbf24" />}
+            iconColor="#fbbf24"
+            title="Restaurer sauvegarde"
+            subtitle="Importer depuis un fichier"
+            onPress={handleRestore}
+            delay={398}
+          />
+          <SettingItem
             icon={<Download size={20} color={Colors.cta} />}
             iconColor={Colors.cta}
             title="Exporter JSON"
-            subtitle="Sauvegarde tes données"
+            subtitle="Export hebdo (historique)"
             onPress={handleExportJSON}
             delay={400}
           />
@@ -539,6 +673,14 @@ export default function SettingsScreen() {
             subtitle="Corriger les incohérences"
             onPress={handleRecalculateQuests}
             delay={420}
+          />
+          <SettingItem
+            icon={<Heart size={20} color="#f43f5e" />}
+            iconColor="#f43f5e"
+            title="Health Connect"
+            subtitle="Importer depuis Health Connect (Android)"
+            onPress={() => router.push('/health-connect')}
+            delay={440}
           />
         </GlassCard>
 

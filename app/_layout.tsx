@@ -4,6 +4,7 @@ import { useSettings } from '../src/stores';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { LayoutDashboard, Dumbbell, ChartBar, Wrench, Settings, Trophy, Users } from 'lucide-react-native';
 import { Colors, Spacing } from '../src/constants';
@@ -142,33 +143,35 @@ export default function Layout() {
     });
 
     return (
-        <Tabs
-            tabBar={(props) => <CustomTabBar {...props} visibleTabs={visibleTabs} />}
-            screenOptions={{
-                headerShown: false,
-                tabBarStyle: { display: 'none' },
-            }}
-        >
-            <Tabs.Screen name="index" options={{ title: "Today" }} />
-            <Tabs.Screen 
-                name="workout" 
-                options={{ 
-                    title: "Workout",
-                    href: settings.hiddenTabs?.workout ? null : undefined,
-                }} 
-            />
-            <Tabs.Screen name="gamification" options={{ title: "Ploppy" }} />
-            <Tabs.Screen name="social" options={{ title: "Social" }} />
-            <Tabs.Screen name="progress" options={{ title: "Progress" }} />
-            <Tabs.Screen 
-                name="tools" 
-                options={{ 
-                    title: "Tools",
-                    href: settings.hiddenTabs?.tools ? null : undefined,
-                }} 
-            />
-            <Tabs.Screen name="settings" options={{ title: "Settings" }} />
-        </Tabs>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <Tabs
+                tabBar={(props) => <CustomTabBar {...props} visibleTabs={visibleTabs} />}
+                screenOptions={{
+                    headerShown: false,
+                    tabBarStyle: { display: 'none' },
+                }}
+            >
+                <Tabs.Screen name="index" options={{ title: "Today" }} />
+                <Tabs.Screen 
+                    name="workout" 
+                    options={{ 
+                        title: "Workout",
+                        href: settings.hiddenTabs?.workout ? null : undefined,
+                    }} 
+                />
+                <Tabs.Screen name="gamification" options={{ title: "Ploppy" }} />
+                <Tabs.Screen name="social" options={{ title: "Social" }} />
+                <Tabs.Screen name="progress" options={{ title: "Progress" }} />
+                <Tabs.Screen 
+                    name="tools" 
+                    options={{ 
+                        title: "Tools",
+                        href: settings.hiddenTabs?.tools ? null : undefined,
+                    }} 
+                />
+                <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+            </Tabs>
+        </GestureHandlerRootView>
     );
 }
 
