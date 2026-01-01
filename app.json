@@ -52,7 +52,18 @@
           "enableFrameProcessors": true
         }
       ],
-      "./plugins/withMediaPipeModel.js"
+      "./plugins/withMediaPipeModel.js",
+      [
+      "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0",
+            "minSdkVersion": 26
+          }
+        }
+        ]
     ],
     "experiments": {
       "typedRoutes": true

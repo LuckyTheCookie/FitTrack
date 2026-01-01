@@ -99,6 +99,11 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
         return null;
     }
 
+    // Cacher la tab bar sur l'écran health-connect
+    if (pathname === '/health-connect') {
+        return null;
+    }
+
     // Ne montrer que les onglets visibles
     const visibleRoutes = state.routes.filter((route: any) => 
         visibleTabs.some((tab: any) => tab.name === route.name)

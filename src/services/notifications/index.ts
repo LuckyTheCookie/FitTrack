@@ -17,15 +17,20 @@ Notifications.setNotificationHandler({
     }),
 });
 
+export type PushTokenResult = 
+    | { success: true; token: string }
+    | { success: false; reason: 'not_device' | 'permission_denied' | 'network_error' | 'unknown' };
+
 /**
  * Enregistre le device pour les notifications push
- * @returns Push token ou null si échec
+ * Avec retry logic pour les erreurs FIS_AUTH_ERROR
+ * @returns Résultat avec le token ou la raison de l'échec
  */
-export async function registerForPushNotifications(): Promise<string | null> {
+export async function registerForPushNotifications(): Promise<PushTokenResult> {
     // Vérifier si c'est un appareil physique
     if (!Device.isDevice) {
         console.log('Push notifications require a physical device');
-        return null;
+        return { success: false, reason: 'not_device' };
     }
 
     // Vérifier/demander les permissions
@@ -39,7 +44,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
     if (finalStatus !== 'granted') {
         console.log('Notification permissions denied');
-        return null;
+        return { success: false, reason: 'permission_denied' };
     }
 
     // Configurer le canal Android
@@ -70,14 +75,45 @@ export async function registerForPushNotifications(): Promise<string | null> {
         });
     }
 
-    // Obtenir le token Expo avec le projectId explicite
+    // Obtenir le token Expo avec retry logic
     const projectId = 'fa564092-790e-4f01-9663-7b0420577cc8';
-    const token = await Notifications.getExpoPushTokenAsync({
-        projectId,
-    });
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-    console.log('Expo Push Token:', token.data);
-    return token.data;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const token = await Notifications.getExpoPushTokenAsync({
+                projectId,
+            });
+
+            console.log('Expo Push Token:', token.data);
+            return { success: true, token: token.data };
+        } catch (error: any) {
+            lastError = error;
+            console.warn(`Push token attempt ${attempt}/${maxRetries} failed:`, error.message);
+            
+            // FIS_AUTH_ERROR - wait and retry
+            if (error.message?.includes('FIS_AUTH_ERROR') && attempt < maxRetries) {
+                // Wait exponentially longer between retries (1s, 2s, 4s)
+                await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+                continue;
+            }
+            
+            // Other errors - break immediately
+            break;
+        }
+    }
+
+    console.error('Failed to get push token after retries:', lastError?.message);
+    
+    // FIS_AUTH_ERROR or network related errors
+    if (lastError?.message?.includes('FIS_AUTH_ERROR') || 
+        lastError?.message?.includes('network') ||
+        lastError?.message?.includes('fetch')) {
+        return { success: false, reason: 'network_error' };
+    }
+    
+    return { success: false, reason: 'unknown' };
 }
 
 /**

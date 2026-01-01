@@ -36,12 +36,12 @@ interface AppState {
     settings: UserSettings;
     unlockedBadges: BadgeId[];
 
-    // Actions - Entries
-    addHomeWorkout: (data: Omit<HomeWorkoutEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-    addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>) => void;
-    addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-    addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
-    addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>) => void;
+    // Actions - Entries (optional customDate for Health Connect imports)
+    addHomeWorkout: (data: Omit<HomeWorkoutEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
+    addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>, customDate?: string) => void;
+    addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
+    addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
+    addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
     deleteEntry: (id: string) => void;
     updateEntry: (id: string, updates: Partial<Entry>) => void;
 
@@ -51,6 +51,7 @@ interface AppState {
 
     // Actions - Data management
     resetAllData: () => void;
+    restoreFromBackup: (data: { entries: Entry[]; settings: Partial<UserSettings>; unlockedBadges: BadgeId[] }) => void;
 
     // Computed (recalculées à chaque appel)
     getStreak: () => { current: number; best: number };
@@ -95,12 +96,12 @@ export const useAppStore = create<AppState>()(
             // ACTIONS - AJOUT D'ENTRÉES
             // ========================================
 
-            addHomeWorkout: (data) => {
+            addHomeWorkout: (data, customDate) => {
                 const entry: HomeWorkoutEntry = {
                     id: nanoid(),
                     type: 'home',
                     createdAt: getNowISO(),
-                    date: getTodayDateString(),
+                    date: customDate || getTodayDateString(),
                     ...data,
                 };
 
@@ -119,7 +120,7 @@ export const useAppStore = create<AppState>()(
                 });
             },
 
-            addRun: (data) => {
+            addRun: (data, customDate) => {
                 // Calculer la vitesse moyenne
                 const avgSpeed = data.durationMinutes > 0
                     ? Math.round((data.distanceKm / (data.durationMinutes / 60)) * 10) / 10
@@ -129,7 +130,7 @@ export const useAppStore = create<AppState>()(
                     id: nanoid(),
                     type: 'run',
                     createdAt: getNowISO(),
-                    date: getTodayDateString(),
+                    date: customDate || getTodayDateString(),
                     avgSpeed,
                     ...data,
                 };
@@ -149,12 +150,12 @@ export const useAppStore = create<AppState>()(
                 });
             },
 
-            addBeatSaber: (data) => {
+            addBeatSaber: (data, customDate) => {
                 const entry: BeatSaberEntry = {
                     id: nanoid(),
                     type: 'beatsaber',
                     createdAt: getNowISO(),
-                    date: getTodayDateString(),
+                    date: customDate || getTodayDateString(),
                     ...data,
                 };
 
@@ -173,12 +174,12 @@ export const useAppStore = create<AppState>()(
                 });
             },
 
-            addMeal: (data) => {
+            addMeal: (data, customDate) => {
                 const entry: MealEntry = {
                     id: nanoid(),
                     type: 'meal',
                     createdAt: getNowISO(),
-                    date: getTodayDateString(),
+                    date: customDate || getTodayDateString(),
                     ...data,
                 };
 
@@ -187,12 +188,12 @@ export const useAppStore = create<AppState>()(
                 }));
             },
 
-            addMeasure: (data) => {
+            addMeasure: (data, customDate) => {
                 const entry: MeasureEntry = {
                     id: nanoid(),
                     type: 'measure',
                     createdAt: getNowISO(),
-                    date: getTodayDateString(),
+                    date: customDate || getTodayDateString(),
                     ...data,
                 };
 
@@ -240,6 +241,17 @@ export const useAppStore = create<AppState>()(
                     entries: [],
                     settings: defaultSettings,
                     unlockedBadges: [],
+                });
+            },
+
+            restoreFromBackup: (data) => {
+                set({
+                    entries: data.entries || [],
+                    settings: {
+                        ...defaultSettings,
+                        ...data.settings,
+                    },
+                    unlockedBadges: data.unlockedBadges || [],
                 });
             },
 

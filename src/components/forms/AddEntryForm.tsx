@@ -68,7 +68,6 @@ const EXAMPLE_JSON = `{
   "includeAbsBlock": true
 }`;
 
-
 export function AddEntryForm({
     onSuccess,
     onDismiss,
@@ -97,13 +96,13 @@ export function AddEntryForm({
         const lines = text.split('\n').filter(l => l.trim());
         if (lines.length === 0) return [{ id: nanoid(), name: '', reps: '', sets: '3' }];
         return lines.map(line => {
-            const match = line.match(/^([^:]+):\s*(\d+)x(\d+)/);
+            const match = line.match(/^([^:]+):\s*(\d+)x(.+)$/);
             if (match) {
                 return {
                     id: nanoid(),
                     name: match[1].trim(),
                     sets: match[2],
-                    reps: match[3],
+                    reps: match[3].trim(),
                 };
             }
             return { id: nanoid(), name: line.trim(), reps: '', sets: '3' };
@@ -282,7 +281,14 @@ export function AddEntryForm({
                     }
                     const exercisesText = formatExercisesToText(validExercises);
                     const homeTotalReps = validExercises.reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
-                    const homeDurationMinutes = homeDuration ? parseInt(homeDuration, 10) : undefined;
+                    
+                    const homeDurationClean = homeDuration.trim().replace(',', '.');
+                    const homeDurationMinutes = homeDurationClean ? Math.round(parseFloat(homeDurationClean)) : undefined;
+                    
+                    if (homeDurationClean && (isNaN(homeDurationMinutes!) || homeDurationMinutes! <= 0)) {
+                        Alert.alert('Erreur', 'Durée invalide - entre un nombre de minutes positif');
+                        return;
+                    }
                     
                     if (isEditMode && editEntry) {
                         updateEntry(editEntry.id, {
@@ -304,13 +310,16 @@ export function AddEntryForm({
                     break;
 
                 case 'run':
-                    const km = parseFloat(runKm);
-                    const minutes = parseInt(runMinutes, 10);
-                    if (isNaN(km) || km <= 0) {
+                    const kmClean = runKm.trim().replace(',', '.');
+                    const minutesClean = runMinutes.trim().replace(',', '.');
+                    const km = parseFloat(kmClean);
+                    const minutes = Math.round(parseFloat(minutesClean));
+                    
+                    if (isNaN(km) || km <= 0 || !kmClean) {
                         Alert.alert('Erreur', 'Distance invalide');
                         return;
                     }
-                    if (isNaN(minutes) || minutes <= 0) {
+                    if (isNaN(minutes) || minutes <= 0 || !minutesClean) {
                         Alert.alert('Erreur', 'Durée invalide');
                         return;
                     }
@@ -337,14 +346,14 @@ export function AddEntryForm({
                     break;
 
                 case 'beatsaber':
-                    const bsMinutes = parseInt(bsDuration, 10);
+                    const bsDurationClean = bsDuration.trim().replace(',', '.');
+                    const bsMinutes = parseFloat(bsDurationClean);
                     
-                    if (isNaN(bsMinutes) || bsMinutes <= 0) {
-                        Alert.alert('Erreur', 'Durée invalide');
+                    if (isNaN(bsMinutes) || bsMinutes <= 0 || !bsDurationClean) {
+                        Alert.alert('Erreur', 'Durée invalide - entre un nombre de minutes');
                         return;
                     }
 
-                    // Store rounded minutes (at least 1)
                     const bsMinutesRounded = Math.max(1, Math.round(bsMinutes));
 
                     if (isEditMode && editEntry) {
@@ -387,45 +396,45 @@ export function AddEntryForm({
                     break;
 
                 case 'measure':
-                    const hasAnyMeasure = weight || waist || arm || hips;
+                    const wClean = weight.trim().replace(',', '.');
+                    const waistClean = waist.trim().replace(',', '.');
+                    const armClean = arm.trim().replace(',', '.');
+                    const hipsClean = hips.trim().replace(',', '.');
+
+                    const hasAnyMeasure = wClean || waistClean || armClean || hipsClean;
                     if (!hasAnyMeasure) {
                         Alert.alert('Erreur', 'Ajoute au moins une mesure');
                         return;
                     }
+
+                    const data = {
+                        weight: wClean ? parseFloat(wClean) : undefined,
+                        waist: waistClean ? parseFloat(waistClean) : undefined,
+                        arm: armClean ? parseFloat(armClean) : undefined,
+                        hips: hipsClean ? parseFloat(hipsClean) : undefined,
+                    };
+
                     if (isEditMode && editEntry) {
-                        updateEntry(editEntry.id, {
-                            weight: weight ? parseFloat(weight) : undefined,
-                            waist: waist ? parseFloat(waist) : undefined,
-                            arm: arm ? parseFloat(arm) : undefined,
-                            hips: hips ? parseFloat(hips) : undefined,
-                        });
+                        updateEntry(editEntry.id, data);
                     } else {
-                        addMeasure({
-                            weight: weight ? parseFloat(weight) : undefined,
-                            waist: waist ? parseFloat(waist) : undefined,
-                            arm: arm ? parseFloat(arm) : undefined,
-                            hips: hips ? parseFloat(hips) : undefined,
-                        });
+                        addMeasure(data);
                     }
                     break;
             }
 
-            // XP Reward generic for other types (only in add mode, not edit)
             if (!isEditMode) {
                 if (activeTab === 'home') {
-                    addXp(50, `Séance maison : ${homeName || 'Workout'}`); // Base XP for workout
+                    addXp(50, `Séance maison : ${homeName || 'Workout'}`);
                     updateQuestProgress('workouts', 1);
-                    // Use validExercises calculated above
                     const reps = exercises.filter(ex => ex.name.trim()).reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
                     if (reps > 0) updateQuestProgress('exercises', reps);
                 } else if (activeTab === 'run') {
-                    const km = parseFloat(runKm);
+                    const km = parseFloat(runKm.trim().replace(',', '.'));
                     addXp(30 + Math.floor(km * 5), `Running (${km}km)`);
                     updateQuestProgress('workouts', 1);
                 }
             }
 
-            // Reset form
             setHomeName('');
             setHomeDuration('');
             setExercises([{ id: nanoid(), name: '', reps: '', sets: '3' }]);
@@ -445,19 +454,20 @@ export function AddEntryForm({
             setArm('');
             setHips('');
 
-            setHasStarted(false); // Reset to intro on success
+            setHasStarted(false);
             onSuccess?.();
         } finally {
             setLoading(false);
         }
     }, [
         activeTab,
-        homeName, exercises, withAbsBlock,
-        runKm, runMinutes, runBpmAvg, runBpmMax,
+        homeName, homeDuration, exercises, withAbsBlock, // AJOUTÉ : homeDuration
+        runKm, runMinutes, runBpmAvg, runBpmMax, runCardiacLoad, // AJOUTÉ : runCardiacLoad
+        bsDuration, bsCardiacLoad, bsBpmAvg, bsBpmMax, // AJOUTÉ : bsDuration et les autres
         mealTime, mealDescription,
         weight, waist, arm, hips,
-        addHomeWorkout, addRun, addMeal, addMeasure, onSuccess,
-        addXp, updateQuestProgress
+        addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, updateEntry, // AJOUTÉ : addBeatSaber (par sécurité)
+        onSuccess, addXp, updateQuestProgress, isEditMode, editEntry
     ]);
 
     const handleStartActivity = (type: EntryType) => {
@@ -471,7 +481,6 @@ export function AddEntryForm({
                 <Text style={styles.introTitle}>Que veux-tu ajouter ?</Text>
                 <Text style={styles.introSubtitle}>Choisis une activité</Text>
 
-                {/* Bouton Tracking temps réel en vedette */}
                 <TouchableOpacity
                     style={styles.realTimeButton}
                     onPress={handleRealTimeTracking}
@@ -492,7 +501,10 @@ export function AddEntryForm({
                 </TouchableOpacity>
 
                 <Text style={styles.orText}>— ou ajoute manuellement —</Text>
-
+                <ScrollView
+                    nestedScrollEnabled={true}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                >    
                 <View style={styles.activityGrid}>
                     {tabs.map((tab) => (
                         <TouchableOpacity
@@ -507,6 +519,7 @@ export function AddEntryForm({
                         </TouchableOpacity>
                     ))}
                 </View>
+                </ScrollView>            
             </View>
         );
     }
@@ -601,7 +614,6 @@ export function AddEntryForm({
                             />
                         </View>
 
-                        {/* Toggle bloc abdos */}
                         <TouchableOpacity
                             style={styles.absToggle}
                             onPress={() => setWithAbsBlock(!withAbsBlock)}
@@ -788,7 +800,6 @@ export function AddEntryForm({
                 />
             </ScrollView>
 
-            {/* Modal import JSON */}
             <Modal
                 visible={importModalVisible}
                 transparent

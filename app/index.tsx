@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { 
   GlassCard, 
   ProgressRing, 
@@ -94,9 +93,8 @@ export default function TodayScreen() {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar style="light" />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar style="light" />
       
       <ScrollView 
         style={styles.scrollView}
@@ -214,7 +212,6 @@ export default function TodayScreen() {
       {/* BOTTOM SHEET D'AJOUT */}
       <AddEntryBottomSheet ref={bottomSheetRef} />
     </SafeAreaView>
-    </GestureHandlerRootView>
   );
 }
 

@@ -18,6 +18,7 @@ export interface BaseEntry {
   type: EntryType;
   createdAt: string; // ISO date
   date: string; // YYYY-MM-DD pour regroupement
+  healthConnectId?: string; // ID de la séance Health Connect si importée
 }
 
 // Séance à la maison

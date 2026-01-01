@@ -257,7 +257,7 @@ export default function SocialScreen() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showSyncModal, setShowSyncModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'granted' | 'denied'>('unknown');
+    const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'granted' | 'denied' | 'network_error'>('unknown');
 
     // Local data from app store
     const { entries, getStreak } = useAppStore();
@@ -298,15 +298,22 @@ export default function SocialScreen() {
             await checkAuth();
             
             // Check notification permissions
-            const token = await NotificationService.registerForPushNotifications();
-            if (token) {
+            const result = await NotificationService.registerForPushNotifications();
+            if (result.success) {
                 setNotificationStatus('granted');
                 // Save token to profile if authenticated
                 if (isAuthenticated && savePushToken) {
-                    await savePushToken(token);
+                    await savePushToken(result.token);
                 }
-            } else {
+            } else if (result.reason === 'permission_denied') {
+                // User explicitly denied - don't show any message
                 setNotificationStatus('denied');
+            } else if (result.reason === 'network_error') {
+                // Network/VPN issue - show helpful message
+                setNotificationStatus('network_error');
+            } else {
+                // Other issues (not_device, unknown) - silent
+                setNotificationStatus('unknown');
             }
         };
         
@@ -573,23 +580,28 @@ export default function SocialScreen() {
                 )}
 
                 {/* Notification Status */}
-                {notificationStatus === 'denied' && (
+                {notificationStatus === 'network_error' && (
                     <Animated.View entering={FadeInDown.delay(120).springify()}>
                         <TouchableOpacity 
-                            style={styles.notificationWarning}
+                            style={[styles.notificationWarning, { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}
                             onPress={async () => {
-                                const token = await NotificationService.registerForPushNotifications();
-                                if (token) {
+                                const result = await NotificationService.registerForPushNotifications();
+                                if (result.success) {
                                     setNotificationStatus('granted');
-                                    if (savePushToken) await savePushToken(token);
+                                    if (savePushToken) await savePushToken(result.token);
                                 }
                             }}
                         >
-                            <Bell size={18} color={Colors.warning} />
-                            <Text style={styles.notificationWarningText}>
-                                Active les notifications pour recevoir les encouragements
-                            </Text>
-                            <ChevronRight size={18} color={Colors.warning} />
+                            <Bell size={18} color="#fbbf24" />
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.notificationWarningText, { color: '#fbbf24' }]}>
+                                    Impossible d'activer les notifications
+                                </Text>
+                                <Text style={[styles.notificationWarningText, { fontSize: 11, opacity: 0.8, color: '#fbbf24' }]}>
+                                    Un VPN ou bloqueur de pub peut empêcher la réception
+                                </Text>
+                            </View>
+                            <ChevronRight size={18} color="#fbbf24" />
                         </TouchableOpacity>
                     </Animated.View>
                 )}

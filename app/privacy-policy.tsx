@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Shield, Lock, Server, Bell, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Shield, Lock, Server, Bell, Trash2, Heart } from 'lucide-react-native';
 import { GlassCard } from '../src/components/ui';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
@@ -168,12 +168,46 @@ export default function PrivacyPolicyScreen() {
                     </Text>
                 </PolicySection>
 
+                {/* Health Connect */}
+                <PolicySection 
+                    title="Health Connect (Android)" 
+                    icon={<Heart size={20} color="#f43f5e" />}
+                    iconColor="#f43f5e"
+                    delay={450}
+                >
+                    <Text style={styles.paragraph}>
+                        FitTrack peut importer des séances d'entraînement depuis Google Health Connect 
+                        sur Android. Cette fonctionnalité est optionnelle.
+                    </Text>
+                    
+                    <Text style={styles.subheading}>Données accessibles :</Text>
+                    <BulletPoint>Séances d'exercice (type, durée, date)</BulletPoint>
+                    <BulletPoint>Distance parcourue</BulletPoint>
+                    <BulletPoint>Calories brûlées</BulletPoint>
+                    <BulletPoint>Fréquence cardiaque (si disponible)</BulletPoint>
+                    
+                    <Text style={styles.subheading}>Utilisation des données :</Text>
+                    <BulletPoint>Import local uniquement - aucun envoi serveur</BulletPoint>
+                    <BulletPoint>Conversion en entrées FitTrack locales</BulletPoint>
+                    <BulletPoint>Tu choisis quelles séances importer</BulletPoint>
+                    
+                    <Text style={[styles.paragraph, styles.highlight]}>
+                        ✅ Les données Health Connect sont lues une seule fois et stockées 
+                        localement. FitTrack n'écrit jamais dans Health Connect.
+                    </Text>
+                    
+                    <Text style={styles.paragraph}>
+                        Tu peux révoquer l'accès à tout moment dans les paramètres 
+                        Health Connect de ton appareil.
+                    </Text>
+                </PolicySection>
+
                 {/* Tes droits RGPD */}
                 <PolicySection 
                     title="Tes Droits (RGPD)" 
                     icon={<Trash2 size={20} color="#f87171" />}
                     iconColor="#f87171"
-                    delay={500}
+                    delay={550}
                 >
                     <Text style={styles.paragraph}>
                         Conformément au RGPD, tu as le droit de :
@@ -201,7 +235,7 @@ export default function PrivacyPolicyScreen() {
                 </PolicySection>
 
                 {/* Contact */}
-                <Animated.View entering={FadeInDown.delay(600).springify()}>
+                <Animated.View entering={FadeInDown.delay(650).springify()}>
                     <GlassCard style={styles.contactCard}>
                         <Text style={styles.contactTitle}>Contact</Text>
                         <Text style={styles.contactText}>

@@ -326,10 +326,13 @@ export const useSocialStore = create<SocialState>()(
 
             initializeNotifications: async () => {
                 try {
-                    const token = await Notifications.registerForPushNotifications();
-                    if (token) {
-                        console.log('Push token:', token);
+                    const result = await Notifications.registerForPushNotifications();
+                    if (result.success) {
+                        console.log('Push token:', result.token);
                         // Optionally save token to backend for remote push
+                    } else if (result.reason !== 'permission_denied') {
+                        // Only log non-permission errors (user chose to deny = silent)
+                        console.log('Push notifications unavailable:', result.reason);
                     }
                 } catch (error) {
                     console.error('Failed to register for notifications:', error);
