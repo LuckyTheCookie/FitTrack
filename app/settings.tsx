@@ -694,7 +694,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={styles.appName}>FitTrack</Text>
-                <Text style={styles.appVersion}>Version 2.0.0</Text>
+                <Text style={styles.appVersion}>Version 3.0.0</Text>
               </View>
             </View>
             
@@ -703,8 +703,6 @@ export default function SettingsScreen() {
                 <Rocket size={16} color={Colors.cta} />
                 <Text style={styles.futureTitle}>Prochainement</Text>
               </View>
-              <Text style={styles.futureItem}>• Sync cloud & compte</Text>
-              <Text style={styles.futureItem}>• Google Fit / Apple Health</Text>
               <Text style={styles.futureItem}>• Notifications intelligentes</Text>
               <Text style={styles.futureItem}>• Traductions en plusieurs langues</Text>
             </View>
