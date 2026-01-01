@@ -34,6 +34,10 @@ import {
   History,
   Sparkles,
   Users,
+  Shield,
+  FileText,
+  Globe,
+  UserX,
 } from 'lucide-react-native';
 import { 
   GlassCard, 
@@ -149,10 +153,18 @@ export default function SettingsScreen() {
   } = useAppStore();
 
   const { recalculateFromScratch } = useGamificationStore();
-  const { socialEnabled, setSocialEnabled, isAuthenticated } = useSocialStore();
+  const { 
+    socialEnabled, 
+    setSocialEnabled, 
+    isAuthenticated,
+    profile,
+    disableSocialAndDeleteData,
+    updateLeaderboardVisibility,
+  } = useSocialStore();
 
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
   const [exportModalVisible, setExportModalVisible] = useState(false);
+  const [isDisablingSocial, setIsDisablingSocial] = useState(false);
   const streak = getStreak();
 
   // Stats calculées
@@ -218,6 +230,50 @@ export default function SettingsScreen() {
       ]
     );
   }, [entries, recalculateFromScratch]);
+
+  // Handler pour désactiver les fonctionnalités sociales avec suppression RGPD
+  const handleDisableSocial = useCallback(() => {
+    if (!isAuthenticated) {
+      setSocialEnabled(false);
+      return;
+    }
+
+    Alert.alert(
+      '⚠️ Désactiver les fonctionnalités sociales ?',
+      'Cette action supprimera définitivement vos données en ligne (profil, classement, XP, amis, encouragements) pour respecter le RGPD.\n\nVos données locales (séances, repas, mesures) seront conservées.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Désactiver et supprimer', 
+          style: 'destructive',
+          onPress: async () => {
+            setIsDisablingSocial(true);
+            try {
+              await disableSocialAndDeleteData();
+              Alert.alert(
+                '✅ Données supprimées',
+                'Tes données en ligne ont été supprimées. Mode local activé.'
+              );
+            } catch (error) {
+              Alert.alert('Erreur', 'Impossible de supprimer les données. Réessaie plus tard.');
+            } finally {
+              setIsDisablingSocial(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [isAuthenticated, disableSocialAndDeleteData, setSocialEnabled]);
+
+  // Handler pour toggle leaderboard visibility
+  const handleToggleLeaderboardVisibility = useCallback(async () => {
+    const newValue = !(profile?.is_public ?? true);
+    try {
+      await updateLeaderboardVisibility(newValue);
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de modifier la visibilité.');
+    }
+  }, [profile, updateLeaderboardVisibility]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -372,44 +428,101 @@ export default function SettingsScreen() {
           <>
             <SectionTitle title="Social" delay={360} />
             <GlassCard style={styles.settingsCard}>
+              {/* Toggle fonctionnalités sociales */}
               <SettingItem
                 icon={<Users size={20} color="#22d3ee" />}
                 iconColor="#22d3ee"
-                title="Fonctions sociales"
+                title="Fonctionnalités sociales"
                 subtitle={socialEnabled ? 'Classement et amis activés' : 'Mode hors-ligne'}
                 showChevron={false}
                 rightElement={
-                  <Switch
-                    value={socialEnabled}
-                    onValueChange={setSocialEnabled}
-                    trackColor={{ false: Colors.card, true: Colors.teal }}
-                    thumbColor="#fff"
-                  />
+                  socialEnabled && isAuthenticated ? (
+                    <TouchableOpacity 
+                      style={styles.disableButton}
+                      onPress={handleDisableSocial}
+                      disabled={isDisablingSocial}
+                    >
+                      <UserX size={14} color={Colors.error} />
+                      <Text style={styles.disableButtonText}>
+                        {isDisablingSocial ? '...' : 'Désactiver'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Switch
+                      value={socialEnabled}
+                      onValueChange={(value) => {
+                        if (value) {
+                          setSocialEnabled(true);
+                        } else {
+                          handleDisableSocial();
+                        }
+                      }}
+                      trackColor={{ false: Colors.card, true: Colors.teal }}
+                      thumbColor="#fff"
+                    />
+                  )
                 }
                 delay={380}
               />
-              {isAuthenticated && (
+              
+              {/* Toggle classement global (si authentifié) */}
+              {isAuthenticated && socialEnabled && (
                 <SettingItem
-                  icon={<Eye size={20} color="#a78bfa" />}
+                  icon={<Globe size={20} color="#a78bfa" />}
                   iconColor="#a78bfa"
-                  title="Profil public"
-                  subtitle="Visible dans le classement global"
+                  title="Apparaître dans le classement"
+                  subtitle={profile?.is_public !== false ? 'Visible publiquement' : 'Masqué du classement global'}
                   showChevron={false}
                   rightElement={
-                    <View style={styles.visibilityBadge}>
-                      <Eye size={14} color="#4ade80" />
-                      <Text style={styles.visibilityText}>Public</Text>
-                    </View>
+                    <Switch
+                      value={profile?.is_public !== false}
+                      onValueChange={handleToggleLeaderboardVisibility}
+                      trackColor={{ false: Colors.card, true: Colors.teal }}
+                      thumbColor="#fff"
+                    />
                   }
                   delay={400}
+                />
+              )}
+              
+              {/* Lien vers profil */}
+              {isAuthenticated && socialEnabled && (
+                <SettingItem
+                  icon={<Eye size={20} color="#4ade80" />}
+                  iconColor="#4ade80"
+                  title="Mon profil public"
+                  subtitle={`@${profile?.username || 'utilisateur'}`}
+                  onPress={() => router.push('/social')}
+                  delay={420}
                 />
               )}
             </GlassCard>
           </>
         )}
 
+        {/* LÉGAL */}
+        <SectionTitle title="Légal" delay={440} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Shield size={20} color="#4ade80" />}
+            iconColor="#4ade80"
+            title="Politique de confidentialité"
+            subtitle="RGPD et protection des données"
+            onPress={() => router.push('/privacy-policy')}
+            delay={460}
+          />
+          <SettingItem
+            icon={<FileText size={20} color="#60a5fa" />}
+            iconColor="#60a5fa"
+            title="Conditions d'utilisation"
+            subtitle="Règles d'usage de l'application"
+            onPress={() => router.push('/terms-of-service')}
+            delay={480}
+          />
+        </GlassCard>
+
         {/* DATA MANAGEMENT */}
-        <SectionTitle title="Données" delay={380} />
+        <SectionTitle title="Données" delay={500} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
             icon={<Download size={20} color={Colors.cta} />}
@@ -679,6 +792,24 @@ const styles = StyleSheet.create({
     color: '#4ade80',
   },
   visibilityTextHidden: {
+    color: Colors.error,
+  },
+
+  // Disable Social Button
+  disableButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(248, 113, 113, 0.3)',
+  },
+  disableButtonText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
     color: Colors.error,
   },
 
