@@ -1,5 +1,5 @@
 // ============================================================================
-// WORKOUT SCREEN - Historique complet des séances (Redesign)
+// WORKOUT SCREEN - Historique complet des séances (Optimisé)
 // ============================================================================
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -40,6 +40,7 @@ import { calculateQuestTotals } from '../src/utils/questCalculator';
 import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSaberEntry } from '../src/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const ITEM_HEIGHT = 150; // Hauteur estimée pour getItemLayout
 
 type FilterType = 'all' | 'home' | 'run' | 'beatsaber' | 'meal' | 'measure';
 
@@ -59,7 +60,6 @@ const filterOptions: FilterOption[] = [
   { value: 'measure', label: 'Mesures', icon: <Ruler size={16} color="#a78bfa" />, color: '#a78bfa' },
 ];
 
-// Obtenir l'icône et la couleur selon le type
 const getEntryStyle = (type: string) => {
   switch (type) {
     case 'home':
@@ -77,8 +77,8 @@ const getEntryStyle = (type: string) => {
   }
 };
 
-// Composant pour le badge de filtre
-function FilterChip({ option, isActive, onPress }: { option: FilterOption; isActive: boolean; onPress: () => void }) {
+// Composant FilterChip optimisé avec React.memo
+const FilterChip = React.memo(({ option, isActive, onPress }: { option: FilterOption; isActive: boolean; onPress: () => void }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -92,13 +92,13 @@ function FilterChip({ option, isActive, onPress }: { option: FilterOption; isAct
       {isActive && <Text style={[styles.filterChipText, { color: option.color }]}>{option.label}</Text>}
     </TouchableOpacity>
   );
-}
+});
 
-// Composant pour afficher une entrée selon son type
-function EntryCard({ entry, onDelete, onPress, index }: { entry: Entry; onDelete: () => void; onPress?: () => void; index: number }) {
+// Composant EntryCard optimisé avec React.memo
+const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entry; onDelete: () => void; onPress?: () => void; index: number }) => {
   const entryStyle = getEntryStyle(entry.type);
   
-  const getContent = () => {
+  const renderContent = useCallback(() => {
     switch (entry.type) {
       case 'home': {
         const homeEntry = entry as HomeWorkoutEntry;
@@ -223,7 +223,7 @@ function EntryCard({ entry, onDelete, onPress, index }: { entry: Entry; onDelete
         );
       }
     }
-  };
+  }, [entry]);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).duration(300)}>
@@ -234,17 +234,14 @@ function EntryCard({ entry, onDelete, onPress, index }: { entry: Entry; onDelete
       >
         <GlassCard style={styles.card}>
           <View style={styles.cardRow}>
-            {/* Icon */}
             <View style={[styles.cardIconContainer, { backgroundColor: entryStyle.bg }]}>
               {entryStyle.icon}
             </View>
             
-            {/* Content */}
             <View style={styles.cardContent}>
-              {getContent()}
+              {renderContent()}
             </View>
 
-            {/* Delete button */}
             <TouchableOpacity 
               onPress={onDelete} 
               style={styles.deleteButton}
@@ -254,7 +251,6 @@ function EntryCard({ entry, onDelete, onPress, index }: { entry: Entry; onDelete
             </TouchableOpacity>
           </View>
           
-          {/* Footer avec date */}
           <View style={styles.cardFooter}>
             <Calendar size={12} color={Colors.muted2} />
             <Text style={styles.cardDate}>{getRelativeTime(entry.createdAt)}</Text>
@@ -264,7 +260,9 @@ function EntryCard({ entry, onDelete, onPress, index }: { entry: Entry; onDelete
       </TouchableOpacity>
     </Animated.View>
   );
-}
+}, (prevProps, nextProps) => {
+  return prevProps.entry.id === nextProps.entry.id && prevProps.index === nextProps.index;
+});
 
 export default function WorkoutScreen() {
   const { entries, deleteEntry } = useAppStore();
@@ -278,7 +276,6 @@ export default function WorkoutScreen() {
     return entries.filter(e => e.type === filter);
   }, [entries, filter]);
 
-  // Stats rapides
   const quickStats = useMemo(() => {
     const sportEntries = entries.filter(e => ['home', 'run', 'beatsaber'].includes(e.type));
     const today = new Date().toISOString().split('T')[0];
@@ -310,21 +307,41 @@ export default function WorkoutScreen() {
     );
   }, [deleteEntry, entries, recalculateAllQuests]);
 
+  const handleEntryPress = useCallback((entry: Entry) => {
+    setSelectedEntry(entry);
+    setDetailModalVisible(true);
+  }, []);
+
   const renderItem = useCallback(({ item, index }: { item: Entry; index: number }) => (
     <EntryCard 
       entry={item}
       index={index}
-      onPress={() => {
-        setSelectedEntry(item);
-        setDetailModalVisible(true);
-      }}
+      onPress={() => handleEntryPress(item)}
       onDelete={() => handleDelete(item)}
     />
-  ), [handleDelete]);
+  ), [handleDelete, handleEntryPress]);
+
+  const keyExtractor = useCallback((item: Entry) => item.id, []);
+
+  // Optimisation FlatList performance
+  const getItemLayout = useCallback((data: any, index: number) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  }), []);
+
+  const renderFilterItem = useCallback(({ item }: { item: FilterOption }) => (
+    <FilterChip
+      option={item}
+      isActive={filter === item.value}
+      onPress={() => setFilter(item.value)}
+    />
+  ), [filter]);
+
+  const filterKeyExtractor = useCallback((item: FilterOption) => item.value, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header avec gradient */}
       <LinearGradient
         colors={['rgba(215, 150, 134, 0.15)', 'transparent']}
         style={styles.headerGradient}
@@ -339,31 +356,32 @@ export default function WorkoutScreen() {
         </Animated.View>
       </View>
 
-      {/* Filtres horizontaux */}
       <Animated.View entering={FadeIn.delay(200)} style={styles.filterContainer}>
         <FlatList
           horizontal
           data={filterOptions}
-          keyExtractor={(item) => item.value}
+          keyExtractor={filterKeyExtractor}
+          renderItem={renderFilterItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterList}
-          renderItem={({ item }) => (
-            <FilterChip
-              option={item}
-              isActive={filter === item.value}
-              onPress={() => setFilter(item.value)}
-            />
-          )}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={6}
+          windowSize={3}
         />
       </Animated.View>
 
-      {/* Liste des entrées */}
       <FlatList
         data={filteredEntries}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={10}
         ListEmptyComponent={
           <EmptyState 
             icon="📋" 
@@ -376,12 +394,6 @@ export default function WorkoutScreen() {
         }
       />
 
-      {/* Hint en bas */}
-      <View style={styles.hintContainer}>
-        <Text style={styles.hint}>💡 Appui long ou icône 🗑️ pour supprimer</Text>
-      </View>
-
-      {/* MODAL DÉTAILS */}
       <EntryDetailModal
         entry={selectedEntry}
         visible={detailModalVisible}
