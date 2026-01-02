@@ -5,7 +5,7 @@
 import { KnownPoseLandmarks } from 'react-native-mediapipe-posedetection';
 
 // Types for pose detection
-export type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks';
+export type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank';
 
 // MediaPipe landmark structure (from the package)
 export interface Landmark {

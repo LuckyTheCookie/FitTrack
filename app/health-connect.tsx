@@ -2,7 +2,7 @@
 // HEALTH CONNECT SCREEN - Importer des séances depuis Health Connect
 // ============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -207,6 +207,8 @@ export default function HealthConnectScreen() {
     const [workouts, setWorkouts] = useState<ImportableWorkout[]>([]);
     const [importing, setImporting] = useState(false);
     const [daysBack, setDaysBack] = useState(7);
+    const [isLoadingWorkouts, setIsLoadingWorkouts] = useState(false);
+    const hasLoadedOnce = useRef(false);
 
     const { addHomeWorkout, addRun, addBeatSaber, entries } = useAppStore();
     const { addXp, updateQuestProgress, recalculateAllQuests } = useGamificationStore();
@@ -215,13 +217,14 @@ export default function HealthConnectScreen() {
         checkAvailability();
     }, []);
 
-    // Auto-refresh workouts when screen becomes focused
+    // Auto-refresh workouts when screen becomes focused (only once)
     useFocusEffect(
         useCallback(() => {
-            if (status === 'ready') {
+            if (status === 'ready' && !hasLoadedOnce.current && !isLoadingWorkouts) {
+                hasLoadedOnce.current = true;
                 loadWorkouts();
             }
-        }, [status])
+        }, [status, isLoadingWorkouts])
     );
 
     const checkAvailability = async () => {
@@ -276,28 +279,34 @@ export default function HealthConnectScreen() {
     };
 
     const loadWorkouts = async () => {
-        setStatus('loading');
-        const rawWorkouts = await healthConnect.getRecentWorkouts(daysBack);
+        if (isLoadingWorkouts) return; // Prevent concurrent loads
+        setIsLoadingWorkouts(true);
+        try {
+            const rawWorkouts = await healthConnect.getRecentWorkouts(daysBack);
         
-        // Filter out workouts that have already been imported
-        // Only show workouts that don't have a corresponding entry with healthConnectId
-        const alreadyImportedIds = new Set(
-            entries
-                .filter(entry => entry.healthConnectId)
-                .map(entry => entry.healthConnectId!)
-        );
-        
-        const notImported = rawWorkouts.filter(workout => !alreadyImportedIds.has(workout.id));
-        
-        // Simple mapping, selection logic handled inside component
-        const importable = notImported.map((w): ImportableWorkout => ({
-            ...w,
-            fitTrackType: healthConnect.getDefaultFitTrackType(w.exerciseType as number),
-            selected: true,
-        }));
+            // Filter out workouts that have already been imported
+            // Only show workouts that don't have a corresponding entry with healthConnectId
+            const alreadyImportedIds = new Set(
+                entries
+                    .filter(entry => entry.healthConnectId)
+                    .map(entry => entry.healthConnectId!)
+            );
+            
+            const notImported = rawWorkouts.filter(workout => !alreadyImportedIds.has(workout.id));
+            
+            // Simple mapping, selection logic handled inside component
+            const importable = notImported.map((w): ImportableWorkout => ({
+                ...w,
+                fitTrackType: healthConnect.getDefaultFitTrackType(w.exerciseType as number),
+                selected: true,
+            }));
 
-        setWorkouts(importable);
-        setStatus('ready');
+            setWorkouts(importable);
+        } catch (error) {
+            console.error('Error loading workouts:', error);
+        } finally {
+            setIsLoadingWorkouts(false);
+        }
     };
 
     const handleTypeChange = useCallback((workoutId: string, type: FitTrackWorkoutType) => {

@@ -54,6 +54,7 @@ import {
     Camera,
     Activity,
     Video,
+    Volume2,
 } from 'lucide-react-native';
 import { GlassCard, PoseCameraView } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
@@ -105,10 +106,20 @@ const MOTIVATIONAL_MESSAGES: Record<ExerciseType, Array<{ text: string; emoji: s
         { text: 'Super!', emoji: '🎉' },
         { text: 'Explosif!', emoji: '💥' },
     ],
+    plank: [
+        { text: 'Tiens bon!', emoji: '💪' },
+        { text: 'Continue comme ça!', emoji: '🔥' },
+        { text: 'Tu es une machine!', emoji: '🤖' },
+        { text: 'Respire profondément!', emoji: '🌬️' },
+        { text: 'Core en acier!', emoji: '⚡' },
+        { text: 'Tu gères!', emoji: '🏆' },
+        { text: 'Mental de champion!', emoji: '🧠' },
+        { text: 'Encore un peu!', emoji: '💥' },
+    ],
 };
 
 // Types d'exercices supportés
-type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks';
+type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank';
 type DetectionMode = 'sensor' | 'camera';
 type CameraView = 'front' | 'side';
 
@@ -124,6 +135,7 @@ interface ExerciseConfig {
     cooldown: number; // Temps minimum entre 2 reps (ms)
     supportsCameraMode: boolean;
     preferredCameraView: CameraView;
+    isTimeBased?: boolean; // Pour la planche: compte les secondes au lieu des reps
 }
 
 const EXERCISES: ExerciseConfig[] = [
@@ -178,6 +190,20 @@ const EXERCISES: ExerciseConfig[] = [
         cooldown: 400,
         supportsCameraMode: true,
         preferredCameraView: 'front',
+    },
+    {
+        id: 'plank',
+        name: 'Planche',
+        icon: '🧘',
+        color: '#06b6d4',
+        instruction: 'Posez le téléphone de côté pour vous voir de profil',
+        cameraInstruction: 'Posez le téléphone de côté pour vous voir de profil.\n\n💡 Conseil : Augmente le volume pour entendre les sons !',
+        threshold: 0.3,
+        axis: 'z',
+        cooldown: 500,
+        supportsCameraMode: true,
+        preferredCameraView: 'side',
+        isTimeBased: true,
     },
 ];
 
@@ -307,20 +333,36 @@ const PositionScreen = ({
                 <View style={[styles.phoneIcon, { borderColor: exercise.color }]}>
                     {detectionMode === 'camera' ? (
                         <Camera size={48} color={exercise.color} />
+                    ) : exercise.isTimeBased ? (
+                        <Timer size={48} color={exercise.color} />
                     ) : (
                         <Smartphone size={48} color={exercise.color} />
                     )}
                 </View>
-                <ArrowDown size={32} color={exercise.color} style={styles.arrowIcon} />
+                {!exercise.isTimeBased && (
+                    <ArrowDown size={32} color={exercise.color} style={styles.arrowIcon} />
+                )}
             </Animated.View>
 
             <Text style={styles.positionTitle}>{instruction}</Text>
             <Text style={styles.positionSubtitle}>
-                {detectionMode === 'camera'
-                    ? 'La caméra détectera vos mouvements'
-                    : 'Quand vous êtes prêt, appuyez sur Commencer'
+                {exercise.isTimeBased
+                    ? 'Appuie sur Play pour lancer le chrono, puis Pause quand tu tombes'
+                    : detectionMode === 'camera'
+                        ? 'La caméra détectera vos mouvements'
+                        : 'Quand vous êtes prêt, appuyez sur Commencer'
                 }
             </Text>
+
+            {/* Volume recommendation for plank */}
+            {exercise.isTimeBased && (
+                <View style={styles.volumeRecommendation}>
+                    <Volume2 size={18} color="#facc15" />
+                    <Text style={styles.volumeRecommendationText}>
+                        Monte le son pour les encouragements ! 🔊
+                    </Text>
+                </View>
+            )}
 
             <TouchableOpacity onPress={onReady} activeOpacity={0.9} style={styles.readyButton}>
                 <LinearGradient
@@ -353,9 +395,17 @@ export default function RepCounterScreen() {
     const [currentPhase, setCurrentPhase] = useState<'up' | 'down' | 'neutral'>('neutral');
     const [motivationalMessage, setMotivationalMessage] = useState<{ text: string; emoji: string } | null>(null);
     const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+    const [isPlankActive, setIsPlankActive] = useState(false); // Pour la planche: est-ce que l'utilisateur est levé?
+    const [plankSeconds, setPlankSeconds] = useState(0); // Secondes tenues en planche
+    const [showNewRecord, setShowNewRecord] = useState(false); // Affichage du message de nouveau record
+    const [personalBest, setPersonalBest] = useState(0); // Record personnel pour cet exercice
 
-    // Sound effect avec expo-audio
+    // Sound effects avec expo-audio
     const repSound = useAudioPlayer(require('../assets/rep.mp3'));
+    const keepGoingSound = useAudioPlayer(require('../assets/keepgoing.mp3'));
+    const secondsSound = useAudioPlayer(require('../assets/seconds.mp3'));
+    const newRecordSound = useAudioPlayer(require('../assets/new-record.mp3'));
+    const finishedSound = useAudioPlayer(require('../assets/finished.mp3'));
 
     // Pour la détection de mouvement améliorée
     const lastRepTime = useRef(0);
@@ -367,11 +417,14 @@ export default function RepCounterScreen() {
     const wasAboveThreshold = useRef(false);
     const subscriptionRef = useRef<any>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const plankTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const hasBeatenRecord = useRef(false); // Pour éviter de jouer le son plusieurs fois
 
     // Animations
     const countScale = useSharedValue(1);
     const pulseOpacity = useSharedValue(0);
     const messageOpacity = useSharedValue(0);
+
 
     // State pour le modal de confirmation de sortie
     const [showExitModal, setShowExitModal] = useState(false);
@@ -440,13 +493,99 @@ export default function RepCounterScreen() {
     // Play sound
     const playRepSound = useCallback(() => {
         try {
-            // Seek to beginning and play
             repSound.seekTo(0);
             repSound.play();
         } catch (error) {
             // Ignore sound errors
         }
     }, [repSound]);
+
+    // Play keep going sound (every 10 reps/seconds)
+    const playKeepGoingSound = useCallback(() => {
+        try {
+            keepGoingSound.seekTo(0);
+            keepGoingSound.play();
+        } catch (error) {
+            // Ignore sound errors
+        }
+    }, [keepGoingSound]);
+
+    // Play seconds sound (for plank only)
+    const playSecondsSound = useCallback(() => {
+        try {
+            secondsSound.seekTo(0);
+            secondsSound.play();
+        } catch (error) {
+            // Ignore sound errors
+        }
+    }, [secondsSound]);
+
+    // Play new record sound
+    const playNewRecordSound = useCallback(() => {
+        try {
+            newRecordSound.seekTo(0);
+            newRecordSound.play();
+        } catch (error) {
+            // Ignore sound errors
+        }
+    }, [newRecordSound]);
+
+    // Play finished sound
+    const playFinishedSound = useCallback(() => {
+        try {
+            finishedSound.seekTo(0);
+            finishedSound.play();
+        } catch (error) {
+            // Ignore sound errors
+        }
+    }, [finishedSound]);
+
+    // Charger le record personnel pour l'exercice sélectionné
+    useEffect(() => {
+        if (selectedExercise) {
+            // Chercher le record dans les entrées précédentes
+            const exerciseEntries = entries.filter(e => 
+                e.type === 'home' && 
+                e.name?.toLowerCase().includes(selectedExercise.name.toLowerCase())
+            );
+            let best = 0;
+            for (const entry of exerciseEntries) {
+                // Type guard: entry is HomeWorkoutEntry after the filter above
+                if (entry.type !== 'home') continue;
+                if (selectedExercise.isTimeBased) {
+                    // Pour la planche, chercher la durée max
+                    const durationSecs = (entry.durationMinutes ?? 0) * 60;
+                    if (durationSecs > best) {
+                        best = durationSecs;
+                    }
+                } else {
+                    // Pour les autres exercices, chercher le max de reps
+                    const reps = entry.totalReps ?? 0;
+                    if (reps > best) {
+                        best = reps;
+                    }
+                }
+            }
+            setPersonalBest(best);
+            hasBeatenRecord.current = false;
+        }
+    }, [selectedExercise, entries]);
+
+    // Vérifier si on a battu le record
+    useEffect(() => {
+        if (!selectedExercise || hasBeatenRecord.current) return;
+        
+        const currentValue = selectedExercise.isTimeBased ? plankSeconds : repCount;
+        if (currentValue > personalBest && currentValue > 0) {
+            hasBeatenRecord.current = true;
+            setShowNewRecord(true);
+            playNewRecordSound();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            
+            // Cacher le message après 3 secondes
+            setTimeout(() => setShowNewRecord(false), 3000);
+        }
+    }, [repCount, plankSeconds, personalBest, selectedExercise, playNewRecordSound]);
 
     // Show motivational message
     const showMotivationalMessage = useCallback((feedback?: string) => {
@@ -516,23 +655,76 @@ export default function RepCounterScreen() {
 
     // Fonction pour incrémenter le compteur
     const incrementRep = useCallback(() => {
-        setRepCount(prev => prev + 1);
+        setRepCount(prev => {
+            const newCount = prev + 1;
+            // Jouer le son keepgoing toutes les 10 reps
+            if (newCount > 0 && newCount % 10 === 0) {
+                playKeepGoingSound();
+            }
+            return newCount;
+        });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         playRepSound();
         showMotivationalMessage();
         animateRep();
-    }, [animateRep, playRepSound, showMotivationalMessage]);
+    }, [animateRep, playRepSound, showMotivationalMessage, playKeepGoingSound]);
 
     // Callback pour la détection de rep par caméra IA
     const handleCameraRepDetected = useCallback((newCount: number, feedback?: string) => {
         if (isTracking && newCount > repCount) {
+            // Jouer le son keepgoing toutes les 10 reps
+            if (newCount > 0 && newCount % 10 === 0) {
+                playKeepGoingSound();
+            }
             setRepCount(newCount);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             playRepSound();
             showMotivationalMessage(feedback);
             animateRep();
         }
-    }, [isTracking, repCount, animateRep, playRepSound, showMotivationalMessage]);
+    }, [isTracking, repCount, animateRep, playRepSound, showMotivationalMessage, playKeepGoingSound]);
+
+    // Gestion du timer pour la planche
+    useEffect(() => {
+        if (isTracking && selectedExercise?.isTimeBased && isPlankActive) {
+            plankTimerRef.current = setInterval(() => {
+                setPlankSeconds(prev => {
+                    const newSeconds = prev + 1;
+                    // Jouer le son des secondes
+                    playSecondsSound();
+                    // Jouer keepgoing toutes les 10 secondes
+                    if (newSeconds > 0 && newSeconds % 10 === 0) {
+                        playKeepGoingSound();
+                        showMotivationalMessage();
+                    }
+                    return newSeconds;
+                });
+            }, 1000);
+        } else if (plankTimerRef.current) {
+            clearInterval(plankTimerRef.current);
+        }
+
+        return () => {
+            if (plankTimerRef.current) {
+                clearInterval(plankTimerRef.current);
+            }
+        };
+    }, [isTracking, selectedExercise?.isTimeBased, isPlankActive, playSecondsSound, playKeepGoingSound, showMotivationalMessage]);
+
+    // Fonction pour toggle la planche (up/down)
+    const togglePlank = useCallback((isUp: boolean) => {
+        if (!selectedExercise?.isTimeBased) return;
+        
+        if (isUp && !isPlankActive) {
+            // L'utilisateur se lève
+            setIsPlankActive(true);
+            console.log('[Plank] Utilisateur levé - timer démarré');
+        } else if (!isUp && isPlankActive) {
+            // L'utilisateur retombe
+            setIsPlankActive(false);
+            console.log(`[Plank] Utilisateur tombé après ${plankSeconds}s`);
+        }
+    }, [selectedExercise?.isTimeBased, isPlankActive, plankSeconds]);
 
     // Démarrer le tracking
     const startTracking = useCallback(async () => {
@@ -541,6 +733,9 @@ export default function RepCounterScreen() {
         setIsTracking(true);
         setRepCount(0);
         setElapsedTime(0);
+        setPlankSeconds(0);
+        setIsPlankActive(false);
+        hasBeatenRecord.current = false;
         calibrationSamples.current = [];
         recentValues.current = [];
         isInRep.current = false;
@@ -548,11 +743,16 @@ export default function RepCounterScreen() {
         peakValue.current = 0;
         wasAboveThreshold.current = false;
 
-        // En mode caméra, on n'utilise pas l'accéléromètre (le téléphone est posé)
-        // Le comptage se fait par tap sur l'écran
+        // Pour la planche en mode caméra, la détection de position se fait via la caméra
+        if (selectedExercise.isTimeBased && detectionMode === 'camera') {
+            console.log('[RepCounter] Mode planche caméra: Détection de position activée');
+            return; // Le timer se gère via togglePlank appelé par la détection de pose
+        }
+
+        // En mode caméra normal, on n'utilise pas l'accéléromètre
         if (detectionMode === 'camera') {
             console.log('[RepCounter] Mode caméra: Détection automatique activée');
-            // On continue pour initialiser le reste (timer, etc)
+            return;
         }
 
         // Mode capteur: configurer l'accéléromètre
@@ -618,39 +818,61 @@ export default function RepCounterScreen() {
     // Arrêter le tracking
     const stopTracking = useCallback(() => {
         setIsTracking(false);
+        setIsPlankActive(false);
         if (subscriptionRef.current) {
             subscriptionRef.current.remove();
             subscriptionRef.current = null;
+        }
+        if (plankTimerRef.current) {
+            clearInterval(plankTimerRef.current);
+            plankTimerRef.current = null;
         }
     }, []);
 
     // Terminer et sauvegarder
     // Save workout to store
     const saveWorkout = useCallback(async () => {
-        if (!selectedExercise || repCount === 0) return;
+        // Pour la planche, on vérifie plankSeconds au lieu de repCount
+        const isTimeBased = selectedExercise?.isTimeBased;
+        const valueToCheck = isTimeBased ? plankSeconds : repCount;
+        
+        if (!selectedExercise || valueToCheck === 0) return;
+
+        // Jouer le son finished
+        playFinishedSound();
 
         const exerciseName = selectedExercise.name;
-        const exerciseText = `${exerciseName}: ${repCount} reps`;
-        const durationMinutes = Math.floor(elapsedTime / 60);
+        const exerciseText = isTimeBased 
+            ? `${exerciseName}: ${plankSeconds}s`
+            : `${exerciseName}: ${repCount} reps`;
+        const durationMinutes = isTimeBased 
+            ? Math.ceil(plankSeconds / 60) 
+            : Math.floor(elapsedTime / 60);
 
         addHomeWorkout({
             name: `Track ${exerciseName}`,
             exercises: exerciseText,
-            totalReps: repCount,
+            totalReps: isTimeBased ? undefined : repCount,
             durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
         });
 
-        // Attribuer les XP pour la séance (après un court délai pour éviter les races avec les recalculs)
+        // Attribuer les XP pour la séance
         const { addXp, updateQuestProgress } = useGamificationStore.getState();
-        const xpGained = 50 + Math.floor(repCount / 10) * 5; // 50 base + 5 XP par 10 reps
+        const xpGained = isTimeBased 
+            ? 50 + Math.floor(plankSeconds / 10) * 3 // 50 base + 3 XP par 10 secondes
+            : 50 + Math.floor(repCount / 10) * 5; // 50 base + 5 XP par 10 reps
         console.log('[rep-counter] Before addXp, xp =', useGamificationStore.getState().xp);
 
         await new Promise<void>((resolve) => {
             setTimeout(() => {
                 try {
-                    addXp(xpGained, `Tracking ${exerciseName} (${repCount} reps)`);
+                    const description = isTimeBased 
+                        ? `Tracking ${exerciseName} (${plankSeconds}s)` 
+                        : `Tracking ${exerciseName} (${repCount} reps)`;
+                    addXp(xpGained, description);
                     updateQuestProgress('workouts', 1);
-                    if (repCount > 0) updateQuestProgress('exercises', repCount);
+                    if (!isTimeBased && repCount > 0) updateQuestProgress('exercises', repCount);
+                    if (isTimeBased) updateQuestProgress('duration', Math.ceil(plankSeconds / 60));
                     console.log('[rep-counter] After addXp, xp =', useGamificationStore.getState().xp);
 
                     // Marquer comme sauvegardé pour reset au retour
@@ -663,7 +885,7 @@ export default function RepCounterScreen() {
                 }
             }, 60);
         });
-    }, [selectedExercise, repCount, elapsedTime, addHomeWorkout]);
+    }, [selectedExercise, repCount, plankSeconds, elapsedTime, addHomeWorkout, playFinishedSound]);
 
     // Recalculer les quêtes après sauvegarde (quand workoutSaved devient true)
     useEffect(() => {
@@ -686,6 +908,9 @@ export default function RepCounterScreen() {
         stopTracking();
         setRepCount(0);
         setElapsedTime(0);
+        setPlankSeconds(0);
+        setIsPlankActive(false);
+        hasBeatenRecord.current = false;
         setStep('select');
         setSelectedExercise(null);
     }, [stopTracking]);
@@ -698,6 +923,9 @@ export default function RepCounterScreen() {
             }
             if (timerRef.current) {
                 clearInterval(timerRef.current);
+            }
+            if (plankTimerRef.current) {
+                clearInterval(plankTimerRef.current);
             }
         };
     }, []);
@@ -725,7 +953,10 @@ export default function RepCounterScreen() {
     };
 
     // Calcul des calories (approximatif)
-    const calories = Math.round(repCount * 0.5);
+    // Planche: ~4 cal/min, autres exercices: ~0.5 cal/rep
+    const calories = selectedExercise?.isTimeBased 
+        ? Math.round((plankSeconds / 60) * 4)
+        : Math.round(repCount * 0.5);
     const progress = Math.min(repCount / 50, 1); // Objectif de 50 reps
 
     return (
@@ -856,14 +1087,39 @@ export default function RepCounterScreen() {
                                 {/* UI Overlay (Always visible) */}
                                 <View style={styles.counterWrapper}>
                                     <Animated.View style={[styles.pulseRing, pulseStyle, { borderColor: selectedExercise.color }]} />
-                                    <ProgressRing progress={progress} size={240}>
+                                    <ProgressRing progress={selectedExercise.isTimeBased ? Math.min(plankSeconds / 60, 1) : progress} size={240}>
                                         <Animated.View style={[styles.counterInner, countStyle]}>
-                                            <Text style={styles.repCount}>{repCount}</Text>
-                                            <Text style={styles.repLabel}>reps</Text>
+                                            {selectedExercise.isTimeBased ? (
+                                                <>
+                                                    <Text style={styles.repCount}>{plankSeconds}</Text>
+                                                    <Text style={styles.repLabel}>secondes</Text>
+                                                    {isPlankActive && (
+                                                        <View style={[styles.plankStatusBadge, { backgroundColor: Colors.success }]}>
+                                                            <Text style={styles.plankStatusText}>ACTIF</Text>
+                                                        </View>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Text style={styles.repCount}>{repCount}</Text>
+                                                    <Text style={styles.repLabel}>reps</Text>
+                                                </>
+                                            )}
                                         </Animated.View>
                                     </ProgressRing>
                                 </View>
                             </View>
+
+                            {/* Nouveau record ! */}
+                            {showNewRecord && (
+                                <Animated.View 
+                                    entering={FadeInDown.springify()} 
+                                    style={styles.newRecordBanner}
+                                >
+                                    <Text style={styles.newRecordEmoji}>🏆</Text>
+                                    <Text style={styles.newRecordText}>Nouveau record personnel !</Text>
+                                </Animated.View>
+                            )}
 
                             {/* Stats en temps réel */}
                             <View style={styles.liveStats}>
@@ -877,13 +1133,23 @@ export default function RepCounterScreen() {
                                     <Text style={[styles.liveStatValue, { color: selectedExercise.color }]}>{calories}</Text>
                                     <Text style={styles.liveStatLabel}>kcal</Text>
                                 </View>
-                                <View style={styles.liveStat}>
-                                    <Zap size={18} color={Colors.muted} />
-                                    <Text style={styles.liveStatValue}>
-                                        {elapsedTime > 0 ? (repCount / (elapsedTime / 60)).toFixed(1) : '0'}
-                                    </Text>
-                                    <Text style={styles.liveStatLabel}>rep/min</Text>
-                                </View>
+                                {selectedExercise.isTimeBased ? (
+                                    <View style={styles.liveStat}>
+                                        <Zap size={18} color={Colors.muted} />
+                                        <Text style={styles.liveStatValue}>
+                                            {personalBest > 0 ? `${personalBest}s` : '-'}
+                                        </Text>
+                                        <Text style={styles.liveStatLabel}>Record</Text>
+                                    </View>
+                                ) : (
+                                    <View style={styles.liveStat}>
+                                        <Zap size={18} color={Colors.muted} />
+                                        <Text style={styles.liveStatValue}>
+                                            {elapsedTime > 0 ? (repCount / (elapsedTime / 60)).toFixed(1) : '0'}
+                                        </Text>
+                                        <Text style={styles.liveStatLabel}>rep/min</Text>
+                                    </View>
+                                )}
                             </View>
 
                             {/* Mode indicator */}
@@ -894,6 +1160,10 @@ export default function RepCounterScreen() {
                                         Détection IA active
                                     </Text>
                                 </View>
+                            ) : selectedExercise.isTimeBased ? (
+                                <Text style={styles.helpText}>
+                                    {isPlankActive ? 'Tiens bon ! 💪' : 'Appuie sur ▶️ pour démarrer le chrono'}
+                                </Text>
                             ) : (
                                 <Text style={styles.helpText}>
                                     Continue tes {selectedExercise.name.toLowerCase()} !
@@ -994,7 +1264,7 @@ export default function RepCounterScreen() {
                             </Animated.View>
 
                             <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.doneTitle}>
-                                Bravo ! 🎉
+                                {showNewRecord ? '🏆 Nouveau record !' : 'Bravo ! 🎉'}
                             </Animated.Text>
 
                             <Animated.View entering={FadeInDown.delay(300).springify()}>
@@ -1002,7 +1272,9 @@ export default function RepCounterScreen() {
                                     <View style={styles.summaryRow}>
                                         <View style={styles.summaryItem}>
                                             <Dumbbell size={20} color={selectedExercise.color} />
-                                            <Text style={styles.summaryValue}>{repCount}</Text>
+                                            <Text style={styles.summaryValue}>
+                                                {selectedExercise.isTimeBased ? `${plankSeconds}s` : repCount}
+                                            </Text>
                                             <Text style={styles.summaryLabel}>{selectedExercise.name}</Text>
                                         </View>
                                         <View style={styles.summaryDivider} />
@@ -1245,6 +1517,21 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: Spacing.xxl,
     },
+    volumeRecommendation: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(250, 204, 21, 0.15)',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: BorderRadius.lg,
+        marginBottom: Spacing.xl,
+        gap: 8,
+    },
+    volumeRecommendationText: {
+        fontSize: FontSize.sm,
+        color: '#facc15',
+        fontWeight: FontWeight.medium,
+    },
     readyButton: {
         borderRadius: BorderRadius.full,
         overflow: 'hidden',
@@ -1309,6 +1596,41 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         color: Colors.muted,
         marginTop: -8,
+    },
+
+    // Plank specific
+    plankStatusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+        marginTop: 8,
+    },
+    plankStatusText: {
+        fontSize: FontSize.sm,
+        fontWeight: FontWeight.bold,
+        color: '#fff',
+        letterSpacing: 1,
+    },
+    newRecordBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(250, 204, 21, 0.2)',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: BorderRadius.full,
+        marginBottom: Spacing.lg,
+        gap: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(250, 204, 21, 0.4)',
+    },
+    newRecordEmoji: {
+        fontSize: 20,
+    },
+    newRecordText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.bold,
+        color: '#facc15',
     },
 
     // Live Stats

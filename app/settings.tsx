@@ -11,6 +11,8 @@ import {
   Alert,
   TouchableOpacity,
   Switch,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -181,6 +183,9 @@ export default function SettingsScreen() {
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [isDisablingSocial, setIsDisablingSocial] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [timePickerHour, setTimePickerHour] = useState('20');
+  const [timePickerMinute, setTimePickerMinute] = useState('00');
   const streak = getStreak();
 
   // Stats calculées
@@ -492,39 +497,11 @@ export default function SettingsScreen() {
               icon={<Clock size={20} color="#60a5fa" />}
               iconColor="#60a5fa"
               title="Heure du rappel"
-              subtitle="Choisir l'heure de notification"
+              subtitle={`${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}`}
               onPress={() => {
-                Alert.prompt(
-                  'Heure du rappel',
-                  'Entre l\'heure du rappel (format HH:MM)',
-                  [
-                    { text: 'Annuler', style: 'cancel' },
-                    {
-                      text: 'Valider',
-                      onPress: async (input: string | undefined) => {
-                        const match = input?.match(/^(\d{1,2}):(\d{2})$/);
-                        if (match) {
-                          const hour = parseInt(match[1], 10);
-                          const minute = parseInt(match[2], 10);
-                          if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-                            await NotificationService.scheduleStreakReminder(hour, minute);
-                            updateSettings({ 
-                              streakReminderHour: hour,
-                              streakReminderMinute: minute,
-                            });
-                            Alert.alert('Heure mise à jour', `Rappel programmé à ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-                          } else {
-                            Alert.alert('Erreur', 'Heure invalide');
-                          }
-                        } else {
-                          Alert.alert('Erreur', 'Format invalide. Utilise HH:MM (ex: 20:00)');
-                        }
-                      },
-                    },
-                  ],
-                  'plain-text',
-                  `${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}`
-                );
+                setTimePickerHour(String(settings.streakReminderHour ?? 20));
+                setTimePickerMinute(String(settings.streakReminderMinute ?? 0).padStart(2, '0'));
+                setTimePickerVisible(true);
               }}
               delay={195}
             />
@@ -824,6 +801,78 @@ export default function SettingsScreen() {
         entries={entries}
         streak={streak}
       />
+
+      {/* TIME PICKER MODAL */}
+      <Modal
+        visible={timePickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTimePickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.timePickerModal}>
+            <Text style={styles.timePickerTitle}>Heure du rappel</Text>
+            <Text style={styles.timePickerSubtitle}>Choisis l'heure de notification</Text>
+            
+            <View style={styles.timePickerInputs}>
+              <TextInput
+                style={styles.timePickerInput}
+                value={timePickerHour}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, '');
+                  if (num.length <= 2) setTimePickerHour(num);
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="HH"
+                placeholderTextColor={Colors.muted}
+              />
+              <Text style={styles.timePickerSeparator}>:</Text>
+              <TextInput
+                style={styles.timePickerInput}
+                value={timePickerMinute}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, '');
+                  if (num.length <= 2) setTimePickerMinute(num);
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="MM"
+                placeholderTextColor={Colors.muted}
+              />
+            </View>
+
+            <View style={styles.timePickerButtons}>
+              <TouchableOpacity 
+                style={styles.timePickerCancelButton}
+                onPress={() => setTimePickerVisible(false)}
+              >
+                <Text style={styles.timePickerCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.timePickerConfirmButton}
+                onPress={async () => {
+                  const hour = parseInt(timePickerHour, 10);
+                  const minute = parseInt(timePickerMinute, 10);
+                  if (!isNaN(hour) && !isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                    await NotificationService.scheduleStreakReminder(hour, minute);
+                    updateSettings({ 
+                      streakReminderHour: hour,
+                      streakReminderMinute: minute,
+                    });
+                    setTimePickerVisible(false);
+                    Alert.alert('Heure mise à jour', `Rappel programmé à ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+                  } else {
+                    Alert.alert('Erreur', 'Heure invalide (00-23 : 00-59)');
+                  }
+                }}
+              >
+                <Text style={styles.timePickerConfirmText}>Valider</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1103,5 +1152,86 @@ const styles = StyleSheet.create({
   storageText: {
     fontSize: FontSize.xs,
     color: Colors.muted,
+  },
+  // Time Picker Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  timePickerModal: {
+    backgroundColor: Colors.cardSolid,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1
+    },
+  timePickerTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  timePickerSubtitle: {
+    fontSize: FontSize.sm,
+    color: Colors.muted,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  timePickerInputs: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  timePickerInput: {
+    backgroundColor: Colors.overlay,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    textAlign: 'center',
+    width: 80,
+    borderWidth: 1
+  },
+  timePickerSeparator: {
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+  },
+  timePickerButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  timePickerCancelButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.overlay,
+    alignItems: 'center',
+  },
+  timePickerCancelText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.medium,
+    color: Colors.muted,
+  },
+  timePickerConfirmButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.cta,
+    alignItems: 'center',
+  },
+  timePickerConfirmText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: '#fff',
   },
 });

@@ -9,7 +9,6 @@ import { Platform } from 'react-native';
 // Configuration handler - affichage même en foreground
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
-        shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
         shouldShowBanner: true,
