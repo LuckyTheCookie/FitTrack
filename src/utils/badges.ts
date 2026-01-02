@@ -71,7 +71,8 @@ export function checkBadges(
 ): BadgeId[] {
   const unlockedBadges: BadgeId[] = [];
   
-  const sportEntries = entries.filter(e => e.type === 'home' || e.type === 'run');
+  // Inclure beatsaber dans les entrées sport
+  const sportEntries = entries.filter(e => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber');
   const runEntries = entries.filter(e => e.type === 'run');
   
   const totalWorkouts = sportEntries.length;

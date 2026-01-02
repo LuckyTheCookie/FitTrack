@@ -626,7 +626,7 @@ export default function RepCounterScreen() {
 
     // Terminer et sauvegarder
     // Save workout to store
-    const saveWorkout = useCallback(() => {
+    const saveWorkout = useCallback(async () => {
         if (!selectedExercise || repCount === 0) return;
 
         const exerciseName = selectedExercise.name;
@@ -640,8 +640,29 @@ export default function RepCounterScreen() {
             durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
         });
 
-        // Marquer comme sauvegardé pour reset au retour
-        setWorkoutSaved(true);
+        // Attribuer les XP pour la séance (après un court délai pour éviter les races avec les recalculs)
+        const { addXp, updateQuestProgress } = useGamificationStore.getState();
+        const xpGained = 50 + Math.floor(repCount / 10) * 5; // 50 base + 5 XP par 10 reps
+        console.log('[rep-counter] Before addXp, xp =', useGamificationStore.getState().xp);
+
+        await new Promise<void>((resolve) => {
+            setTimeout(() => {
+                try {
+                    addXp(xpGained, `Tracking ${exerciseName} (${repCount} reps)`);
+                    updateQuestProgress('workouts', 1);
+                    if (repCount > 0) updateQuestProgress('exercises', repCount);
+                    console.log('[rep-counter] After addXp, xp =', useGamificationStore.getState().xp);
+
+                    // Marquer comme sauvegardé pour reset au retour
+                    setWorkoutSaved(true);
+                } catch (err) {
+                    console.error('[rep-counter] Error adding XP:', err);
+                    setWorkoutSaved(true);
+                } finally {
+                    resolve();
+                }
+            }, 60);
+        });
     }, [selectedExercise, repCount, elapsedTime, addHomeWorkout]);
 
     // Recalculer les quêtes après sauvegarde (quand workoutSaved devient true)
@@ -1010,8 +1031,8 @@ export default function RepCounterScreen() {
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    onPress={() => {
-                                        saveWorkout();
+                                    onPress={async () => {
+                                        await saveWorkout();
                                         router.back();
                                     }}
                                     activeOpacity={0.9}

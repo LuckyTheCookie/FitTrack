@@ -86,6 +86,7 @@ interface SocialState {
     setupRealtimeSubscriptions: () => void;
     cleanupSubscriptions: () => void;
     savePushToken: (token: string) => Promise<void>;
+    registerPushTokenAfterAuth: () => Promise<void>;
 }
 
 // ============================================================================
@@ -122,6 +123,11 @@ export const useSocialStore = create<SocialState>()(
                         profile,
                         isLoading: false,
                     });
+                    
+                    // If authenticated, try to register/update push token
+                    if (profile) {
+                        get().registerPushTokenAfterAuth();
+                    }
                 } catch {
                     set({ isAuthenticated: false, profile: null, isLoading: false });
                 }
@@ -135,6 +141,9 @@ export const useSocialStore = create<SocialState>()(
                     await SocialService.signUp(email, password, username);
                     const profile = await SocialService.getMyProfile();
                     set({ isAuthenticated: true, profile, isLoading: false });
+                    
+                    // Auto-register push token after successful signup
+                    get().registerPushTokenAfterAuth();
                 } catch (error) {
                     set({ isLoading: false });
                     throw error;
@@ -149,6 +158,9 @@ export const useSocialStore = create<SocialState>()(
                     await SocialService.signIn(email, password);
                     const profile = await SocialService.getMyProfile();
                     set({ isAuthenticated: true, profile, isLoading: false });
+                    
+                    // Auto-register push token after successful login
+                    get().registerPushTokenAfterAuth();
                 } catch (error) {
                     set({ isLoading: false });
                     throw error;
@@ -386,8 +398,24 @@ export const useSocialStore = create<SocialState>()(
                 if (!get().isAuthenticated) return;
                 try {
                     await SocialService.savePushToken(token);
+                    console.log('Push token saved successfully');
                 } catch (error) {
                     console.error('Failed to save push token:', error);
+                }
+            },
+
+            registerPushTokenAfterAuth: async () => {
+                // Non-blocking call to register push token
+                // This runs in background after login/signup
+                try {
+                    const result = await Notifications.registerForPushNotifications();
+                    if (result.success) {
+                        await get().savePushToken(result.token);
+                    } else {
+                        console.log('Push token registration failed:', result.reason);
+                    }
+                } catch (error) {
+                    console.error('Error registering push token:', error);
                 }
             },
         }),

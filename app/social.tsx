@@ -38,6 +38,7 @@ import {
     Upload,
     Bell,
     CheckCircle,
+    UserX,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { GlassCard } from '../src/components/ui';
@@ -93,11 +94,15 @@ function LeaderboardItem({
     rank,
     isMe,
     onEncourage,
+    isFriend,
+    onPress,
 }: { 
     entry: LeaderboardEntry;
     rank: number;
     isMe?: boolean;
     onEncourage?: () => void;
+    isFriend?: boolean;
+    onPress?: () => void;
 }) {
     const getRankIcon = () => {
         if (rank === 1) return <Crown size={20} color="#fbbf24" fill="#fbbf24" />;
@@ -108,6 +113,7 @@ function LeaderboardItem({
 
     return (
         <Animated.View entering={FadeInDown.delay(rank * 50).springify()}>
+            <TouchableOpacity onPress={onPress} disabled={isMe || !onPress} activeOpacity={0.7}>
             <GlassCard style={isMe ? [styles.leaderboardItem, styles.leaderboardItemMe] : styles.leaderboardItem}>
                 <View style={styles.rankContainer}>
                     {getRankIcon()}
@@ -133,7 +139,8 @@ function LeaderboardItem({
                     <Text style={styles.xpValue}>{entry.weekly_xp}</Text>
                     <Text style={styles.xpLabel}>XP</Text>
                 </View>
-                {!isMe && onEncourage && (
+                {/* Afficher le bouton d'encouragement uniquement si c'est un ami */}
+                {!isMe && onEncourage && isFriend && (
                     <TouchableOpacity 
                         style={styles.encourageButton}
                         onPress={onEncourage}
@@ -142,6 +149,7 @@ function LeaderboardItem({
                     </TouchableOpacity>
                 )}
             </GlassCard>
+            </TouchableOpacity>
         </Animated.View>
     );
 }
@@ -258,6 +266,10 @@ export default function SocialScreen() {
     const [showSyncModal, setShowSyncModal] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'granted' | 'denied' | 'network_error'>('unknown');
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [selectedFriend, setSelectedFriend] = useState<Profile | null>(null);
+    const [showFriendModal, setShowFriendModal] = useState(false);
+    const [hasSyncedThisSession, setHasSyncedThisSession] = useState(false);
 
     // Local data from app store
     const { entries, getStreak } = useAppStore();
@@ -281,6 +293,7 @@ export default function SocialScreen() {
         fetchEncouragements,
         sendFriendRequest,
         respondToRequest,
+        removeFriend,
         sendEncouragement,
         markAsRead,
         searchUsers,
@@ -291,11 +304,25 @@ export default function SocialScreen() {
         savePushToken,
     } = useSocialStore();
 
+    // Helper pour vérifier si un utilisateur est ami
+    const isFriend = useCallback((userId: string) => {
+        return friends.some(f => f.id === userId);
+    }, [friends]);
+
+    // Trouver le friendship ID pour un ami
+    const getFriendshipId = useCallback((friendId: string) => {
+        // Chercher dans les amis - on a besoin de la relation
+        // Pour l'instant on retourne l'ID du friend, mais idéalement on devrait stocker le friendship_id
+        return friendId;
+    }, []);
+
     // Check auth and notifications on mount
     useEffect(() => {
         const initialize = async () => {
+            setIsInitialLoading(true);
             // Check auth state
             await checkAuth();
+            setIsInitialLoading(false);
             
             // Check notification permissions
             const result = await NotificationService.registerForPushNotifications();
@@ -327,7 +354,7 @@ export default function SocialScreen() {
         }
     }, [isAuthenticated, socialEnabled]);
 
-    // Initial fetch
+    // Initial fetch + auto sync
     useEffect(() => {
         if (isAuthenticated && socialEnabled) {
             fetchGlobalLeaderboard();
@@ -335,6 +362,30 @@ export default function SocialScreen() {
             fetchFriends();
             fetchPendingRequests();
             fetchEncouragements();
+            
+            // Auto sync on page open (only once per session)
+            if (!hasSyncedThisSession) {
+                setHasSyncedThisSession(true);
+                // Sync silently without modal
+                const autoSync = async () => {
+                    try {
+                        const streakData = getStreak();
+                        await syncStats({
+                            workouts: localStats.weeklyWorkouts,
+                            distance: localStats.weeklyDistance,
+                            duration: localStats.weeklyDuration,
+                            xp: xp,
+                            streak: streakData.current,
+                            bestStreak: streakData.best,
+                            totalXp: xp,
+                            level,
+                        });
+                    } catch {
+                        // Silent fail for auto sync
+                    }
+                };
+                autoSync();
+            }
         }
     }, [isAuthenticated, socialEnabled]);
 
@@ -452,6 +503,37 @@ export default function SocialScreen() {
     // Current leaderboard
     const currentLeaderboard = leaderboardType === 'global' ? globalLeaderboard : friendsLeaderboard;
 
+    // Handler pour supprimer un ami
+    const handleRemoveFriend = useCallback(async (friendId: string) => {
+        Alert.alert(
+            'Supprimer cet ami ?',
+            'Tu ne pourras plus voir ses statistiques et il ne pourra plus t\'envoyer d\'encouragements.',
+            [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                    text: 'Supprimer',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await removeFriend(friendId);
+                            setShowFriendModal(false);
+                            setSelectedFriend(null);
+                            Alert.alert('Ami supprimé', 'Cet utilisateur n\'est plus dans ta liste d\'amis.');
+                        } catch (error: any) {
+                            Alert.alert('Erreur', error.message || 'Impossible de supprimer cet ami');
+                        }
+                    },
+                },
+            ]
+        );
+    }, [removeFriend]);
+
+    // Handler pour ouvrir le modal d'ami
+    const handleOpenFriendModal = useCallback((friend: Profile) => {
+        setSelectedFriend(friend);
+        setShowFriendModal(true);
+    }, []);
+
     // Not configured
     if (!isSocialAvailable()) {
         return (
@@ -460,6 +542,18 @@ export default function SocialScreen() {
                     <Text style={styles.screenTitle}>Social</Text>
                     <NotConfiguredPrompt />
                 </ScrollView>
+            </SafeAreaView>
+        );
+    }
+
+    // Loading initial - afficher un loader pendant la vérification d'auth
+    if (isInitialLoading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.cta} />
+                    <Text style={styles.loadingText}>Chargement...</Text>
+                </View>
             </SafeAreaView>
         );
     }
@@ -676,9 +770,15 @@ export default function SocialScreen() {
                                     entry={entry}
                                     rank={index + 1}
                                     isMe={entry.id === profile?.id}
+                                    isFriend={isFriend(entry.id)}
                                     onEncourage={
-                                        entry.id !== profile?.id 
+                                        entry.id !== profile?.id && isFriend(entry.id)
                                             ? () => handleEncourage(entry.id, entry.display_name || entry.username)
+                                            : undefined
+                                    }
+                                    onPress={
+                                        entry.id !== profile?.id && isFriend(entry.id)
+                                            ? () => handleOpenFriendModal(entry as any)
                                             : undefined
                                     }
                                 />
@@ -776,7 +876,12 @@ export default function SocialScreen() {
                                 </View>
                             ) : (
                                 friends.map(friend => (
-                                    <GlassCard key={friend.id} style={styles.friendItem}>
+                                    <TouchableOpacity 
+                                        key={friend.id} 
+                                        onPress={() => handleOpenFriendModal(friend)}
+                                        activeOpacity={0.7}
+                                    >
+                                    <GlassCard style={styles.friendItem}>
                                         <View style={styles.userAvatar}>
                                             <Text style={styles.avatarText}>
                                                 {(friend.display_name || friend.username).charAt(0).toUpperCase()}
@@ -798,14 +903,18 @@ export default function SocialScreen() {
                                         </View>
                                         <TouchableOpacity
                                             style={styles.encourageButton}
-                                            onPress={() => handleEncourage(
-                                                friend.id, 
-                                                friend.display_name || friend.username
-                                            )}
+                                            onPress={(e) => {
+                                                e.stopPropagation();
+                                                handleEncourage(
+                                                    friend.id, 
+                                                    friend.display_name || friend.username
+                                                );
+                                            }}
                                         >
                                             <Heart size={18} color={Colors.cta} />
                                         </TouchableOpacity>
                                     </GlassCard>
+                                    </TouchableOpacity>
                                 ))
                             )}
                         </View>
@@ -929,6 +1038,84 @@ export default function SocialScreen() {
                                 )}
                             </TouchableOpacity>
                         </View>
+                    </Animated.View>
+                </View>
+            </Modal>
+
+            {/* Friend Management Modal */}
+            <Modal
+                visible={showFriendModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowFriendModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <Animated.View 
+                        entering={FadeInDown.springify()}
+                        style={styles.friendModal}
+                    >
+                        {selectedFriend && (
+                            <>
+                                <View style={styles.friendModalHeader}>
+                                    <View style={styles.friendModalAvatar}>
+                                        <Text style={styles.friendModalAvatarText}>
+                                            {(selectedFriend.display_name || selectedFriend.username).charAt(0).toUpperCase()}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.friendModalName}>
+                                        {selectedFriend.display_name || selectedFriend.username}
+                                    </Text>
+                                    <Text style={styles.friendModalLevel}>Niveau {selectedFriend.level}</Text>
+                                </View>
+
+                                <View style={styles.friendModalStats}>
+                                    <View style={styles.friendModalStat}>
+                                        <Flame size={20} color={Colors.warning} />
+                                        <Text style={styles.friendModalStatValue}>{selectedFriend.current_streak}j</Text>
+                                        <Text style={styles.friendModalStatLabel}>Streak</Text>
+                                    </View>
+                                    <View style={styles.friendModalStatDivider} />
+                                    <View style={styles.friendModalStat}>
+                                        <Zap size={20} color={Colors.cta} />
+                                        <Text style={styles.friendModalStatValue}>{selectedFriend.weekly_xp || 0}</Text>
+                                        <Text style={styles.friendModalStatLabel}>XP semaine</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.friendModalActions}>
+                                    <TouchableOpacity
+                                        style={styles.friendModalActionBtn}
+                                        onPress={() => {
+                                            handleEncourage(
+                                                selectedFriend.id,
+                                                selectedFriend.display_name || selectedFriend.username
+                                            );
+                                            setShowFriendModal(false);
+                                        }}
+                                    >
+                                        <Heart size={20} color={Colors.cta} />
+                                        <Text style={styles.friendModalActionText}>Encourager</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[styles.friendModalActionBtn, styles.friendModalActionDanger]}
+                                        onPress={() => handleRemoveFriend(selectedFriend.id)}
+                                    >
+                                        <UserX size={20} color={Colors.error} />
+                                        <Text style={[styles.friendModalActionText, { color: Colors.error }]}>
+                                            Supprimer
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <TouchableOpacity
+                                    style={styles.friendModalCloseBtn}
+                                    onPress={() => setShowFriendModal(false)}
+                                >
+                                    <Text style={styles.friendModalCloseText}>Fermer</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </Animated.View>
                 </View>
             </Modal>
@@ -1501,5 +1688,113 @@ const styles = StyleSheet.create({
         fontSize: FontSize.md,
         fontWeight: FontWeight.bold,
         color: '#fff',
+    },
+
+    // Loading container
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: Spacing.md,
+    },
+    loadingText: {
+        fontSize: FontSize.md,
+        color: Colors.muted,
+    },
+
+    // Friend Modal
+    friendModal: {
+        backgroundColor: Colors.cardSolid,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        width: '100%',
+        maxWidth: 350,
+        alignItems: 'center',
+    },
+    friendModalHeader: {
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    friendModalAvatar: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: Colors.teal,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    friendModalAvatarText: {
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+    },
+    friendModalName: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        marginBottom: 4,
+    },
+    friendModalLevel: {
+        fontSize: FontSize.sm,
+        color: Colors.muted,
+    },
+    friendModalStats: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.xl,
+        gap: Spacing.xl,
+    },
+    friendModalStat: {
+        alignItems: 'center',
+        gap: 4,
+    },
+    friendModalStatValue: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+    },
+    friendModalStatLabel: {
+        fontSize: FontSize.xs,
+        color: Colors.muted,
+    },
+    friendModalStatDivider: {
+        width: 1,
+        height: 40,
+        backgroundColor: Colors.stroke,
+    },
+    friendModalActions: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        marginBottom: Spacing.lg,
+        width: '100%',
+    },
+    friendModalActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: 'rgba(215, 150, 134, 0.15)',
+    },
+    friendModalActionDanger: {
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    },
+    friendModalActionText: {
+        fontSize: FontSize.sm,
+        fontWeight: FontWeight.semibold,
+        color: Colors.cta,
+    },
+    friendModalCloseBtn: {
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.xl,
+    },
+    friendModalCloseText: {
+        fontSize: FontSize.md,
+        color: Colors.muted,
+        fontWeight: FontWeight.medium,
     },
 });

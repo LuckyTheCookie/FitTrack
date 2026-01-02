@@ -18,12 +18,14 @@ import {
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Video } from 'lucide-react-native';
+import { Video, Calendar, Clock } from 'lucide-react-native';
 import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui';
 import { useAppStore, useGamificationStore } from '../../stores';
 import type { EntryType, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import { nanoid } from 'nanoid/non-secure';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface Exercise {
     id: string;
@@ -178,6 +180,11 @@ export function AddEntryForm({
     const initialMeal = getInitialMeal();
     const initialMeasure = getInitialMeasure();
 
+    // Date/heure personnalisée
+    const [useCustomDateTime, setUseCustomDateTime] = useState(false);
+    const [customDate, setCustomDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [customTime, setCustomTime] = useState(format(new Date(), 'HH:mm'));
+
     // Home workout - nouveau format
     const [homeName, setHomeName] = useState(initialHome.name);
     const [homeDuration, setHomeDuration] = useState(initialHome.duration);
@@ -271,6 +278,10 @@ export function AddEntryForm({
 
     const handleSubmit = useCallback(async () => {
         setLoading(true);
+        
+        // Calculer la date personnalisée si activée (format YYYY-MM-DD)
+        const entryDate = useCustomDateTime ? format(customDate, 'yyyy-MM-dd') : undefined;
+        
         try {
             switch (activeTab) {
                 case 'home':
@@ -305,7 +316,7 @@ export function AddEntryForm({
                             absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
                             totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
                             durationMinutes: homeDurationMinutes && homeDurationMinutes > 0 ? homeDurationMinutes : undefined,
-                        });
+                        }, entryDate);
                     }
                     break;
 
@@ -341,7 +352,7 @@ export function AddEntryForm({
                             bpmAvg: runBpmAvg ? parseInt(runBpmAvg, 10) : undefined,
                             bpmMax: runBpmMax ? parseInt(runBpmMax, 10) : undefined,
                             cardiacLoad: runCardiacLoad ? parseInt(runCardiacLoad, 10) : undefined,
-                        });
+                        }, entryDate);
                     }
                     break;
 
@@ -369,7 +380,7 @@ export function AddEntryForm({
                             cardiacLoad: bsCardiacLoad ? parseInt(bsCardiacLoad, 10) : undefined,
                             bpmAvg: bsBpmAvg ? parseInt(bsBpmAvg, 10) : undefined,
                             bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
-                        });
+                        }, entryDate);
 
                         addXp(15 + Math.floor(bsMinutesRounded / 5), `Beat Saber (${bsMinutesRounded}min)`);
                         updateQuestProgress('duration', bsMinutesRounded);
@@ -391,7 +402,7 @@ export function AddEntryForm({
                         addMeal({
                             mealName: mealTimeLabels[mealTime],
                             description: mealDescription.trim(),
-                        });
+                        }, entryDate);
                     }
                     break;
 
@@ -417,7 +428,7 @@ export function AddEntryForm({
                     if (isEditMode && editEntry) {
                         updateEntry(editEntry.id, data);
                     } else {
-                        addMeasure(data);
+                        addMeasure(data, entryDate);
                     }
                     break;
             }
@@ -453,6 +464,11 @@ export function AddEntryForm({
             setWaist('');
             setArm('');
             setHips('');
+            
+            // Reset custom date/time
+            setUseCustomDateTime(false);
+            setCustomDate(format(new Date(), 'yyyy-MM-dd'));
+            setCustomTime(format(new Date(), 'HH:mm'));
 
             setHasStarted(false);
             onSuccess?.();
@@ -467,7 +483,8 @@ export function AddEntryForm({
         mealTime, mealDescription,
         weight, waist, arm, hips,
         addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, updateEntry, // AJOUTÉ : addBeatSaber (par sécurité)
-        onSuccess, addXp, updateQuestProgress, isEditMode, editEntry
+        onSuccess, addXp, updateQuestProgress, isEditMode, editEntry,
+        useCustomDateTime, customDate, customTime
     ]);
 
     const handleStartActivity = (type: EntryType) => {
@@ -544,6 +561,96 @@ export function AddEntryForm({
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
+                {/* Option date personnalisée - seulement en mode création */}
+                {!isEditMode && (
+                    <View style={styles.customDateSection}>
+                        <TouchableOpacity
+                            style={styles.customDateToggle}
+                            onPress={() => setUseCustomDateTime(!useCustomDateTime)}
+                            activeOpacity={0.7}
+                        >
+                            <Calendar size={18} color={useCustomDateTime ? Colors.cta : Colors.muted} />
+                            <Text style={[
+                                styles.customDateToggleText,
+                                useCustomDateTime && styles.customDateToggleTextActive
+                            ]}>
+                                {useCustomDateTime ? 'Date personnalisée' : 'Aujourd\'hui'}
+                            </Text>
+                            <Text style={styles.customDateToggleHint}>
+                                {useCustomDateTime ? (() => {
+                                    // Parse YYYY-MM-DD and format for display
+                                    const parts = customDate.split('-');
+                                    if (parts.length === 3) {
+                                        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                        return format(d, 'dd MMM yyyy', { locale: fr });
+                                    }
+                                    return customDate;
+                                })() : 'Modifier'}
+                            </Text>
+                        </TouchableOpacity>
+                        
+                        {useCustomDateTime && (
+                            <View style={styles.customDateInputs}>
+                                <View style={styles.customDateRow}>
+                                    <InputField
+                                        label="Date (JJ/MM/AAAA)"
+                                        placeholder="31/12/2024"
+                                        value={(() => {
+                                            // Convert YYYY-MM-DD to DD/MM/YYYY for display
+                                            const parts = customDate.split('-');
+                                            if (parts.length === 3) {
+                                                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                            }
+                                            return customDate;
+                                        })()}
+                                        onChangeText={(text) => {
+                                            // Parse DD/MM/YYYY format and store as YYYY-MM-DD
+                                            const parts = text.split('/');
+                                            if (parts.length === 3) {
+                                                const day = parts[0].padStart(2, '0');
+                                                const month = parts[1].padStart(2, '0');
+                                                const year = parts[2];
+                                                if (day.length === 2 && month.length === 2 && year.length === 4) {
+                                                    // Validate the date
+                                                    const d = parseInt(day, 10);
+                                                    const m = parseInt(month, 10);
+                                                    const y = parseInt(year, 10);
+                                                    if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 2020 && y <= 2099) {
+                                                        setCustomDate(`${year}-${month}-${day}`);
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                        keyboardType="numbers-and-punctuation"
+                                        containerStyle={styles.dateInput}
+                                    />
+                                    <InputField
+                                        label="Heure (HH:MM)"
+                                        placeholder="14:30"
+                                        value={customTime}
+                                        onChangeText={(text) => {
+                                            // Validate HH:MM format
+                                            const parts = text.split(':');
+                                            if (parts.length === 2) {
+                                                const hours = parseInt(parts[0], 10);
+                                                const minutes = parseInt(parts[1], 10);
+                                                if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+                                                    setCustomTime(`${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`);
+                                                }
+                                            } else {
+                                                // Allow partial input
+                                                setCustomTime(text);
+                                            }
+                                        }}
+                                        keyboardType="numbers-and-punctuation"
+                                        containerStyle={styles.timeInput}
+                                    />
+                                </View>
+                            </View>
+                        )}
+                    </View>
+                )}
+
                 {/* HOME WORKOUT - Nouveau format */}
                 {activeTab === 'home' && (
                     <View>
@@ -1123,5 +1230,44 @@ const styles = StyleSheet.create({
         fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
         color: Colors.text,
+    },
+    // Custom date/time styles
+    customDateSection: {
+        marginBottom: Spacing.lg,
+    },
+    customDateToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.overlay,
+        borderRadius: BorderRadius.lg,
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        gap: Spacing.sm,
+    },
+    customDateToggleText: {
+        flex: 1,
+        fontSize: FontSize.md,
+        color: Colors.muted,
+    },
+    customDateToggleTextActive: {
+        color: Colors.cta,
+        fontWeight: FontWeight.medium,
+    },
+    customDateToggleHint: {
+        fontSize: FontSize.sm,
+        color: Colors.muted,
+    },
+    customDateInputs: {
+        marginTop: Spacing.md,
+    },
+    customDateRow: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+    },
+    dateInput: {
+        flex: 2,
+    },
+    timeInput: {
+        flex: 1,
     },
 });

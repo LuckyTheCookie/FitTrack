@@ -44,6 +44,8 @@ import {
   Heart,
   Upload,
   Save,
+  Bell,
+  Clock,
 } from 'lucide-react-native';
 import { 
   GlassCard, 
@@ -56,6 +58,7 @@ import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { generateFullBackup, exportFullBackup, parseBackup } from '../src/utils/export';
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
+import * as NotificationService from '../src/services/notifications';
 
 // Setting Item composant
 function SettingItem({
@@ -445,6 +448,87 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
+        </GlassCard>
+
+        {/* NOTIFICATIONS */}
+        <SectionTitle title="Notifications" delay={180} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Bell size={20} color="#fbbf24" />}
+            iconColor="#fbbf24"
+            title="Rappel de série"
+            subtitle={settings.streakReminderEnabled 
+              ? `Rappel à ${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}`
+              : 'Désactivé'
+            }
+            showChevron={false}
+            rightElement={
+              <Switch
+                value={settings.streakReminderEnabled ?? false}
+                onValueChange={async (value) => {
+                  if (value) {
+                    const hour = settings.streakReminderHour ?? 20;
+                    const minute = settings.streakReminderMinute ?? 0;
+                    await NotificationService.scheduleStreakReminder(hour, minute);
+                    updateSettings({ 
+                      streakReminderEnabled: true,
+                      streakReminderHour: hour,
+                      streakReminderMinute: minute,
+                    });
+                    Alert.alert('Rappel activé', `Tu recevras un rappel tous les jours à ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} si tu n'as pas encore fait de sport.`);
+                  } else {
+                    await NotificationService.cancelStreakReminder();
+                    updateSettings({ streakReminderEnabled: false });
+                  }
+                }}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            }
+            delay={190}
+          />
+          {settings.streakReminderEnabled && (
+            <SettingItem
+              icon={<Clock size={20} color="#60a5fa" />}
+              iconColor="#60a5fa"
+              title="Heure du rappel"
+              subtitle="Choisir l'heure de notification"
+              onPress={() => {
+                Alert.prompt(
+                  'Heure du rappel',
+                  'Entre l\'heure du rappel (format HH:MM)',
+                  [
+                    { text: 'Annuler', style: 'cancel' },
+                    {
+                      text: 'Valider',
+                      onPress: async (input: string | undefined) => {
+                        const match = input?.match(/^(\d{1,2}):(\d{2})$/);
+                        if (match) {
+                          const hour = parseInt(match[1], 10);
+                          const minute = parseInt(match[2], 10);
+                          if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                            await NotificationService.scheduleStreakReminder(hour, minute);
+                            updateSettings({ 
+                              streakReminderHour: hour,
+                              streakReminderMinute: minute,
+                            });
+                            Alert.alert('Heure mise à jour', `Rappel programmé à ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+                          } else {
+                            Alert.alert('Erreur', 'Heure invalide');
+                          }
+                        } else {
+                          Alert.alert('Erreur', 'Format invalide. Utilise HH:MM (ex: 20:00)');
+                        }
+                      },
+                    },
+                  ],
+                  'plain-text',
+                  `${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}`
+                );
+              }}
+              delay={195}
+            />
+          )}
         </GlassCard>
 
         {/* NAVIGATION */}

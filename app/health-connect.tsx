@@ -248,8 +248,8 @@ export default function HealthConnectScreen() {
             const hasPerms = await healthConnect.requestHealthConnectPermissions(); 
             // Note: requestPermission acts as check if already granted
             if (hasPerms) {
+                // Set ready first, then load workouts separately to avoid infinite loop
                 setStatus('ready');
-                loadWorkouts();
             } else {
                 setStatus('permission_needed');
             }
