@@ -684,6 +684,25 @@ export default function RepCounterScreen() {
         }
     }, [isTracking, repCount, animateRep, playRepSound, showMotivationalMessage, playKeepGoingSound]);
 
+    // Callback pour le changement d'état de la planche (caméra)
+    const handlePlankStateChange = useCallback((isInPlank: boolean, confidence: number) => {
+        if (!isTracking || !selectedExercise?.isTimeBased) return;
+        
+        console.log(`[RepCounter] Plank state change: ${isInPlank ? 'IN PLANK' : 'NOT IN PLANK'} (${(confidence * 100).toFixed(0)}%)`);
+        
+        if (isInPlank && !isPlankActive) {
+            // L'utilisateur entre en position de planche
+            setIsPlankActive(true);
+            showMotivationalMessage('C\'est parti ! 💪');
+        } else if (!isInPlank && isPlankActive) {
+            // L'utilisateur sort de la position de planche
+            setIsPlankActive(false);
+            if (plankSeconds > 0) {
+                showMotivationalMessage(`${plankSeconds}s - Bien joué !`);
+            }
+        }
+    }, [isTracking, selectedExercise?.isTimeBased, isPlankActive, plankSeconds, showMotivationalMessage]);
+
     // Gestion du timer pour la planche
     useEffect(() => {
         if (isTracking && selectedExercise?.isTimeBased && isPlankActive) {
@@ -933,6 +952,10 @@ export default function RepCounterScreen() {
     // Sélection d'exercice
     const handleExerciseSelect = useCallback((exercise: ExerciseConfig) => {
         setSelectedExercise(exercise);
+        // Force camera mode for time-based exercises (plank)
+        if (exercise.isTimeBased) {
+            setDetectionMode('camera');
+        }
     }, []);
 
     // Passer à l'étape suivante
@@ -1004,51 +1027,68 @@ export default function RepCounterScreen() {
 
                             {selectedExercise && (
                                 <Animated.View entering={FadeInDown.delay(400)}>
-                                    {/* Mode de détection */}
-                                    <View style={styles.modeSelector}>
-                                        <Text style={styles.modeSelectorLabel}>Mode de détection</Text>
-                                        <View style={styles.modeButtons}>
-                                            <TouchableOpacity
-                                                onPress={() => setDetectionMode('sensor')}
-                                                style={[
-                                                    styles.modeButton,
-                                                    detectionMode === 'sensor' && styles.modeButtonActive,
-                                                ]}
-                                            >
-                                                <Activity size={18} color={detectionMode === 'sensor' ? '#fff' : Colors.muted} />
-                                                <Text style={[
-                                                    styles.modeButtonText,
-                                                    detectionMode === 'sensor' && styles.modeButtonTextActive,
-                                                ]}>
-                                                    Capteur
-                                                </Text>
-                                            </TouchableOpacity>
-
-                                            {selectedExercise.supportsCameraMode && (
+                                    {/* Mode de détection - caché pour la planche (caméra uniquement) */}
+                                    {!selectedExercise.isTimeBased && (
+                                        <View style={styles.modeSelector}>
+                                            <Text style={styles.modeSelectorLabel}>Mode de détection</Text>
+                                            <View style={styles.modeButtons}>
                                                 <TouchableOpacity
-                                                    onPress={() => setDetectionMode('camera')}
+                                                    onPress={() => setDetectionMode('sensor')}
                                                     style={[
                                                         styles.modeButton,
-                                                        detectionMode === 'camera' && styles.modeButtonActive,
-                                                        detectionMode === 'camera' && { backgroundColor: selectedExercise.color },
+                                                        detectionMode === 'sensor' && styles.modeButtonActive,
                                                     ]}
                                                 >
-                                                    <Camera size={18} color={detectionMode === 'camera' ? '#fff' : Colors.muted} />
+                                                    <Activity size={18} color={detectionMode === 'sensor' ? '#fff' : Colors.muted} />
                                                     <Text style={[
                                                         styles.modeButtonText,
-                                                        detectionMode === 'camera' && styles.modeButtonTextActive,
+                                                        detectionMode === 'sensor' && styles.modeButtonTextActive,
                                                     ]}>
-                                                        Caméra
+                                                        Capteur
                                                     </Text>
                                                 </TouchableOpacity>
+
+                                                {selectedExercise.supportsCameraMode && (
+                                                    <TouchableOpacity
+                                                        onPress={() => setDetectionMode('camera')}
+                                                        style={[
+                                                            styles.modeButton,
+                                                            detectionMode === 'camera' && styles.modeButtonActive,
+                                                            detectionMode === 'camera' && { backgroundColor: selectedExercise.color },
+                                                        ]}
+                                                    >
+                                                        <Camera size={18} color={detectionMode === 'camera' ? '#fff' : Colors.muted} />
+                                                        <Text style={[
+                                                            styles.modeButtonText,
+                                                            detectionMode === 'camera' && styles.modeButtonTextActive,
+                                                        ]}>
+                                                            Caméra
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                            {detectionMode === 'camera' && (
+                                                <Text style={styles.cameraModeNote}>
+                                                    📷 La caméra utilise l'IA pour détecter tes mouvements
+                                                </Text>
                                             )}
                                         </View>
-                                        {detectionMode === 'camera' && (
+                                    )}
+
+                                    {/* Message pour la planche : caméra requise */}
+                                    {selectedExercise.isTimeBased && (
+                                        <View style={styles.modeSelector}>
+                                            <View style={[styles.cameraRequiredBadge, { backgroundColor: `${selectedExercise.color}20` }]}>
+                                                <Camera size={18} color={selectedExercise.color} />
+                                                <Text style={[styles.cameraRequiredText, { color: selectedExercise.color }]}>
+                                                    Mode caméra uniquement
+                                                </Text>
+                                            </View>
                                             <Text style={styles.cameraModeNote}>
-                                                📷 La caméra utilise l'IA pour détecter tes mouvements
+                                                📷 Positionne le téléphone de côté pour te voir de profil
                                             </Text>
-                                        )}
-                                    </View>
+                                        </View>
+                                    )}
 
                                     <TouchableOpacity
                                         onPress={handleNext}
@@ -1177,8 +1217,9 @@ export default function RepCounterScreen() {
                                         facing="front"
                                         showDebugOverlay={settings.debugCamera}
                                         exerciseType={selectedExercise.id}
-                                        currentCount={repCount}
+                                        currentCount={selectedExercise.isTimeBased ? plankSeconds : repCount}
                                         onRepDetected={handleCameraRepDetected}
+                                        onPlankStateChange={handlePlankStateChange}
                                         isActive={isTracking}
                                         style={styles.cameraPreview}
                                     />
@@ -1192,8 +1233,9 @@ export default function RepCounterScreen() {
                                         facing="front"
                                         showDebugOverlay={false}
                                         exerciseType={selectedExercise.id}
-                                        currentCount={repCount}
+                                        currentCount={selectedExercise.isTimeBased ? plankSeconds : repCount}
                                         onRepDetected={handleCameraRepDetected}
+                                        onPlankStateChange={handlePlankStateChange}
                                         isActive={isTracking}
                                         style={styles.hiddenCamera}
                                     />
@@ -1835,6 +1877,20 @@ const styles = StyleSheet.create({
         fontSize: FontSize.sm,
         color: Colors.muted2,
         textAlign: 'center',
+    },
+    cameraRequiredBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: BorderRadius.lg,
+        alignSelf: 'center',
+    },
+    cameraRequiredText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
     },
 
     // Camera preview styles

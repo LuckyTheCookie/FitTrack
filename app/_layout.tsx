@@ -9,6 +9,9 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from '
 import { LayoutDashboard, Dumbbell, ChartBar, Wrench, Settings, Trophy, Users } from 'lucide-react-native';
 import { Colors, Spacing } from '../src/constants';
 
+// Initialize i18n
+import '../src/i18n';
+
 // Configuration des icônes
 const TAB_CONFIG = [
     { name: 'index', label: 'Today', Icon: LayoutDashboard },

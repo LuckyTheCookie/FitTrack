@@ -34,6 +34,7 @@ import {
     countRepsFromPose,
     resetExerciseState,
     isPoseValid,
+    detectPlankPosition,
 } from '../../utils/poseDetection';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -65,6 +66,7 @@ interface PoseCameraViewProps {
     exerciseType?: ExerciseType;
     onRepDetected?: (newCount: number, feedback?: string) => void;
     onPoseDetected?: (landmarks: PoseLandmarks | null) => void;
+    onPlankStateChange?: (isInPlank: boolean, confidence: number) => void;
     onCameraReady?: () => void;
     currentCount?: number;
     style?: any;
@@ -77,6 +79,7 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     exerciseType = 'squats',
     onRepDetected,
     onPoseDetected,
+    onPlankStateChange,
     onCameraReady,
     currentCount = 0,
     style,
@@ -102,6 +105,9 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
         resetExerciseState(exerciseType);
     }, [exerciseType]);
 
+    // Track previous plank state to detect changes
+    const prevPlankStateRef = useRef<boolean>(false);
+
     // Pose detection using MediaPipe
     const poseDetection = usePoseDetection(
         {
@@ -116,8 +122,19 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                     setPoseStatus('pose');
                     onPoseDetected?.(landmarks);
 
-                    // Count reps
-                    if (exerciseTypeRef.current) {
+                    // Handle plank exercise separately
+                    if (exerciseTypeRef.current === 'plank') {
+                        const plankState = detectPlankPosition(landmarks);
+                        // Notify on state change
+                        if (plankState.isInPlankPosition !== prevPlankStateRef.current) {
+                            prevPlankStateRef.current = plankState.isInPlankPosition;
+                            if (plankState.isInPlankPosition) {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            }
+                            onPlankStateChange?.(plankState.isInPlankPosition, plankState.confidence);
+                        }
+                    } else if (exerciseTypeRef.current) {
+                        // Count reps for other exercises
                         const repResult = countRepsFromPose(
                             landmarks, 
                             exerciseTypeRef.current, 
@@ -134,8 +151,14 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                     setCurrentPose(null);
                     setPoseStatus('no-pose');
                     onPoseDetected?.(null);
+                    
+                    // If no pose detected during plank, consider it as "not in plank"
+                    if (exerciseTypeRef.current === 'plank' && prevPlankStateRef.current) {
+                        prevPlankStateRef.current = false;
+                        onPlankStateChange?.(false, 0);
+                    }
                 }
-            }, [onPoseDetected, onRepDetected]),
+            }, [onPoseDetected, onRepDetected, onPlankStateChange]),
             onError: useCallback((error: any) => {
                 console.error('[PoseCamera] Detection error:', error.message);
                 setPoseStatus('no-pose');

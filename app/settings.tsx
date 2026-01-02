@@ -22,6 +22,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { 
   Settings as SettingsIcon,
   Target,
@@ -48,6 +49,7 @@ import {
   Save,
   Bell,
   Clock,
+  Languages,
 } from 'lucide-react-native';
 import { 
   GlassCard, 
@@ -61,6 +63,7 @@ import { generateFullBackup, exportFullBackup, parseBackup } from '../src/utils/
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import * as NotificationService from '../src/services/notifications';
+import { LANGUAGES, changeLanguage, getCurrentLanguage, type LanguageCode } from '../src/i18n';
 
 // Setting Item composant
 function SettingItem({
@@ -155,6 +158,7 @@ function StatsHero({ sportCount, mealCount, measureCount }: {
 }
 
 export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
   const { 
     entries, 
     settings, 
@@ -186,7 +190,16 @@ export default function SettingsScreen() {
   const [timePickerVisible, setTimePickerVisible] = useState(false);
   const [timePickerHour, setTimePickerHour] = useState('20');
   const [timePickerMinute, setTimePickerMinute] = useState('00');
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>(getCurrentLanguage());
   const streak = getStreak();
+
+  // Handle language change
+  const handleLanguageChange = useCallback(async (lang: LanguageCode) => {
+    await changeLanguage(lang);
+    setCurrentLanguage(lang);
+    setLanguageModalVisible(false);
+  }, []);
 
   // Stats calculées
   const stats = useMemo(() => ({
@@ -602,6 +615,19 @@ export default function SettingsScreen() {
           />
         </GlassCard>
 
+        {/* LANGUE */}
+        <SectionTitle title="🌍 Langue" delay={350} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Languages size={20} color="#a78bfa" />}
+            iconColor="#a78bfa"
+            title="Langue de l'app"
+            subtitle={`${LANGUAGES[currentLanguage].flag} ${LANGUAGES[currentLanguage].nativeName}`}
+            onPress={() => setLanguageModalVisible(true)}
+            delay={355}
+          />
+        </GlassCard>
+
         {/* SOCIAL */}
         {isSocialAvailable() && (
           <>
@@ -870,6 +896,53 @@ export default function SettingsScreen() {
                 <Text style={styles.timePickerConfirmText}>Valider</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Language Picker Modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.timePickerModal}>
+            <Text style={styles.timePickerTitle}>🌍 Choisir la langue</Text>
+            
+            <View style={styles.languageOptions}>
+              {(Object.entries(LANGUAGES) as [LanguageCode, typeof LANGUAGES[LanguageCode]][]).map(([code, lang]) => (
+                <TouchableOpacity
+                  key={code}
+                  style={[
+                    styles.languageOption,
+                    currentLanguage === code && styles.languageOptionActive,
+                  ]}
+                  onPress={() => handleLanguageChange(code)}
+                >
+                  <Text style={styles.languageFlag}>{lang.flag}</Text>
+                  <Text style={[
+                    styles.languageName,
+                    currentLanguage === code && styles.languageNameActive,
+                  ]}>
+                    {lang.nativeName}
+                  </Text>
+                  {currentLanguage === code && (
+                    <View style={styles.languageCheck}>
+                      <Text style={styles.languageCheckText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.timePickerCancelButton}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={styles.timePickerCancelText}>Fermer</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1233,5 +1306,48 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
     color: '#fff',
+  },
+  // Language picker
+  languageOptions: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    backgroundColor: Colors.overlay,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
+  },
+  languageOptionActive: {
+    backgroundColor: `${Colors.teal}33`,
+    borderWidth: 1,
+    borderColor: Colors.teal,
+  },
+  languageFlag: {
+    fontSize: 24,
+  },
+  languageName: {
+    fontSize: FontSize.md,
+    color: Colors.text,
+    flex: 1,
+  },
+  languageNameActive: {
+    fontWeight: FontWeight.bold,
+    color: Colors.teal,
+  },
+  languageCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languageCheckText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
   },
 });

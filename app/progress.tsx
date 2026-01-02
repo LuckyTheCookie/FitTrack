@@ -428,6 +428,59 @@ export default function ProgressScreen() {
             .reverse();
     }, [entries]);
 
+    // Personal Records (PRs) pour les exercices trackés en temps réel
+    const personalRecords = useMemo(() => {
+        const prs: { id: string; name: string; icon: string; value: string; type: 'reps' | 'time' }[] = [];
+        
+        // Exercices à tracker (doit correspondre à ceux du rep-counter)
+        const trackedExercises = [
+            { id: 'pushups', name: 'Pompes', icon: '💪', type: 'reps' as const },
+            { id: 'situps', name: 'Abdos', icon: '🔥', type: 'reps' as const },
+            { id: 'squats', name: 'Squats', icon: '🦵', type: 'reps' as const },
+            { id: 'jumping_jacks', name: 'Jumping Jacks', icon: '⭐', type: 'reps' as const },
+            { id: 'plank', name: 'Planche', icon: '🧘', type: 'time' as const },
+        ];
+
+        for (const exercise of trackedExercises) {
+            const relevantWorkouts = entries.filter(
+                (e): e is HomeWorkoutEntry => 
+                    e.type === 'home' && 
+                    e.name?.toLowerCase().includes(exercise.name.toLowerCase())
+            );
+
+            let bestValue = 0;
+            for (const workout of relevantWorkouts) {
+                if (exercise.type === 'time') {
+                    // Pour les exercices basés sur le temps (planche)
+                    const durationSecs = (workout.durationMinutes ?? 0) * 60;
+                    if (durationSecs > bestValue) {
+                        bestValue = durationSecs;
+                    }
+                } else {
+                    // Pour les exercices basés sur les reps
+                    const reps = workout.totalReps ?? 0;
+                    if (reps > bestValue) {
+                        bestValue = reps;
+                    }
+                }
+            }
+
+            if (bestValue > 0) {
+                prs.push({
+                    id: exercise.id,
+                    name: exercise.name,
+                    icon: exercise.icon,
+                    value: exercise.type === 'time' 
+                        ? `${bestValue}s` 
+                        : `${bestValue} reps`,
+                    type: exercise.type,
+                });
+            }
+        }
+
+        return prs;
+    }, [entries]);
+
     // Top exercice du mois
     const topExercise = useMemo(() => {
         const currentMonth = new Date().toISOString().slice(0, 7);
@@ -570,6 +623,26 @@ export default function ProgressScreen() {
                     </Animated.View>
                 )}
 
+                {/* Personal Records */}
+                {personalRecords.length > 0 && (
+                    <Animated.View entering={FadeInDown.delay(575).springify()}>
+                        <GlassCard style={styles.prCard}>
+                            <View style={styles.prHeader}>
+                                <Trophy size={18} color="#facc15" />
+                                <Text style={styles.prTitle}>Records Personnels</Text>
+                            </View>
+                            <View style={styles.prGrid}>
+                                {personalRecords.map((pr) => (
+                                    <View key={pr.id} style={styles.prItem}>
+                                        <Text style={styles.prIcon}>{pr.icon}</Text>
+                                        <Text style={styles.prName}>{pr.name}</Text>
+                                        <Text style={styles.prValue}>{pr.value}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </GlassCard>
+                    </Animated.View>
+                )}
                 {/* Badges */}
                 <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.badgesSection}>
                     <SectionHeader title="🏆 Badges" />
@@ -875,6 +948,50 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         fontWeight: FontWeight.bold,
         color: Colors.warning,
+    },
+
+    // Personal Records
+    prCard: {
+        marginBottom: Spacing.lg,
+    },
+    prHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.md,
+    },
+    prTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+    },
+    prGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    prItem: {
+        backgroundColor: 'rgba(250, 204, 21, 0.1)',
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        alignItems: 'center',
+        minWidth: (SCREEN_WIDTH - Spacing.lg * 2 - 48 - 24) / 3,
+        flexGrow: 1,
+    },
+    prIcon: {
+        fontSize: 24,
+        marginBottom: 4,
+    },
+    prName: {
+        fontSize: FontSize.xs,
+        color: Colors.muted,
+        marginBottom: 2,
+        textAlign: 'center',
+    },
+    prValue: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.bold,
+        color: '#facc15',
     },
 
     // Badges
