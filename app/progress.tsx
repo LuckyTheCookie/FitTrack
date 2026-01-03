@@ -445,7 +445,7 @@ export default function ProgressScreen() {
             const relevantWorkouts = entries.filter(
                 (e): e is HomeWorkoutEntry => 
                     e.type === 'home' && 
-                    e.name?.toLowerCase().includes(exercise.name.toLowerCase())
+                    (e.name?.toLowerCase().includes(exercise.name.toLowerCase()) ?? false)
             );
 
             let bestValue = 0;
