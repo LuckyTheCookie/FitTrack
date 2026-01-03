@@ -499,7 +499,8 @@
     },
     "storageLabel": "Stockage :",
     "saved": "Sauvegardé !",
-    "healthConnect": "Health Connect"
+    "healthConnect": "Health Connect",
+    "healthConnectDesc": "Importer des données de santé"
   },
   "addEntry": {
     "title": "Que veux-tu ajouter ?",
@@ -626,7 +627,6 @@
     "title": "Outils",
     "repCounter": "Compteur de reps",
     "repCounterDesc": "Compte tes répétitions automatiquement",
-    "healthConnectDesc": "Importer des données de santé",
     "workoutGenerator": "Générateur de séance",
     "workoutGeneratorDesc": "Crée une séance personnalisée"
   },
