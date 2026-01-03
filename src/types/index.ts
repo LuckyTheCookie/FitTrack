@@ -136,6 +136,7 @@ export interface UserSettings {
   // Labs settings
   debugCamera?: boolean; // Afficher les points de pose sur la caméra
   preferCameraDetection?: boolean; // Préférer la caméra à l'accéléromètre
+  debugPlank?: boolean; // Afficher les infos de debug pour la détection de planche
   // Notifications de rappel de série
   streakReminderEnabled?: boolean;
   streakReminderHour?: number; // Heure du rappel (0-23)

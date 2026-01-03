@@ -78,6 +78,7 @@ const defaultSettings: UserSettings = {
     },
     debugCamera: false,
     preferCameraDetection: false,
+    debugPlank: false,
 };
 
 // ============================================================================

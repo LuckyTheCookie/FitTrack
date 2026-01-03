@@ -58,6 +58,7 @@ import {
 } from 'lucide-react-native';
 import { GlassCard, PoseCameraView } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
+import type { PlankDebugInfo } from '../src/utils/poseDetection';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
@@ -397,6 +398,7 @@ export default function RepCounterScreen() {
     const [aiFeedback, setAiFeedback] = useState<string | null>(null);
     const [isPlankActive, setIsPlankActive] = useState(false); // Pour la planche: est-ce que l'utilisateur est levé?
     const [plankSeconds, setPlankSeconds] = useState(0); // Secondes tenues en planche
+    const [plankDebugInfo, setPlankDebugInfo] = useState<PlankDebugInfo | null>(null); // Debug info for plank
     const [showNewRecord, setShowNewRecord] = useState(false); // Affichage du message de nouveau record
     const [personalBest, setPersonalBest] = useState(0); // Record personnel pour cet exercice
 
@@ -685,8 +687,13 @@ export default function RepCounterScreen() {
     }, [isTracking, repCount, animateRep, playRepSound, showMotivationalMessage, playKeepGoingSound]);
 
     // Callback pour le changement d'état de la planche (caméra)
-    const handlePlankStateChange = useCallback((isInPlank: boolean, confidence: number) => {
+    const handlePlankStateChange = useCallback((isInPlank: boolean, confidence: number, debugInfo?: PlankDebugInfo) => {
         if (!isTracking || !selectedExercise?.isTimeBased) return;
+        
+        // Store debug info if available
+        if (debugInfo) {
+            setPlankDebugInfo(debugInfo);
+        }
         
         console.log(`[RepCounter] Plank state change: ${isInPlank ? 'IN PLANK' : 'NOT IN PLANK'} (${(confidence * 100).toFixed(0)}%)`);
         
@@ -1210,6 +1217,55 @@ export default function RepCounterScreen() {
                                 </Text>
                             )}
 
+                            {/* Plank Debug Info */}
+                            {settings.debugPlank && selectedExercise.isTimeBased && plankDebugInfo && (
+                                <View style={styles.plankDebugContainer}>
+                                    <Text style={styles.plankDebugTitle}>
+                                        🔍 Debug Planche ({(plankDebugInfo.overallConfidence * 100).toFixed(0)}%)
+                                    </Text>
+                                    <View style={styles.plankDebugChecks}>
+                                        <Text style={styles.plankDebugCheck}>
+                                            {plankDebugInfo.checks.shouldersAligned.message}
+                                        </Text>
+                                        <Text style={styles.plankDebugCheck}>
+                                            {plankDebugInfo.checks.bodyLow.message}
+                                        </Text>
+                                        <Text style={styles.plankDebugCheck}>
+                                            {plankDebugInfo.checks.armsInPosition.message}
+                                        </Text>
+                                        <Text style={styles.plankDebugCheck}>
+                                            {plankDebugInfo.checks.hipsBelowShoulders.message}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.plankDebugLandmarks}>
+                                        <Text style={[
+                                            styles.plankDebugLandmark,
+                                            { color: plankDebugInfo.landmarksVisible.shoulders ? '#4ade80' : '#f87171' }
+                                        ]}>
+                                            Épaules: {plankDebugInfo.landmarksVisible.shoulders ? '✓' : '✗'}
+                                        </Text>
+                                        <Text style={[
+                                            styles.plankDebugLandmark,
+                                            { color: plankDebugInfo.landmarksVisible.hips ? '#4ade80' : '#f87171' }
+                                        ]}>
+                                            Hanches: {plankDebugInfo.landmarksVisible.hips ? '✓' : '✗'}
+                                        </Text>
+                                        <Text style={[
+                                            styles.plankDebugLandmark,
+                                            { color: plankDebugInfo.landmarksVisible.wrists ? '#4ade80' : '#f87171' }
+                                        ]}>
+                                            Poignets: {plankDebugInfo.landmarksVisible.wrists ? '✓' : '✗'}
+                                        </Text>
+                                        <Text style={[
+                                            styles.plankDebugLandmark,
+                                            { color: plankDebugInfo.landmarksVisible.ankles ? '#4ade80' : '#f87171' }
+                                        ]}>
+                                            Chevilles: {plankDebugInfo.landmarksVisible.ankles ? '✓' : '✗'}
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
+
                             {/* Camera Preview - Debug mode shows full preview, otherwise hidden with active detection */}
                             {detectionMode === 'camera' && settings.debugCamera && (
                                 <View style={styles.cameraPreviewContainer}>
@@ -1222,6 +1278,7 @@ export default function RepCounterScreen() {
                                         onPlankStateChange={handlePlankStateChange}
                                         isActive={isTracking}
                                         style={styles.cameraPreview}
+                                        debugPlank={settings.debugPlank}
                                     />
                                 </View>
                             )}
@@ -1238,6 +1295,7 @@ export default function RepCounterScreen() {
                                         onPlankStateChange={handlePlankStateChange}
                                         isActive={isTracking}
                                         style={styles.hiddenCamera}
+                                        debugPlank={settings.debugPlank}
                                     />
                                 </View>
                             )}
@@ -2084,5 +2142,41 @@ const styles = StyleSheet.create({
         fontSize: FontSize.md,
         fontWeight: FontWeight.semibold,
         color: '#fff',
+    },
+    
+    // Plank Debug Styles
+    plankDebugContainer: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        marginTop: Spacing.md,
+        marginHorizontal: Spacing.md,
+    },
+    plankDebugTitle: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        marginBottom: Spacing.sm,
+    },
+    plankDebugChecks: {
+        gap: 4,
+    },
+    plankDebugCheck: {
+        fontSize: FontSize.sm,
+        color: Colors.text,
+        fontFamily: 'monospace',
+    },
+    plankDebugLandmarks: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm,
+        marginTop: Spacing.sm,
+        paddingTop: Spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: Colors.stroke,
+    },
+    plankDebugLandmark: {
+        fontSize: FontSize.xs,
+        fontWeight: FontWeight.semibold,
     },
 });

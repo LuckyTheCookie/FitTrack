@@ -30,6 +30,25 @@ export interface PlankState {
     isInPlankPosition: boolean;
     lastUpdate: number;
     confidence: number;
+    debugInfo?: PlankDebugInfo;
+}
+
+// Debug info for plank detection
+export interface PlankDebugInfo {
+    landmarksVisible: {
+        shoulders: boolean;
+        hips: boolean;
+        elbows: boolean;
+        wrists: boolean;
+        ankles: boolean;
+    };
+    checks: {
+        bodyLow: { passed: boolean; value: number; threshold: number; message: string };
+        shouldersAligned: { passed: boolean; value: number; threshold: number; message: string };
+        armsInPosition: { passed: boolean; value: number; threshold: number; message: string };
+        hipsBelowShoulders: { passed: boolean; value: number; threshold: number; message: string };
+    };
+    overallConfidence: number;
 }
 
 // Current plank state (exported for external use)
@@ -120,15 +139,13 @@ const getBestAngle = (
 
 /**
  * Detect if user is in plank position
- * A plank is detected when:
- * - Body is roughly horizontal (shoulders and hips at similar heights)
- * - Arms are extended (elbows relatively straight)
- * - User is facing down (nose below shoulders)
+ * Focus on upper body detection (shoulders, elbows, wrists, hips)
+ * since legs are often not visible in frame
  */
-export const detectPlankPosition = (landmarks: PoseLandmarks): PlankState => {
+export const detectPlankPosition = (landmarks: PoseLandmarks, debug = false): PlankState => {
     const now = Date.now();
     
-    // Get key landmarks
+    // Get key landmarks - focus on upper body
     const leftShoulder = getLandmark(landmarks, KnownPoseLandmarks.leftShoulder);
     const rightShoulder = getLandmark(landmarks, KnownPoseLandmarks.rightShoulder);
     const leftHip = getLandmark(landmarks, KnownPoseLandmarks.leftHip);
@@ -137,77 +154,144 @@ export const detectPlankPosition = (landmarks: PoseLandmarks): PlankState => {
     const rightElbow = getLandmark(landmarks, KnownPoseLandmarks.rightElbow);
     const leftWrist = getLandmark(landmarks, KnownPoseLandmarks.leftWrist);
     const rightWrist = getLandmark(landmarks, KnownPoseLandmarks.rightWrist);
-    const nose = getLandmark(landmarks, KnownPoseLandmarks.nose);
     const leftAnkle = getLandmark(landmarks, KnownPoseLandmarks.leftAnkle);
     const rightAnkle = getLandmark(landmarks, KnownPoseLandmarks.rightAnkle);
 
-    // Need minimum landmarks
+    // Initialize debug info
+    const debugInfo: PlankDebugInfo = {
+        landmarksVisible: {
+            shoulders: !!(leftShoulder && rightShoulder),
+            hips: !!(leftHip && rightHip),
+            elbows: !!(leftElbow && rightElbow),
+            wrists: !!(leftWrist && rightWrist),
+            ankles: !!(leftAnkle && rightAnkle),
+        },
+        checks: {
+            bodyLow: { passed: false, value: 0, threshold: 0.35, message: '' },
+            shouldersAligned: { passed: false, value: 0, threshold: 0.12, message: '' },
+            armsInPosition: { passed: false, value: 0, threshold: 60, message: '' },
+            hipsBelowShoulders: { passed: false, value: 0, threshold: 0.05, message: '' },
+        },
+        overallConfidence: 0,
+    };
+
+    // Need minimum landmarks (shoulders, elbows, wrists, hips)
     if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) {
-        currentPlankState = { isInPlankPosition: false, lastUpdate: now, confidence: 0 };
+        debugInfo.checks.bodyLow.message = '❌ Épaules ou hanches non visibles';
+        currentPlankState = { isInPlankPosition: false, lastUpdate: now, confidence: 0, debugInfo };
+        return currentPlankState;
+    }
+
+    if (!leftElbow || !rightElbow || !leftWrist || !rightWrist) {
+        debugInfo.checks.armsInPosition.message = '❌ Bras non visibles (cadre-toi mieux)';
+        currentPlankState = { isInPlankPosition: false, lastUpdate: now, confidence: 0, debugInfo };
         return currentPlankState;
     }
 
     let confidenceScore = 0;
-    const checks: boolean[] = [];
 
-    // Check 1: Body is horizontal - shoulders and hips at similar Y level
-    // In camera view, Y increases downward, so horizontal means similar Y values
+    // Calculate average positions
     const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const avgShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
     const avgHipY = (leftHip.y + rightHip.y) / 2;
-    const bodyTilt = Math.abs(avgShoulderY - avgHipY);
-    const isHorizontal = bodyTilt < 0.15; // Allow some tilt
-    checks.push(isHorizontal);
-    if (isHorizontal) confidenceScore += 0.25;
+    const avgHipX = (leftHip.x + rightHip.x) / 2;
+    const avgElbowY = (leftElbow.y + rightElbow.y) / 2;
+    const avgWristY = (leftWrist.y + rightWrist.y) / 2;
 
-    // Check 2: User is low (not standing up) - hips should be in lower half of frame
-    // Or shoulders and hips both relatively high in Y (meaning body is low in camera)
-    const isLowPosition = avgHipY > 0.4 && avgShoulderY > 0.3;
-    checks.push(isLowPosition);
-    if (isLowPosition) confidenceScore += 0.25;
-
-    // Check 3: Arms extended (elbow angle > 150 degrees) - supporting the body
-    if (leftElbow && leftWrist && rightElbow && rightWrist) {
-        const leftArmAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
-        const rightArmAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
-        const avgArmAngle = (leftArmAngle + rightArmAngle) / 2;
-        const armsExtended = avgArmAngle > 140;
-        checks.push(armsExtended);
-        if (armsExtended) confidenceScore += 0.25;
-    }
-
-    // Check 4: Body forms a straight line (shoulder-hip-ankle alignment)
-    if (leftAnkle && rightAnkle) {
-        const avgAnkleY = (leftAnkle.y + rightAnkle.y) / 2;
-        // In plank, ankle Y should be similar or slightly lower than hip Y
-        const legsInLine = Math.abs(avgAnkleY - avgHipY) < 0.2;
-        checks.push(legsInLine);
-        if (legsInLine) confidenceScore += 0.25;
-    }
-
-    // Consider it a plank if confidence is high enough
-    const isInPlank = confidenceScore >= 0.5; // At least 2 of 4 checks pass
-    
-    // Hysteresis: require higher confidence to enter, lower to exit
-    const wasInPlank = currentPlankState.isInPlankPosition;
-    const enterThreshold = 0.5;
-    const exitThreshold = 0.25;
-    
-    let finalIsInPlank = isInPlank;
-    if (wasInPlank && confidenceScore >= exitThreshold) {
-        finalIsInPlank = true; // Stay in plank
-    } else if (!wasInPlank && confidenceScore >= enterThreshold) {
-        finalIsInPlank = true; // Enter plank
+    // Check 1: Body is LOW in frame (you're in plank position, not standing)
+    // In plank, shoulders should be in lower half of frame
+    const bodyLowEnough = avgShoulderY > 0.35; // Shoulders are below 35% of screen
+    debugInfo.checks.bodyLow.value = avgShoulderY;
+    debugInfo.checks.bodyLow.passed = bodyLowEnough;
+    if (bodyLowEnough) {
+        confidenceScore += 0.35;
+        debugInfo.checks.bodyLow.message = `✅ Position basse (Y: ${(avgShoulderY * 100).toFixed(0)}%)`;
     } else {
-        finalIsInPlank = false; // Exit or stay out
+        debugInfo.checks.bodyLow.message = `❌ Position trop haute (Y: ${(avgShoulderY * 100).toFixed(0)}% < 35%)`;
+    }
+
+    // Check 2: Shoulders are horizontally aligned (left/right shoulders at same height)
+    // This ensures body is level, not tilted
+    const shoulderTilt = Math.abs(leftShoulder.y - rightShoulder.y);
+    const shouldersAligned = shoulderTilt < 0.12;
+    debugInfo.checks.shouldersAligned.value = shoulderTilt;
+    debugInfo.checks.shouldersAligned.passed = shouldersAligned;
+    if (shouldersAligned) {
+        confidenceScore += 0.25;
+        debugInfo.checks.shouldersAligned.message = `✅ Épaules alignées (diff: ${(shoulderTilt * 100).toFixed(0)}%)`;
+    } else {
+        debugInfo.checks.shouldersAligned.message = `❌ Épaules pas alignées (diff: ${(shoulderTilt * 100).toFixed(0)}% > 12%)`;
+    }
+
+    // Check 3: Arms are in plank position (elbows bent around 90° for forearm plank, or straight for high plank)
+    const leftArmAngle = calculateAngle(leftShoulder, leftElbow, leftWrist);
+    const rightArmAngle = calculateAngle(rightShoulder, rightElbow, rightWrist);
+    const avgArmAngle = (leftArmAngle + rightArmAngle) / 2;
+    
+    // Accept both forearm plank (60-110°) and high plank (150-180°)
+    const isForearmPlank = avgArmAngle >= 60 && avgArmAngle <= 110;
+    const isHighPlank = avgArmAngle >= 150;
+    const armsInPosition = isForearmPlank || isHighPlank;
+    
+    debugInfo.checks.armsInPosition.value = avgArmAngle;
+    debugInfo.checks.armsInPosition.passed = armsInPosition;
+    if (armsInPosition) {
+        confidenceScore += 0.30;
+        const plankType = isForearmPlank ? 'forearm' : 'haute';
+        debugInfo.checks.armsInPosition.message = `✅ Position ${plankType} (angle: ${avgArmAngle.toFixed(0)}°)`;
+    } else {
+        debugInfo.checks.armsInPosition.message = `❌ Bras pas en position (angle: ${avgArmAngle.toFixed(0)}°)`;
+    }
+
+    // Check 4: Hips are slightly below or at shoulders level (body forming a line)
+    // In plank, hips should be at or slightly below shoulder height (not sagging too much)
+    const hipShoulderDiff = avgHipY - avgShoulderY;
+    // Hips should be 0-0.20 below shoulders (allowing some natural body position)
+    const hipsInPosition = hipShoulderDiff >= -0.05 && hipShoulderDiff <= 0.20;
+    
+    debugInfo.checks.hipsBelowShoulders.value = hipShoulderDiff;
+    debugInfo.checks.hipsBelowShoulders.passed = hipsInPosition;
+    if (hipsInPosition) {
+        confidenceScore += 0.10;
+        debugInfo.checks.hipsBelowShoulders.message = `✅ Hanches alignées (diff: ${(hipShoulderDiff * 100).toFixed(0)}%)`;
+    } else {
+        if (hipShoulderDiff < -0.05) {
+            debugInfo.checks.hipsBelowShoulders.message = `⚠️ Hanches trop hautes (diff: ${(hipShoulderDiff * 100).toFixed(0)}%)`;
+        } else {
+            debugInfo.checks.hipsBelowShoulders.message = `⚠️ Hanches trop basses (diff: ${(hipShoulderDiff * 100).toFixed(0)}%)`;
+        }
+    }
+
+    debugInfo.overallConfidence = confidenceScore;
+
+    // Determine if in plank with hysteresis
+    const wasInPlank = currentPlankState.isInPlankPosition;
+    const enterThreshold = 0.70; // Need 70% to enter plank (stricter)
+    const exitThreshold = 0.50;  // Can stay in plank with 50% (more forgiving)
+    
+    let finalIsInPlank = false;
+    if (wasInPlank) {
+        // Already in plank - more lenient to stay
+        finalIsInPlank = confidenceScore >= exitThreshold;
+    } else {
+        // Not in plank - need higher confidence to enter
+        finalIsInPlank = confidenceScore >= enterThreshold;
+    }
+
+    if (debug) {
+        console.log(`[Plank Debug] Confidence: ${(confidenceScore * 100).toFixed(0)}% | In Plank: ${finalIsInPlank}`);
+        console.log(`  - Body Low: ${debugInfo.checks.bodyLow.message}`);
+        console.log(`  - Shoulders Aligned: ${debugInfo.checks.shouldersAligned.message}`);
+        console.log(`  - Arms in Position: ${debugInfo.checks.armsInPosition.message}`);
+        console.log(`  - Hips Aligned: ${debugInfo.checks.hipsBelowShoulders.message}`);
     }
 
     currentPlankState = {
         isInPlankPosition: finalIsInPlank,
         lastUpdate: now,
         confidence: confidenceScore,
+        debugInfo,
     };
-
-    console.log(`[Plank] Confidence: ${(confidenceScore * 100).toFixed(0)}% | Horizontal: ${isHorizontal} | Low: ${isLowPosition} | InPlank: ${finalIsInPlank}`);
 
     return currentPlankState;
 };
