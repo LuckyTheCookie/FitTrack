@@ -46,6 +46,10 @@
   },
   "home": {
     "title": "Today",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "weeksAgo": "{{count}} wks ago",
     "greeting": {
       "morning": "Good morning",
       "afternoon": "Good afternoon",
@@ -75,6 +79,7 @@
   "progress": {
     "title": "Progress",
     "monthlyProgress": "Monthly Progress",
+    "monthlyCount": "{{count}} workouts",
     "streak": {
       "current": "Current streak",
       "record": "Record",
@@ -287,6 +292,10 @@
     "claimed": "Claimed",
     "claim": "Claim",
     "questProgress": "{{current}}/{{target}}"
+  },
+  "workout": {
+    "homeLabel": "Home workout",
+    "defaultHomeName": "Home workout"
   },
   "entries": {
     "workout": "Workout",

@@ -3,6 +3,7 @@
 // ============================================================================
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { GlassCard } from './GlassCard';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../constants';
@@ -26,11 +27,13 @@ export function MonthCard({ month, workoutsCount, goalProgress, onPress }: Month
       ? Colors.cta 
       : 'rgba(255, 255, 255, 0.40)';
 
+  const { t } = useTranslation();
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <GlassCard style={styles.card}>
         <Text style={styles.monthName}>{monthName}</Text>
-        <Text style={styles.meta}>{workoutsCount} séances</Text>
+        <Text style={styles.meta}>{t('progress.monthlyCount', { count: workoutsCount })}</Text>
         <View style={styles.bar}>
           <View style={[styles.barFill, { width: `${progressPercent}%`, backgroundColor: barColor }]} />
         </View>

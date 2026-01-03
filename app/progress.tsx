@@ -31,6 +31,8 @@ import { useAppStore } from '../src/stores';
 import { getBadgesWithState } from '../src/utils/badges';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import type { MeasureEntry, HomeWorkoutEntry } from '../src/types';
+import { useTranslation } from 'react-i18next';
+import { getMonthName } from '../src/utils/date';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -61,6 +63,7 @@ function StatCard({
 
 // Composant pour le streak hero
 function StreakHero({ current, best }: { current: number; best: number }) {
+    const { t } = useTranslation();
     const streakProgress = best > 0 ? (current / best) * 100 : 0;
 
     return (
@@ -77,16 +80,16 @@ function StreakHero({ current, best }: { current: number; best: number }) {
                             <Flame size={40} color="#fbbf24" fill="#fbbf24" />
                         </View>
                         <View style={styles.streakInfo}>
-                            <Text style={styles.streakLabel}>Streak actuel</Text>
+                            <Text style={styles.streakLabel}>{t('progress.streak.current')}</Text>
                             <Text style={styles.streakValue}>
-                                {current} <Text style={styles.streakUnit}>{current > 1 ? 'jours' : 'jour'}</Text>
+                                {current} <Text style={styles.streakUnit}>{current > 1 ? t('common.days') : t('common.day')}</Text>
                             </Text>
                         </View>
                     </View>
 
                     <View style={styles.streakBest}>
                         <Trophy size={16} color={Colors.warning} />
-                        <Text style={styles.streakBestText}>Record: {best}</Text>
+                        <Text style={styles.streakBestText}>{t('progress.streak.record')}: {best}</Text>
                     </View>
                 </View>
 
@@ -96,7 +99,7 @@ function StreakHero({ current, best }: { current: number; best: number }) {
                         <View style={[styles.streakProgressFill, { width: `${Math.min(streakProgress, 100)}%` }]} />
                     </View>
                     <Text style={styles.streakProgressText}>
-                        {current > 0 ? `${Math.round(streakProgress)}% du record` : "Commence aujourd'hui !"}
+                        {current > 0 ? t('progress.streak.percentOfRecord', { percent: Math.round(streakProgress) }) : t('progress.streak.startToday')}
                     </Text>
                 </View>
             </LinearGradient>
@@ -116,6 +119,7 @@ function MonthCalendar({
     activeDays: Set<number>;
     monthName: string;
 }) {
+    const { t } = useTranslation();
     const today = new Date().getDate();
     const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -126,7 +130,7 @@ function MonthCalendar({
                     <Calendar size={18} color={Colors.cta} />
                     <Text style={styles.calendarTitle}>{monthName}</Text>
                     <View style={styles.calendarBadge}>
-                        <Text style={styles.calendarBadgeText}>{activeDays.size} jours actifs</Text>
+                        <Text style={styles.calendarBadgeText}>{t('progress.activeDays', { count: activeDays.size })}</Text>
                     </View>
                 </View>
 
@@ -175,12 +179,14 @@ function MonthCalendar({
 
 // Composant pour le graphique des séances
 function WorkoutChart({ data, maxValue }: { data: { label: string; value: number }[]; maxValue: number }) {
+    const { t } = useTranslation();
+
     if (data.length === 0) {
         return (
             <EmptyState
                 icon="📊"
-                title="Pas encore de données"
-                subtitle="Tes stats apparaîtront ici"
+                title={t('progress.noData')}
+                subtitle={t('progress.noDataHint')}
             />
         );
     }
@@ -362,6 +368,8 @@ export default function ProgressScreen() {
         getSportEntries,
     } = useAppStore();
 
+    const { t } = useTranslation();
+
     const streak = getStreak();
     const monthlyStats = getMonthlyStats();
     const sportEntries = getSportEntries();
@@ -525,7 +533,7 @@ export default function ProgressScreen() {
             daysInMonth,
             startDayOfWeek,
             activeDays,
-            monthName: now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+            monthName: getMonthName(monthStr),
         };
     }, [sportEntries]);
 
@@ -584,7 +592,7 @@ export default function ProgressScreen() {
                     <GlassCard style={styles.chartCard}>
                         <View style={styles.chartHeader}>
                             <TrendingUp size={18} color={Colors.cta} />
-                            <Text style={styles.chartTitle}>Séances par mois</Text>
+                            <Text style={styles.chartTitle}>{t('progress.workoutsPerMonth')}</Text>
                         </View>
                         <WorkoutChart data={weeklyWorkoutsData} maxValue={maxValue} />
                     </GlassCard>
@@ -596,7 +604,7 @@ export default function ProgressScreen() {
                         <GlassCard style={styles.chartCard}>
                             <View style={styles.chartHeader}>
                                 <Scale size={18} color={Colors.cta} />
-                                <Text style={styles.chartTitle}>Évolution du poids</Text>
+                                <Text style={styles.chartTitle}>{t('progress.weightEvolution')}</Text>
                             </View>
                             <WeightChart data={weightHistory} />
                         </GlassCard>
@@ -612,7 +620,7 @@ export default function ProgressScreen() {
                                     <Award size={24} color={Colors.warning} />
                                 </View>
                                 <View style={styles.topExerciseInfo}>
-                                    <Text style={styles.topExerciseLabel}>Top exercice du mois</Text>
+                                    <Text style={styles.topExerciseLabel}>{t('progress.topExercise')}</Text>
                                     <Text style={styles.topExerciseName}>{topExercise.name}</Text>
                                 </View>
                                 <View style={styles.topExerciseCount}>
@@ -629,7 +637,7 @@ export default function ProgressScreen() {
                         <GlassCard style={styles.prCard}>
                             <View style={styles.prHeader}>
                                 <Trophy size={18} color="#facc15" />
-                                <Text style={styles.prTitle}>Records Personnels</Text>
+                                <Text style={styles.prTitle}>{t('progress.personalRecords')}</Text>
                             </View>
                             <View style={styles.prGrid}>
                                 {personalRecords.map((pr) => (

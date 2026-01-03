@@ -18,7 +18,12 @@ import {
   subWeeks,
   subMonths,
 } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
+import i18n from '../i18n';
+
+const getDateLocale = () => {
+  return i18n.language === 'fr' ? fr : enUS;
+}
 
 // Obtenir la date du jour au format YYYY-MM-DD
 export function getTodayDateString(): string {
@@ -37,11 +42,11 @@ export function parseDate(dateString: string): Date {
 
 // Formater pour affichage
 export function formatDisplayDate(dateString: string): string {
-  return format(parseISO(dateString), 'd MMM yyyy', { locale: fr });
+  return format(parseISO(dateString), 'd MMM yyyy', { locale: getDateLocale() });
 }
 
 export function formatShortDate(dateString: string): string {
-  return format(parseISO(dateString), 'd MMM', { locale: fr });
+  return format(parseISO(dateString), 'd MMM', { locale: getDateLocale() });
 }
 
 export function formatTime(isoString: string): string {
@@ -74,7 +79,8 @@ export interface DayInfo {
 
 export function getWeekDaysInfo(): DayInfo[] {
   const start = getCurrentWeekStart();
-  const daysShort = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
+  const isFr = i18n.language === 'fr';
+  const daysShort = isFr ? ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'] : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   
   return Array.from({ length: 7 }, (_, i) => {
     const date = addDays(start, i);
@@ -161,12 +167,12 @@ export function getLastSixMonths(): string[] {
 
 export function getMonthName(monthString: string): string {
   const date = parseISO(`${monthString}-01`);
-  return format(date, 'MMMM', { locale: fr });
+  return format(date, 'MMMM yyyy', { locale: getDateLocale() });
 }
 
 export function getShortMonthName(monthString: string): string {
   const date = parseISO(`${monthString}-01`);
-  return format(date, 'MMM', { locale: fr });
+  return format(date, 'MMM', { locale: getDateLocale() });
 }
 
 // Nombre de jours dans un mois
@@ -178,6 +184,7 @@ export function getDaysInMonth(monthString: string): number {
 }
 
 // Relative time
+
 export function getRelativeTime(isoString: string): string {
   const date = parseISO(isoString);
   const today = new Date();
@@ -187,12 +194,12 @@ export function getRelativeTime(isoString: string): string {
   const todayDay = format(today, 'yyyy-MM-dd');
   const yesterdayDay = format(addDays(today, -1), 'yyyy-MM-dd');
   
-  if (dateDay === todayDay) return "Aujourd'hui";
-  if (dateDay === yesterdayDay) return 'Hier';
+  if (dateDay === todayDay) return i18n.t('home.today');
+  if (dateDay === yesterdayDay) return i18n.t('home.yesterday');
   
   const diffDays = differenceInDays(today, date);
   
-  if (diffDays < 7) return `Il y a ${diffDays} jours`;
-  if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} sem.`;
+  if (diffDays < 7) return i18n.t('home.daysAgo', { count: diffDays });
+  if (diffDays < 30) return i18n.t('home.weeksAgo', { count: Math.floor(diffDays / 7) });
   return formatShortDate(isoString);
 }
