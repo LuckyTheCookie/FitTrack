@@ -228,16 +228,16 @@ export default function SettingsScreen() {
   // Reset
   const handleReset = useCallback(() => {
     Alert.alert(
-      '⚠️ Réinitialiser toutes les données ?',
-      'Cette action est irréversible. Toutes tes séances, repas et mesures seront supprimés.',
+      t('settings.clearDataConfirm.title'),
+      t('settings.clearDataConfirm.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Réinitialiser', 
+          text: t('settings.clearData'), 
           style: 'destructive',
           onPress: () => {
             resetAllData();
-            Alert.alert('Données réinitialisées', 'Tu peux recommencer à zéro !');
+            Alert.alert(t('common.success'), t('settings.clearDataDone'));
           },
         },
       ]
@@ -247,12 +247,12 @@ export default function SettingsScreen() {
   // Recalculer les quêtes et le niveau
   const handleRecalculateQuests = useCallback(() => {
     Alert.alert(
-      '🔄 Recalculer le niveau ?',
-      'Cette action recalculera ton niveau et tes quêtes basés sur tes entrées actuelles. Cela corrigera les éventuelles incohérences.',
+      t('settings.recalculateConfirm.title'),
+      t('settings.recalculateConfirm.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Recalculer', 
+          text: t('settings.recalculate'), 
           onPress: () => {
             const totals = calculateQuestTotals(entries);
             const workoutCount = entries.filter(e => 
@@ -290,7 +290,7 @@ export default function SettingsScreen() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'application/json',
-          dialogTitle: 'Sauvegarder FitTrack',
+          dialogTitle: t('settings.backup'),
         });
       } else {
         Alert.alert(t('common.error'), t('settings.shareUnavailable'));
@@ -307,9 +307,9 @@ export default function SettingsScreen() {
       '⚠️ Restaurer une sauvegarde ?',
       'Cette action remplacera TOUTES tes données actuelles par celles de la sauvegarde. Cette action est irréversible.',
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Choisir un fichier',
+          text: t('settings.chooseFile'),
           onPress: async () => {
             try {
               const result = await DocumentPicker.getDocumentAsync({
@@ -358,8 +358,8 @@ export default function SettingsScreen() {
               });
               
               Alert.alert(
-                '✅ Restauration réussie',
-                `${backup.app.entries.length} entrées restaurées.\nNiveau ${backup.gamification.level} avec ${backup.gamification.xp} XP.`
+                t('common.success'),
+                t('settings.restoreSuccess', { entries: backup.app.entries.length, level: backup.gamification.level, xp: backup.gamification.xp })
               );
             } catch (error) {
               console.error('Restore error:', error);
@@ -379,20 +379,20 @@ export default function SettingsScreen() {
     }
 
     Alert.alert(
-      '⚠️ Désactiver les fonctionnalités sociales ?',
-      'Cette action supprimera définitivement vos données en ligne (profil, classement, XP, amis, encouragements) pour respecter le RGPD.\n\nVos données locales (séances, repas, mesures) seront conservées.',
+      t('settings.disableSocialConfirm.title'),
+      t('settings.disableSocialConfirm.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Désactiver et supprimer', 
+          text: t('settings.disable'), 
           style: 'destructive',
           onPress: async () => {
             setIsDisablingSocial(true);
             try {
               await disableSocialAndDeleteData();
               Alert.alert(
-                '✅ Données supprimées',
-                'Tes données en ligne ont été supprimées. Mode local activé.'
+                t('common.success'),
+                t('settings.disableSocialSuccess')
               );
             } catch (error) {
               Alert.alert(t('common.error'), t('settings.deleteDataError'));
@@ -424,7 +424,7 @@ export default function SettingsScreen() {
       >
         {/* Header */}
         <Animated.View entering={FadeIn.delay(50)} style={styles.header}>
-          <Text style={styles.screenTitle}>Paramètres</Text>
+          <Text style={styles.screenTitle}>{t('settings.title')}</Text>
           <View style={styles.headerIcon}>
             <SettingsIcon size={24} color={Colors.cta} />
           </View>
@@ -469,14 +469,14 @@ export default function SettingsScreen() {
                 style={styles.goalSaveButton}
                 onPress={handleSaveGoal}
               >
-                <Text style={styles.goalSaveText}>Sauver</Text>
+                <Text style={styles.goalSaveText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </GlassCard>
 
         {/* NOTIFICATIONS */}
-        <SectionTitle title="Notifications" delay={180} />
+        <SectionTitle title={t('settings.notifications')} delay={180} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
             icon={<Bell size={20} color="#fbbf24" />}
@@ -516,7 +516,7 @@ export default function SettingsScreen() {
             <SettingItem
               icon={<Clock size={20} color="#60a5fa" />}
               iconColor="#60a5fa"
-              title="Heure du rappel"
+              title={t('settings.reminderTime')}
               subtitle={`${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}`}
               onPress={() => {
                 setTimePickerHour(String(settings.streakReminderHour ?? 20));
@@ -534,8 +534,8 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<Zap size={20} color="#a78bfa" />}
             iconColor="#a78bfa"
-            title="Onglet Générer"
-            subtitle="Générateur de séances"
+            title={t('settings.toolsTab')}
+            subtitle={t('settings.toolsTabDesc')}
             showChevron={false}
             rightElement={
               <View style={[styles.visibilityBadge, settings.hiddenTabs?.tools && styles.visibilityBadgeHidden]}>
@@ -545,7 +545,7 @@ export default function SettingsScreen() {
                   <Eye size={14} color="#4ade80" />
                 )}
                 <Text style={[styles.visibilityText, settings.hiddenTabs?.tools && styles.visibilityTextHidden]}>
-                  {settings.hiddenTabs?.tools ? 'Masqué' : 'Visible'}
+                  {settings.hiddenTabs?.tools ? t('settings.hidden') : t('settings.visible')}
                 </Text>
               </View>
             }
@@ -639,14 +639,14 @@ export default function SettingsScreen() {
         {/* SOCIAL */}
         {isSocialAvailable() && (
           <>
-            <SectionTitle title="Social" delay={360} />
+            <SectionTitle title={t('settings.social')} delay={360} />
             <GlassCard style={styles.settingsCard}>
               {/* Toggle fonctionnalités sociales */}
               <SettingItem
                 icon={<Users size={20} color="#22d3ee" />}
                 iconColor="#22d3ee"
-                title="Fonctionnalités sociales"
-                subtitle={socialEnabled ? 'Classement et amis activés' : 'Mode hors-ligne'}
+                title={t('settings.socialFeatures')}
+                subtitle={socialEnabled ? t('settings.socialEnabled') : t('settings.socialDisabled')}
                 showChevron={false}
                 rightElement={
                   socialEnabled && isAuthenticated ? (
@@ -657,7 +657,7 @@ export default function SettingsScreen() {
                     >
                       <UserX size={14} color={Colors.error} />
                       <Text style={styles.disableButtonText}>
-                        {isDisablingSocial ? '...' : 'Désactiver'}
+                        {isDisablingSocial ? '...' : t('settings.disable')}
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -683,8 +683,8 @@ export default function SettingsScreen() {
                 <SettingItem
                   icon={<Globe size={20} color="#a78bfa" />}
                   iconColor="#a78bfa"
-                  title="Apparaître dans le classement"
-                  subtitle={profile?.is_public !== false ? 'Visible publiquement' : 'Masqué du classement global'}
+                  title={t('settings.leaderboardVisibility')}
+                  subtitle={profile?.is_public !== false ? t('settings.leaderboardPublic') : t('settings.leaderboardHidden')}
                   showChevron={false}
                   rightElement={
                     <Switch
@@ -703,8 +703,8 @@ export default function SettingsScreen() {
                 <SettingItem
                   icon={<Eye size={20} color="#4ade80" />}
                   iconColor="#4ade80"
-                  title="Mon profil public"
-                  subtitle={`@${profile?.username || 'utilisateur'}`}
+                  title={t('settings.myPublicProfile')}
+                  subtitle={`@${profile?.username || t('profile.notLoggedIn')}`}
                   onPress={() => router.push('/social')}
                   delay={420}
                 />
@@ -714,73 +714,73 @@ export default function SettingsScreen() {
         )}
 
         {/* LÉGAL */}
-        <SectionTitle title="Légal" delay={440} />
+        <SectionTitle title={t('settings.legal')} delay={440} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
             icon={<Shield size={20} color="#4ade80" />}
             iconColor="#4ade80"
-            title="Politique de confidentialité"
-            subtitle="RGPD et protection des données"
+            title={t('settings.privacyPolicy')}
+            subtitle={t('settings.privacyPolicyDesc')}
             onPress={() => router.push('/privacy-policy')}
             delay={460}
           />
           <SettingItem
             icon={<FileText size={20} color="#60a5fa" />}
             iconColor="#60a5fa"
-            title="Conditions d'utilisation"
-            subtitle="Règles d'usage de l'application"
+            title={t('settings.termsOfService')}
+            subtitle={t('settings.termsOfServiceDesc')}
             onPress={() => router.push('/terms-of-service')}
             delay={480}
           />
         </GlassCard>
 
         {/* DATA MANAGEMENT */}
-        <SectionTitle title="Données" delay={500} />
+        <SectionTitle title={t('settings.data')} delay={500} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
             icon={<Save size={20} color="#22d3ee" />}
             iconColor="#22d3ee"
-            title="Sauvegarde complète"
-            subtitle="Exporter toutes les données + XP"
+            title={t('settings.backup')}
+            subtitle={t('settings.backupDesc')}
             onPress={handleFullBackup}
             delay={395}
           />
           <SettingItem
             icon={<Upload size={20} color="#fbbf24" />}
             iconColor="#fbbf24"
-            title="Restaurer sauvegarde"
-            subtitle="Importer depuis un fichier"
+            title={t('settings.restore')}
+            subtitle={t('settings.restoreDesc')}
             onPress={handleRestore}
             delay={398}
           />
           <SettingItem
             icon={<Download size={20} color={Colors.cta} />}
             iconColor={Colors.cta}
-            title="Exporter JSON"
-            subtitle="Export hebdo (historique)"
+            title={t('settings.exportData')}
+            subtitle={t('settings.exportDataDesc')}
             onPress={handleExportJSON}
             delay={400}
           />
           <SettingItem
             icon={<RefreshCw size={20} color="#a78bfa" />}
             iconColor="#a78bfa"
-            title="Recalculer niveau"
-            subtitle="Corriger les incohérences"
+            title={t('settings.recalculate')}
+            subtitle={t('settings.recalculateDesc')}
             onPress={handleRecalculateQuests}
             delay={420}
           />
           <SettingItem
             icon={<Heart size={20} color="#f43f5e" />}
             iconColor="#f43f5e"
-            title="Health Connect"
-            subtitle="Importer depuis Health Connect (Android)"
+            title={t('settings.healthConnect')}
+            subtitle={t('settings.healthConnectDesc')}
             onPress={() => router.push('/health-connect')}
             delay={440}
           />
         </GlassCard>
 
         {/* À PROPOS */}
-        <SectionTitle title="À propos" delay={460} />
+        <SectionTitle title={t('settings.about')} delay={460} />
         <GlassCard style={styles.settingsCard}>
           <View style={styles.aboutSection}>
             <View style={styles.appInfo}>
@@ -789,36 +789,36 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={styles.appName}>FitTrack</Text>
-                <Text style={styles.appVersion}>Version 3.0.0</Text>
+                <Text style={styles.appVersion}>{t('settings.version', { version: (Constants as any).manifest?.version ?? (Constants as any).expoConfig?.version ?? '3.0.0' })}</Text>
               </View>
             </View>
             
             <View style={styles.futureFeatures}>
               <View style={styles.futureTitleRow}>
                 <Rocket size={16} color={Colors.cta} />
-                <Text style={styles.futureTitle}>Prochainement</Text>
+                <Text style={styles.futureTitle}>{t('settings.comingSoon')}</Text>
               </View>
-              <Text style={styles.futureItem}>• Notifications intelligentes</Text>
-              <Text style={styles.futureItem}>• Traductions en plusieurs langues</Text>
+              <Text style={styles.futureItem}>• {t('settings.futureFeatures.notifications')}</Text>
+              <Text style={styles.futureItem}>• {t('settings.futureFeatures.multilang')}</Text>
             </View>
 
             <View style={styles.storageInfo}>
               <Database size={14} color={Colors.muted} />
               <Text style={styles.storageText}>
-                Storage: {storageHelpers.getStorageType()}
+                {t('settings.storageLabel')} {storageHelpers.getStorageType()}
               </Text>
             </View>
           </View>
         </GlassCard>
 
         {/* DANGER ZONE */}
-        <SectionTitle title="Zone de danger" delay={500} />
+        <SectionTitle title={t('settings.dangerZone')} delay={500} />
         <GlassCard style={[styles.settingsCard, styles.dangerCard]}>
           <SettingItem
             icon={<Trash2 size={20} color={Colors.error} />}
             iconColor={Colors.error}
-            title="Réinitialiser"
-            subtitle="Supprimer toutes les données"
+            title={t('settings.clearData')}
+            subtitle={t('settings.clearDataDesc')}
             onPress={handleReset}
             delay={520}
           />
@@ -845,8 +845,8 @@ export default function SettingsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.timePickerModal}>
-            <Text style={styles.timePickerTitle}>Heure du rappel</Text>
-            <Text style={styles.timePickerSubtitle}>Choisis l'heure de notification</Text>
+            <Text style={styles.timePickerTitle}>{t('settings.changeTime.title')}</Text>
+            <Text style={styles.timePickerSubtitle}>{t('settings.changeTimeDesc')}</Text>
             
             <View style={styles.timePickerInputs}>
               <TextInput
@@ -881,7 +881,7 @@ export default function SettingsScreen() {
                 style={styles.timePickerCancelButton}
                 onPress={() => setTimePickerVisible(false)}
               >
-                <Text style={styles.timePickerCancelText}>Annuler</Text>
+                <Text style={styles.timePickerCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.timePickerConfirmButton}
@@ -895,13 +895,13 @@ export default function SettingsScreen() {
                       streakReminderMinute: minute,
                     });
                     setTimePickerVisible(false);
-                    Alert.alert('Heure mise à jour', `Rappel programmé à ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+                    Alert.alert(t('common.success'), t('settings.reminderSet', { time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`}));
                   } else {
-                    Alert.alert('Erreur', 'Heure invalide (00-23 : 00-59)');
+                    Alert.alert(t('common.error'), t('settings.reminderInvalid'));
                   }
                 }}
               >
-                <Text style={styles.timePickerConfirmText}>Valider</Text>
+                <Text style={styles.timePickerConfirmText}>{t('common.validate')}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -36,7 +36,9 @@
     "reps": "reps",
     "km": "km",
     "kcal": "kcal",
-    "kg": "kg"
+    "kg": "kg",
+    "skip": "Ignorer",
+    "minShort": "min"
   },
   "tabs": {
     "home": "Accueil",
@@ -46,15 +48,42 @@
     "profile": "Profil"
   },
   "badges": {
-    "first_workout": { "name": "Premier pas", "description": "Complète ta première séance" },
-    "streak_7": { "name": "Semaine de feu", "description": "7 jours consécutifs" },
-    "streak_30": { "name": "Mois de fer", "description": "30 jours consécutifs" },
-    "workouts_10": { "name": "Régulier", "description": "10 séances complétées" },
-    "workouts_50": { "name": "Déterminé", "description": "50 séances complétées" },
-    "workouts_100": { "name": "Légende", "description": "100 séances complétées" },
-    "runner_10km": { "name": "Coureur", "description": "10 km parcourus au total" },
-    "runner_50km": { "name": "Marathon", "description": "50 km parcourus au total" },
-    "consistent_month": { "name": "Constant", "description": "Objectif hebdo atteint 4 semaines de suite" },
+    "first_workout": {
+      "name": "Premier pas",
+      "description": "Complète ta première séance"
+    },
+    "streak_7": {
+      "name": "Semaine de feu",
+      "description": "7 jours consécutifs"
+    },
+    "streak_30": {
+      "name": "Mois de fer",
+      "description": "30 jours consécutifs"
+    },
+    "workouts_10": {
+      "name": "Régulier",
+      "description": "10 séances complétées"
+    },
+    "workouts_50": {
+      "name": "Déterminé",
+      "description": "50 séances complétées"
+    },
+    "workouts_100": {
+      "name": "Légende",
+      "description": "100 séances complétées"
+    },
+    "runner_10km": {
+      "name": "Coureur",
+      "description": "10 km parcourus au total"
+    },
+    "runner_50km": {
+      "name": "Marathon",
+      "description": "50 km parcourus au total"
+    },
+    "consistent_month": {
+      "name": "Constant",
+      "description": "Objectif hebdo atteint 4 semaines de suite"
+    },
     "unlocked": "Débloqué !",
     "locked": "Verrouillé"
   },
@@ -114,7 +143,6 @@
     "topExercise": "Top exercice du mois",
     "personalRecords": "Records Personnels",
     "badges": "Badges",
-
     "noData": "Pas encore de données",
     "noDataHint": "Tes stats apparaîtront ici"
   },
@@ -156,20 +184,204 @@
       "detecting": "Détection..."
     },
     "instructions": {
-      "pushups": { "default": "Placez le téléphone face vers le bas, sous votre poitrine", "camera": "Posez le téléphone de côté pour vous voir de profil" },
-      "situps": { "default": "Placez le téléphone sur votre poitrine, écran vers le haut", "camera": "Posez le téléphone de côté pour vous voir de profil" },
-      "squats": { "default": "Tenez le téléphone contre votre poitrine", "camera": "Posez le téléphone devant vous ou de côté" },
-      "jumpingJacks": { "default": "Tenez le téléphone dans votre main", "camera": "Posez le téléphone devant vous face à vous" },
-      "plank": { "default": "Posez le téléphone de côté pour vous voir de profil", "camera": "Posez le téléphone de côté pour vous voir de profil.\n\n💡 Conseil : Augmente le volume pour entendre les sons !" }
+      "pushups": {
+        "default": "Placez le téléphone face vers le bas, sous votre poitrine",
+        "camera": "Posez le téléphone de côté pour vous voir de profil"
+      },
+      "situps": {
+        "default": "Placez le téléphone sur votre poitrine, écran vers le haut",
+        "camera": "Posez le téléphone de côté pour vous voir de profil"
+      },
+      "squats": {
+        "default": "Tenez le téléphone contre votre poitrine",
+        "camera": "Posez le téléphone devant vous ou de côté"
+      },
+      "jumpingJacks": {
+        "default": "Tenez le téléphone dans votre main",
+        "camera": "Posez le téléphone devant vous face à vous"
+      },
+      "plank": {
+        "default": "Posez le téléphone de côté pour vous voir de profil",
+        "camera": "Posez le téléphone de côté pour vous voir de profil.\n\n💡 Conseil : Augmente le volume pour entendre les sons !"
+      }
     },
     "active": "ACTIF",
     "trackedSession": "Séance {{exercise}}",
     "motivations": {
-      "pushups": [{"text":"Continue comme ça!","emoji":"💪"},{"text":"Pecs en feu!","emoji":"🔥"},{"text":"Excellent!","emoji":"⭐"},{"text":"Force!","emoji":"💥"},{"text":"Champion!","emoji":"🏆"},{"text":"Bravo!","emoji":"👏"},{"text":"Super forme!","emoji":"⚡"},{"text":"Solide!","emoji":"🦾"},{"text":"Puissant!","emoji":"💪"}],
-      "squats": [{"text":"Jambes en acier!","emoji":"🦵"},{"text":"Tu gères!","emoji":"🔥"},{"text":"Excellent squat!","emoji":"⭐"},{"text":"Puissance!","emoji":"💥"},{"text":"Incroyable!","emoji":"🚀"},{"text":"Continue!","emoji":"💪"},{"text":"Solides cuisses!","emoji":"⚡"},{"text":"Top!","emoji":"🏆"}],
-      "situps": [{"text":"Abdos en feu!","emoji":"🔥"},{"text":"Tablette de chocolat!","emoji":"💪"},{"text":"Continue!","emoji":"⚡"},{"text":"Excellent!","emoji":"⭐"},{"text":"Core solide!","emoji":"💥"},{"text":"Bravo!","emoji":"👏"},{"text":"Force!","emoji":"🚀"},{"text":"Tu gères!","emoji":"🏆"}],
-      "jumpingJacks": [{"text":"Cardio à fond!","emoji":"❤️"},{"text":"Continue!","emoji":"⚡"},{"text":"Excellent!","emoji":"⭐"},{"text":"Énergie!","emoji":"🔋"},{"text":"Tu es en feu!","emoji":"🔥"},{"text":"Dynamique!","emoji":"💫"},{"text":"Super!","emoji":"🎉"},{"text":"Explosif!","emoji":"💥"}],
-      "plank": [{"text":"Tiens bon!","emoji":"💪"},{"text":"Continue comme ça!","emoji":"🔥"},{"text":"Tu es une machine!","emoji":"🤖"},{"text":"Respire profondément!","emoji":"🌬️"},{"text":"Core en acier!","emoji":"⚡"},{"text":"Tu gères!","emoji":"🏆"},{"text":"Mental de champion!","emoji":"🧠"},{"text":"Encore un peu!","emoji":"💥"}],
+      "pushups": [
+        {
+          "text": "Continue comme ça!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Pecs en feu!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Force!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Champion!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Bravo!",
+          "emoji": "👏"
+        },
+        {
+          "text": "Super forme!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Solide!",
+          "emoji": "🦾"
+        },
+        {
+          "text": "Puissant!",
+          "emoji": "💪"
+        }
+      ],
+      "squats": [
+        {
+          "text": "Jambes en acier!",
+          "emoji": "🦵"
+        },
+        {
+          "text": "Tu gères!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Excellent squat!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Puissance!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Incroyable!",
+          "emoji": "🚀"
+        },
+        {
+          "text": "Continue!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Solides cuisses!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Top!",
+          "emoji": "🏆"
+        }
+      ],
+      "situps": [
+        {
+          "text": "Abdos en feu!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Tablette de chocolat!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Continue!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Core solide!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Bravo!",
+          "emoji": "👏"
+        },
+        {
+          "text": "Force!",
+          "emoji": "🚀"
+        },
+        {
+          "text": "Tu gères!",
+          "emoji": "🏆"
+        }
+      ],
+      "jumpingJacks": [
+        {
+          "text": "Cardio à fond!",
+          "emoji": "❤️"
+        },
+        {
+          "text": "Continue!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Énergie!",
+          "emoji": "🔋"
+        },
+        {
+          "text": "Tu es en feu!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Dynamique!",
+          "emoji": "💫"
+        },
+        {
+          "text": "Super!",
+          "emoji": "🎉"
+        },
+        {
+          "text": "Explosif!",
+          "emoji": "💥"
+        }
+      ],
+      "plank": [
+        {
+          "text": "Tiens bon!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Continue comme ça!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Tu es une machine!",
+          "emoji": "🤖"
+        },
+        {
+          "text": "Respire profondément!",
+          "emoji": "🌬️"
+        },
+        {
+          "text": "Core en acier!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Tu gères!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Mental de champion!",
+          "emoji": "🧠"
+        },
+        {
+          "text": "Encore un peu!",
+          "emoji": "💥"
+        }
+      ],
       "started": "C'est parti ! 💪",
       "plankSec": "{{seconds}}s - Bien joué !"
     },
@@ -210,6 +422,16 @@
     "visible": "Visible",
     "hidden": "Masqué",
     "labs": "Labs (Beta)",
+    "notifications": "Notifications",
+    "comingSoon": "Prochainement",
+    "privacyPolicyDesc": "RGPD et protection des données",
+    "termsOfServiceDesc": "Règles d'usage de l'application",
+    "restoreSuccess": "{{entries}} entrées restaurées. Niveau {{level}} avec {{xp}} XP.",
+    "disableSocialConfirm": {
+      "title": "Désactiver les fonctionnalités sociales ?",
+      "message": "Cette action supprimera définitivement vos données en ligne (profil, classement, XP, amis, encouragements). Vos données locales (séances, repas, mesures) seront conservées."
+    },
+    "disableSocialSuccess": "Tes données en ligne ont été supprimées. Mode local activé.",
     "goalSaved": "Objectif hebdo: {{goal}} séances",
     "shareUnavailable": "Le partage n'est pas disponible sur cet appareil",
     "backupError": "Impossible de créer la sauvegarde",
@@ -219,7 +441,7 @@
     "visibilityError": "Impossible de modifier la visibilité.",
     "streakReminderEnabled": "Tu recevras un rappel tous les jours à {{time}} si tu n'as pas encore fait de sport.",
     "reminderSet": "Rappel programmé à {{time}}",
-    "reminderInvalid": "Heure invalide (00-23 : 00-59)" ,
+    "reminderInvalid": "Heure invalide (00-23 : 00-59)",
     "cameraMode": "Mode caméra",
     "cameraModeDesc": "Préférer la détection de pose",
     "debugCamera": "Debug caméra",
@@ -269,7 +491,15 @@
       "hour": "Heure",
       "minute": "Minute"
     },
-    "saved": "Sauvegardé !"
+    "changeTimeDesc": "Choisis l'heure de notification",
+    "chooseFile": "Choisir un fichier",
+    "futureFeatures": {
+      "notifications": "Notifications intelligentes",
+      "multilang": "Traductions en plusieurs langues"
+    },
+    "storageLabel": "Stockage :",
+    "saved": "Sauvegardé !",
+    "healthConnect": "Health Connect"
   },
   "addEntry": {
     "title": "Que veux-tu ajouter ?",
@@ -302,11 +532,18 @@
     "includeAbs": "Inclure bloc abdos",
     "absIncluded": "Bloc abdos inclus",
     "mealTime": "Moment du repas",
-    "mealTimes": { "breakfast": "☀️ Petit-déj", "lunch": "🌤️ Déjeuner", "dinner": "🌙 Dîner", "snack": "🍎 Collation" },
+    "mealTimes": {
+      "breakfast": "☀️ Petit-déj",
+      "lunch": "🌤️ Déjeuner",
+      "dinner": "🌙 Dîner",
+      "snack": "🍎 Collation"
+    },
     "durationErrorPositive": "Durée invalide - entre un nombre de minutes positif",
     "durationError": "Durée invalide",
     "durationErrorNumber": "Durée invalide - entre un nombre de minutes",
-    "error": { "noExercise": "Ajoute au moins un exercice" },
+    "error": {
+      "noExercise": "Ajoute au moins un exercice"
+    },
     "homeSession": "Séance maison : {{name}}",
     "edit": "Modifier",
     "editSubtitle": "Mets à jour tes données",
@@ -316,6 +553,7 @@
     "title": "Social",
     "leaderboard": "Classement",
     "friends": "Amis",
+    "encouragements": "Encouragements",
     "addFriend": "Ajouter un ami",
     "friendCode": "Code ami",
     "yourCode": "Ton code",
@@ -326,7 +564,51 @@
     "rank": "Rang",
     "you": "Toi",
     "sendEncouragement": "Envoyer un encouragement",
-    "encouragementSent": "Encouragement envoyé !"
+    "encouragementSent": "Encouragement envoyé !",
+
+    "authTitle": "Connecte-toi pour accéder aux fonctions sociales",
+    "authSubtitle": "Compare tes performances avec tes amis, envoie des encouragements et grimpe le classement !",
+    "notConfiguredTitle": "Fonctions sociales non configurées",
+    "notConfiguredSubtitle": "Ce projet est open-source. Pour activer les fonctions sociales, configurez Supabase dans le fichier .env",
+    "disabledTitle": "Fonctions sociales désactivées",
+    "disabledSubtitle": "Tu peux réactiver les fonctions sociales dans les paramètres.",
+
+    "syncSuccess": "Tes données locales ont été envoyées au classement.",
+    "syncError": "Impossible de synchroniser",
+
+    "requestSent": "Demande envoyée !",
+    "requestText": "Veut être ton ami",
+    "searchPlaceholder": "Rechercher un utilisateur...",
+
+    "pendingRequests": "{{count}} demande en attente",
+    "pendingRequests_plural": "{{count}} demandes en attente",
+
+    "emptyLeaderboardGlobal": "Aucun classement cette semaine",
+    "emptyLeaderboardFriends": "Ajoute des amis pour voir le classement",
+
+    "syncModalTitle": "Synchroniser tes données",
+    "syncModalDescription": "Tes données locales seront envoyées au classement pour que tes amis puissent voir ta progression.",
+    "syncModalConfirm": "Synchroniser",
+    "syncModalStatLabel": "Séances cette semaine",
+
+    "removeFriendConfirmTitle": "Supprimer cet ami ?",
+    "removeFriendConfirmMessage": "Tu ne pourras plus voir ses statistiques et il ne pourra plus t'envoyer d'encouragements.",
+    "friendRemoved": "Ami supprimé",
+
+    "global": "Global",
+    "results": "Résultats",
+    "pendingRequestsTitle": "Demandes en attente ({{count}})",
+    "myFriends": "Mes amis ({{count}})",
+    "unreadTitle": "Non lus ({{count}})",
+    "recent": "Récents",
+    "noEncouragements": "Aucun encouragement",
+    "noEncouragementsSubtitle": "Tes amis peuvent t'envoyer des encouragements !",
+    "sync": "Synchroniser",
+
+    "workouts": "Séances",
+    "streak": "Streak",
+    "notificationsEnableError": "Impossible d'activer les notifications",
+    "notificationsNetworkHint": "Un VPN ou bloqueur de pub peut empêcher la réception"
   },
   "profile": {
     "title": "Profil",
@@ -344,7 +626,6 @@
     "title": "Outils",
     "repCounter": "Compteur de reps",
     "repCounterDesc": "Compte tes répétitions automatiquement",
-    "healthConnect": "Health Connect",
     "healthConnectDesc": "Importer des données de santé",
     "workoutGenerator": "Générateur de séance",
     "workoutGeneratorDesc": "Crée une séance personnalisée"
@@ -361,7 +642,26 @@
     "noData": "Aucune donnée à importer",
     "error": "Erreur lors de l'importation",
     "lastSync": "Dernière synchronisation",
-    "permissions": "Permissions requises"
+    "permissions": "Permissions requises",
+    "headerTitle": "Sync. Activités",
+  "checkingStatus": "Communication avec Health Connect...",
+  "unavailableTitle": "Health Connect indisponible",
+  "unavailableMessage": "L'application Health Connect n'est pas installée ou n'est pas supportée sur cet appareil Android.",
+  "installButton": "Installer / Mettre à jour",
+  "permissionsTitle": "Permissions requises",
+  "permissionsMessage": "Autorise l'accès à tes données d'exercice pour les importer automatiquement.",
+  "grantAccessButton": "Donner l'accès",
+  "sourceLabel": "Source :",
+  "importedFrom": "Importé depuis Health Connect",
+  "importXpLabel": "Import Health Connect",
+  "importSuccess": "{{count}} séance(s) importée(s) ! +{{xp}} XP",
+  "importError": "Problème lors de l'import",
+  "workoutsFound": "séances détectées ces {{days}} derniers jours",
+  "emptyTitle": "Rien à l'horizon",
+  "emptyMessage": "Aucune nouvelle séance trouvée.",
+  "selectedLabel": "Sélectionnées",
+  "sessions": "séance(s)",
+  "importButton": "Importer"
   },
   "notifications": {
     "streakReminder": {
@@ -406,7 +706,7 @@
       "message": "Cette action est irréversible."
     }
   },
-    "workout": {
+  "workout": {
     "homeLabel": "Séance maison",
     "defaultHomeName": "Séance maison",
     "historyTitle": "Historique",

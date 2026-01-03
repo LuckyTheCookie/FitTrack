@@ -37,6 +37,7 @@ import {
     Zap,
 } from 'lucide-react-native';
 import { GlassCard, Button } from '../src/components/ui';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import * as healthConnect from '../src/services/healthConnect';
@@ -59,10 +60,10 @@ interface ImportableWorkout extends HealthConnectWorkout {
 // ============================================================================
 
 const WORKOUT_TYPES: { type: FitTrackWorkoutType; label: string; icon: any; color: string }[] = [
-    { type: 'home', label: 'Maison', icon: Dumbbell, color: '#60A5FA' }, // Blue
-    { type: 'run', label: 'Run', icon: Footprints, color: '#F472B6' }, // Pink
-    { type: 'beatsaber', label: 'VR', icon: Gamepad2, color: '#A78BFA' }, // Purple
-    { type: 'skip', label: 'Ignorer', icon: Trash2, color: '#9CA3AF' }, // Gray
+    { type: 'home', label: 'addEntry.home', icon: Dumbbell, color: '#60A5FA' }, // Blue
+    { type: 'run', label: 'addEntry.run', icon: Footprints, color: '#F472B6' }, // Pink
+    { type: 'beatsaber', label: 'addEntry.beatsaber', icon: Gamepad2, color: '#A78BFA' }, // Purple
+    { type: 'skip', label: 'common.skip', icon: Trash2, color: '#9CA3AF' }, // Gray
 ];
 
 function WorkoutTypePill({
@@ -80,6 +81,7 @@ function WorkoutTypePill({
     selected: boolean;
     onPress: () => void;
 }) {
+    const { t } = useTranslation();
     return (
         <TouchableOpacity
             style={[
@@ -101,7 +103,7 @@ function WorkoutTypePill({
                     selected ? { color: type === 'skip' ? '#9CA3AF' : color, fontWeight: '700' } : { color: Colors.muted },
                 ]}
             >
-                {label}
+                {t(label)}
             </Text>
         </TouchableOpacity>
     );
@@ -120,6 +122,7 @@ function WorkoutImportCard({
     onTypeChange: (type: FitTrackWorkoutType) => void;
     index: number;
 }) {
+    const { t } = useTranslation();
     const isSkipped = workout.fitTrackType === 'skip';
     
     // Determine active color based on type
@@ -167,14 +170,16 @@ function WorkoutImportCard({
                             <Text style={[styles.durationText, isSkipped && { color: '#9CA3AF' }]}>
                                 {workout.durationMinutes}
                             </Text>
-                            <Text style={[styles.minText, isSkipped && { color: '#6B7280' }]}>min</Text>
+                            <Text style={[styles.minText, isSkipped && { color: '#6B7280' }]}>
+                                {t('common.minShort')}
+                            </Text>
                         </View>
                     </View>
 
                     {/* Original Name if different from title */}
                     {workout.title && workout.title !== workout.exerciseTypeName && (
                         <Text style={styles.originalName}>
-                            Source: {workout.exerciseTypeName}
+                            {t('healthConnect.sourceLabel')} {workout.exerciseTypeName}
                         </Text>
                     )}
 
@@ -203,6 +208,7 @@ function WorkoutImportCard({
 // ============================================================================
 
 export default function HealthConnectScreen() {
+    const { t } = useTranslation();
     const [status, setStatus] = useState<'loading' | 'not_available' | 'needs_install' | 'ready' | 'permission_needed'>('loading');
     const [workouts, setWorkouts] = useState<ImportableWorkout[]>([]);
     const [importing, setImporting] = useState(false);
@@ -271,7 +277,7 @@ export default function HealthConnectScreen() {
                 loadWorkouts();
             } else {
                 setStatus('permission_needed');
-                Alert.alert('Permissions requises', 'Accès nécessaire pour lire tes séances.');
+                Alert.alert(t('healthConnect.permissionsTitle'), t('healthConnect.permissionsMessage'));
             }
         } catch (error) {
             setStatus('permission_needed');
@@ -336,7 +342,7 @@ export default function HealthConnectScreen() {
                     case 'home':
                         addHomeWorkout({
                             name: workout.title || workout.exerciseTypeName,
-                            exercises: `Importé depuis Health Connect`,
+                            exercises: t('healthConnect.importedFrom'),
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
                         }, date);
@@ -368,19 +374,19 @@ export default function HealthConnectScreen() {
                 }
             }
 
-            if (totalXp > 0) addXp(totalXp, `Import Health Connect`);
+            if (totalXp > 0) addXp(totalXp, t('healthConnect.importXpLabel'));
             if (workoutsAdded > 0) updateQuestProgress('workouts', workoutsAdded);
             
             const totals = calculateQuestTotals([...entries, ...toImport.map(() => ({} as any))]);
             recalculateAllQuests(totals);
 
             Alert.alert(
-                'Succès !', 
-                `${workoutsAdded} séances importées (+${totalXp} XP)`,
-                [{ text: 'Cool', onPress: () => router.back() }]
+                t('common.success'), 
+                t('healthConnect.importSuccess', { count: workoutsAdded, xp: totalXp }),
+                [{ text: t('common.ok'), onPress: () => router.back() }]
             );
         } catch (error) {
-            Alert.alert('Erreur', 'Problème lors de l\'import');
+            Alert.alert(t('common.error'), t('healthConnect.importError'));
         } finally {
             setImporting(false);
         }
@@ -400,7 +406,7 @@ export default function HealthConnectScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
                     <ChevronLeft size={24} color={Colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Sync. Activités</Text>
+                <Text style={styles.headerTitle}>{t('healthConnect.headerTitle')}</Text>
                 <TouchableOpacity 
                     onPress={loadWorkouts} 
                     style={styles.iconButton}
@@ -421,7 +427,7 @@ export default function HealthConnectScreen() {
             return (
                 <View style={styles.centerContainer}>
                     <ActivityIndicator size="large" color={Colors.cta} />
-                    <Text style={styles.statusText}>Communication avec Health Connect...</Text>
+                    <Text style={styles.statusText}>{t('healthConnect.checkingStatus')}</Text>
                 </View>
             );
         }
@@ -432,12 +438,12 @@ export default function HealthConnectScreen() {
                     <View style={styles.iconCircle}>
                         <AlertCircle size={40} color="#EF4444" />
                     </View>
-                    <Text style={styles.errorTitle}>Health Connect indisponible</Text>
+                    <Text style={styles.errorTitle}>{t('healthConnect.unavailableTitle')}</Text>
                     <Text style={styles.errorText}>
-                        L'application Health Connect n'est pas installée ou n'est pas supportée sur cet appareil Android.
+                        {t('healthConnect.unavailableMessage')}
                     </Text>
                     <Button 
-                        title="Installer / Mettre à jour" 
+                        title={t('healthConnect.installButton')} 
                         onPress={() => Linking.openURL('market://details?id=com.google.android.apps.healthdata')}
                         variant="primary"
                     />
@@ -451,12 +457,12 @@ export default function HealthConnectScreen() {
                     <View style={[styles.iconCircle, { backgroundColor: Colors.cta + '20' }]}>
                         <Heart size={40} color={Colors.cta} fill={Colors.cta + '20'} />
                     </View>
-                    <Text style={styles.errorTitle}>Permissions requises</Text>
+                    <Text style={styles.errorTitle}>{t('healthConnect.permissionsTitle')}</Text>
                     <Text style={styles.errorText}>
-                        Autorise l'accès à tes données d'exercice pour les importer automatiquement.
+                        {t('healthConnect.permissionsMessage')}
                     </Text>
                     <Button 
-                        title="Donner l'accès" 
+                        title={t('healthConnect.grantAccessButton')} 
                         onPress={requestPermissions}
                         variant="cta"
                         style={{ width: 200 }}
@@ -483,7 +489,8 @@ export default function HealthConnectScreen() {
                             >
                                 <Zap size={20} color={Colors.cta} fill={Colors.cta} />
                                 <Text style={styles.summaryText}>
-                                    <Text style={{ fontWeight: 'bold', color: Colors.text }}>{workouts.length}</Text> séances détectées ces {daysBack} derniers jours.
+                                    <Text style={{ fontWeight: 'bold', color: Colors.text }}>{workouts.length}</Text>{' '}
+                                    {t('healthConnect.workoutsFound', { days: daysBack })}
                                 </Text>
                             </LinearGradient>
                         </Animated.View>
@@ -495,8 +502,8 @@ export default function HealthConnectScreen() {
                                 source={{ uri: 'https://cdn-icons-png.flaticon.com/512/7486/7486744.png' }} 
                                 style={{ width: 80, height: 80, opacity: 0.5, marginBottom: 16 }} 
                             />
-                            <Text style={styles.emptyTitle}>Rien à l'horizon</Text>
-                            <Text style={styles.emptyText}>Aucune nouvelle séance trouvée.</Text>
+                            <Text style={styles.emptyTitle}>{t('healthConnect.emptyTitle')}</Text>
+                            <Text style={styles.emptyText}>{t('healthConnect.emptyMessage')}</Text>
                         </View>
                     ) : (
                         workouts.map((workout, index) => (
@@ -517,11 +524,11 @@ export default function HealthConnectScreen() {
                     <Animated.View entering={FadeInDown} style={styles.bottomBarContainer}>
                         <GlassCard style={styles.bottomBar}>
                             <View>
-                                <Text style={styles.bottomBarLabel}>Sélectionnées</Text>
-                                <Text style={styles.bottomBarValue}>{selectedCount} séances</Text>
+                                <Text style={styles.bottomBarLabel}>{t('healthConnect.selectedLabel')}</Text>
+                                <Text style={styles.bottomBarValue}>{selectedCount} {t('healthConnect.sessions')}</Text>
                             </View>
                             <Button
-                                title={importing ? "Import..." : "Importer"}
+                                title={importing ? t('healthConnect.importing') : t('healthConnect.importButton')}
                                 onPress={handleImport}
                                 variant="cta"
                                 disabled={selectedCount === 0 || importing}

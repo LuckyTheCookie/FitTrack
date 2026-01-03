@@ -42,6 +42,7 @@ import {
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { GlassCard } from '../src/components/ui';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, useGamificationStore, useSocialStore } from '../src/stores';
 import { isSocialAvailable } from '../src/services/supabase';
 import * as NotificationService from '../src/services/notifications';
@@ -60,10 +61,11 @@ function TabSelector({
     activeTab: 'leaderboard' | 'friends' | 'encouragements';
     onTabChange: (tab: 'leaderboard' | 'friends' | 'encouragements') => void;
 }) {
+    const { t } = useTranslation();
     const tabs = [
-        { id: 'leaderboard' as const, label: 'Classement', icon: Trophy },
-        { id: 'friends' as const, label: 'Amis', icon: Users },
-        { id: 'encouragements' as const, label: 'Encours', icon: Heart },
+        { id: 'leaderboard' as const, label: t('social.leaderboard'), icon: Trophy },
+        { id: 'friends' as const, label: t('social.friends'), icon: Users },
+        { id: 'encouragements' as const, label: t('social.encouragements'), icon: Heart },
     ];
 
     return (
@@ -164,6 +166,7 @@ function FriendRequestItem({
     onAccept: () => void;
     onReject: () => void;
 }) {
+    const { t } = useTranslation();
     return (
         <GlassCard style={styles.requestItem}>
             <View style={styles.userAvatar}>
@@ -175,7 +178,7 @@ function FriendRequestItem({
                 <Text style={styles.userName}>
                     {request.requester.display_name || request.requester.username}
                 </Text>
-                <Text style={styles.requestText}>Veut être ton ami</Text>
+                <Text style={styles.requestText}>{t('social.requestText')}</Text>
             </View>
             <View style={styles.requestActions}>
                 <TouchableOpacity 
@@ -223,39 +226,38 @@ function EncouragementItem({
 
 // Auth prompt
 function AuthPrompt({ onSignIn }: { onSignIn: () => void }) {
+    const { t } = useTranslation();
     return (
         <View style={styles.authPrompt}>
             <UserCircle size={64} color={Colors.muted} />
-            <Text style={styles.authTitle}>Connecte-toi pour accéder aux fonctions sociales</Text>
-            <Text style={styles.authSubtitle}>
-                Compare tes performances avec tes amis, envoie des encouragements et grimpe le classement !
-            </Text>
+            <Text style={styles.authTitle}>{t('social.authTitle')}</Text>
+            <Text style={styles.authSubtitle}>{t('social.authSubtitle')}</Text>
             <TouchableOpacity style={styles.authButton} onPress={onSignIn}>
                 <LogIn size={20} color="#fff" />
-                <Text style={styles.authButtonText}>Se connecter</Text>
+                <Text style={styles.authButtonText}>{t('profile.signIn')}</Text>
             </TouchableOpacity>
         </View>
     );
-}
+} 
 
 // Not configured prompt
 function NotConfiguredPrompt() {
+    const { t } = useTranslation();
     return (
         <View style={styles.authPrompt}>
             <Settings size={64} color={Colors.muted} />
-            <Text style={styles.authTitle}>Fonctions sociales non configurées</Text>
-            <Text style={styles.authSubtitle}>
-                Ce projet est open-source. Pour activer les fonctions sociales, configurez Supabase dans le fichier .env
-            </Text>
+            <Text style={styles.authTitle}>{t('social.notConfiguredTitle')}</Text>
+            <Text style={styles.authSubtitle}>{t('social.notConfiguredSubtitle')}</Text>
         </View>
     );
-}
+} 
 
 // ============================================================================
 // MAIN SCREEN
 // ============================================================================
 
 export default function SocialScreen() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'leaderboard' | 'friends' | 'encouragements'>('leaderboard');
     const [leaderboardType, setLeaderboardType] = useState<'global' | 'friends'>('global');
     const [searchQuery, setSearchQuery] = useState('');
@@ -491,7 +493,7 @@ export default function SocialScreen() {
     const handleSendRequest = useCallback(async (userId: string) => {
         try {
             await sendFriendRequest(userId);
-            Alert.alert('✅ Demande envoyée', 'Ta demande d\'ami a été envoyée !');
+            Alert.alert(t('common.success'), t('social.requestSent'))
             setSearchResults(prev => 
                 prev.map(u => u.id === userId ? { ...u, friendship_status: 'pending' } : u)
             );
@@ -539,7 +541,7 @@ export default function SocialScreen() {
         return (
             <SafeAreaView style={styles.container} edges={['top']}>
                 <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-                    <Text style={styles.screenTitle}>Social</Text>
+                    <Text style={styles.screenTitle}>{t('social.title')}</Text>
                     <NotConfiguredPrompt />
                 </ScrollView>
             </SafeAreaView>
@@ -552,8 +554,8 @@ export default function SocialScreen() {
             <SafeAreaView style={styles.container} edges={['top']}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.cta} />
-                    <Text style={styles.loadingText}>Chargement...</Text>
-                </View>
+                    <Text style={styles.loadingText}>{t('common.loading')}</Text>
+                </View> 
             </SafeAreaView>
         );
     }
@@ -563,7 +565,7 @@ export default function SocialScreen() {
         return (
             <SafeAreaView style={styles.container} edges={['top']}>
                 <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-                    <Text style={styles.screenTitle}>Social</Text>
+                    <Text style={styles.screenTitle}>{t('social.title')}</Text>
                     <AuthPrompt onSignIn={() => router.push('/auth' as any)} />
                 </ScrollView>
             </SafeAreaView>
@@ -575,20 +577,18 @@ export default function SocialScreen() {
         return (
             <SafeAreaView style={styles.container} edges={['top']}>
                 <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-                    <Text style={styles.screenTitle}>Social</Text>
+                    <Text style={styles.screenTitle}>{t('social.title')}</Text>
                     <View style={styles.authPrompt}>
                         <Users size={64} color={Colors.muted} />
-                        <Text style={styles.authTitle}>Fonctions sociales désactivées</Text>
-                        <Text style={styles.authSubtitle}>
-                            Tu peux réactiver les fonctions sociales dans les paramètres.
-                        </Text>
+                        <Text style={styles.authTitle}>{t('social.disabledTitle')}</Text>
+                        <Text style={styles.authSubtitle}>{t('social.disabledSubtitle')}</Text>
                         <TouchableOpacity 
                             style={styles.authButton} 
                             onPress={() => router.push('/settings')}
                         >
                             <Settings size={20} color="#fff" />
-                            <Text style={styles.authButtonText}>Paramètres</Text>
-                        </TouchableOpacity>
+                            <Text style={styles.authButtonText}>{t('settings.title')}</Text>
+                        </TouchableOpacity> 
                     </View>
                 </ScrollView>
             </SafeAreaView>
@@ -611,7 +611,7 @@ export default function SocialScreen() {
             >
                 {/* Header */}
                 <Animated.View entering={FadeIn.delay(50)} style={styles.header}>
-                    <Text style={styles.screenTitle}>Social</Text>
+                    <Text style={styles.screenTitle}>{t('social.title')}</Text>
                     <TouchableOpacity 
                         style={styles.profileButton}
                         onPress={() => router.push('/profile' as any)}
@@ -645,12 +645,12 @@ export default function SocialScreen() {
                             <View style={styles.myStatsRow}>
                                 <View style={styles.myStat}>
                                     <Text style={styles.myStatValue}>{profile.weekly_xp}</Text>
-                                    <Text style={styles.myStatLabel}>XP semaine</Text>
+                                    <Text style={styles.myStatLabel}>{t('social.weeklyXP')}</Text>
                                 </View>
                                 <View style={styles.myStatDivider} />
                                 <View style={styles.myStat}>
                                     <Text style={styles.myStatValue}>{profile.weekly_workouts}</Text>
-                                    <Text style={styles.myStatLabel}>Séances</Text>
+                                    <Text style={styles.myStatLabel}>{t('social.workouts')}</Text>
                                 </View>
                                 <View style={styles.myStatDivider} />
                                 <View style={styles.myStat}>
@@ -658,7 +658,7 @@ export default function SocialScreen() {
                                         <Flame size={16} color={Colors.warning} />
                                         <Text style={styles.myStatValue}>{profile.current_streak}</Text>
                                     </View>
-                                    <Text style={styles.myStatLabel}>Streak</Text>
+                                    <Text style={styles.myStatLabel}>{t('social.streak')}</Text>
                                 </View>
                             </View>
                             {/* Sync button */}
@@ -667,7 +667,7 @@ export default function SocialScreen() {
                                 onPress={() => setShowSyncModal(true)}
                             >
                                 <Upload size={16} color={Colors.cta} />
-                                <Text style={styles.syncButtonText}>Synchroniser</Text>
+                                <Text style={styles.syncButtonText}>{t('social.sync')}</Text>
                             </TouchableOpacity>
                         </LinearGradient>
                     </Animated.View>
@@ -689,10 +689,10 @@ export default function SocialScreen() {
                             <Bell size={18} color="#fbbf24" />
                             <View style={{ flex: 1 }}>
                                 <Text style={[styles.notificationWarningText, { color: '#fbbf24' }]}>
-                                    Impossible d'activer les notifications
+                                    {t('social.notificationsEnableError')}
                                 </Text>
                                 <Text style={[styles.notificationWarningText, { fontSize: 11, opacity: 0.8, color: '#fbbf24' }]}>
-                                    Un VPN ou bloqueur de pub peut empêcher la réception
+                                    {t('social.notificationsNetworkHint')}
                                 </Text>
                             </View>
                             <ChevronRight size={18} color="#fbbf24" />
@@ -711,7 +711,7 @@ export default function SocialScreen() {
                     >
                         <UserPlus size={16} color="#fff" />
                         <Text style={styles.pendingBadgeText}>
-                            {pendingRequests.length} demande{pendingRequests.length > 1 ? 's' : ''} en attente
+                            {t('social.pendingRequests', { count: pendingRequests.length })}
                         </Text>
                         <ChevronRight size={16} color="#fff" />
                     </TouchableOpacity>
@@ -733,7 +733,7 @@ export default function SocialScreen() {
                                     styles.toggleButtonText,
                                     leaderboardType === 'global' && styles.toggleButtonTextActive
                                 ]}>
-                                    🌍 Global
+                                    🌍 {t('social.global')}
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -747,7 +747,7 @@ export default function SocialScreen() {
                                     styles.toggleButtonText,
                                     leaderboardType === 'friends' && styles.toggleButtonTextActive
                                 ]}>
-                                    👥 Amis
+                                    👥 {t('social.friends')}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -758,8 +758,8 @@ export default function SocialScreen() {
                                 <Trophy size={48} color={Colors.muted} />
                                 <Text style={styles.emptyStateTitle}>
                                     {leaderboardType === 'friends' 
-                                        ? 'Ajoute des amis pour voir le classement'
-                                        : 'Aucun classement cette semaine'
+                                        ? t('social.emptyLeaderboardFriends')
+                                        : t('social.emptyLeaderboardGlobal')
                                     }
                                 </Text>
                             </View>
@@ -795,7 +795,7 @@ export default function SocialScreen() {
                             <Search size={18} color={Colors.muted} />
                             <TextInput
                                 style={styles.searchInput}
-                                placeholder="Rechercher un utilisateur..."
+                                placeholder={t('social.searchPlaceholder')}
                                 placeholderTextColor={Colors.muted}
                                 value={searchQuery}
                                 onChangeText={handleSearch}
@@ -806,7 +806,7 @@ export default function SocialScreen() {
                         {/* Search Results */}
                         {searchResults.length > 0 && (
                             <View style={styles.searchResults}>
-                                <Text style={styles.sectionTitle}>Résultats</Text>
+                                <Text style={styles.sectionTitle}>{t('social.results')}</Text>
                                 {searchResults.map(user => (
                                     <GlassCard key={user.id} style={styles.searchResultItem}>
                                         <View style={styles.userAvatar}>
@@ -846,7 +846,7 @@ export default function SocialScreen() {
                         {pendingRequests.length > 0 && (
                             <View style={styles.section}>
                                 <Text style={styles.sectionTitle}>
-                                    Demandes en attente ({pendingRequests.length})
+                                    {t('social.pendingRequestsTitle', { count: pendingRequests.length })}
                                 </Text>
                                 {pendingRequests.map(request => (
                                     <FriendRequestItem
@@ -862,7 +862,7 @@ export default function SocialScreen() {
                         {/* Friends List */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>
-                                Mes amis ({friends.length})
+                                {t('social.myFriends', { count: friends.length })}
                             </Text>
                             {friends.length === 0 ? (
                                 <View style={styles.emptyState}>
@@ -928,7 +928,7 @@ export default function SocialScreen() {
                         {unreadEncouragements.length > 0 && (
                             <View style={styles.section}>
                                 <Text style={styles.sectionTitle}>
-                                    Non lus ({unreadEncouragements.length})
+                                    {t('social.unreadTitle', { count: unreadEncouragements.length })}
                                 </Text>
                                 {unreadEncouragements.map(enc => (
                                     <EncouragementItem
@@ -942,15 +942,15 @@ export default function SocialScreen() {
 
                         {/* Recent */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Récents</Text>
+                            <Text style={styles.sectionTitle}>{t('social.recent')}</Text>
                             {recentEncouragements.length === 0 ? (
                                 <View style={styles.emptyState}>
                                     <Heart size={48} color={Colors.muted} />
                                     <Text style={styles.emptyStateTitle}>
-                                        Aucun encouragement
+                                        {t('social.noEncouragements')}
                                     </Text>
                                     <Text style={styles.emptyStateSubtitle}>
-                                        Tes amis peuvent t'envoyer des encouragements !
+                                        {t('social.noEncouragementsSubtitle')}
                                     </Text>
                                 </View>
                             ) : (
@@ -986,16 +986,14 @@ export default function SocialScreen() {
                     >
                         <View style={styles.syncModalHeader}>
                             <Upload size={32} color={Colors.cta} />
-                            <Text style={styles.syncModalTitle}>Synchroniser tes données</Text>
+                            <Text style={styles.syncModalTitle}>{t('social.syncModalTitle')}</Text>
                         </View>
                         
-                        <Text style={styles.syncModalDescription}>
-                            Tes données locales seront envoyées au classement pour que tes amis puissent voir ta progression.
-                        </Text>
+                        <Text style={styles.syncModalDescription}>{t('social.syncModalDescription')}</Text>
 
                         <GlassCard style={styles.syncStatsCard}>
                             <View style={styles.syncStatRow}>
-                                <Text style={styles.syncStatLabel}>Séances cette semaine</Text>
+                                <Text style={styles.syncStatLabel}>{t('social.syncModalStatLabel')}</Text>
                                 <Text style={styles.syncStatValue}>{localStats.weeklyWorkouts}</Text>
                             </View>
                             <View style={styles.syncStatRow}>

@@ -36,7 +36,9 @@
     "reps": "reps",
     "km": "km",
     "kcal": "kcal",
-    "kg": "kg"
+    "kg": "kg",
+    "skip": "Skip",
+    "minShort": "min"
   },
   "tabs": {
     "home": "Home",
@@ -46,15 +48,42 @@
     "profile": "Profile"
   },
   "badges": {
-    "first_workout": { "name": "First workout", "description": "Complete your first workout" },
-    "streak_7": { "name": "Week on fire", "description": "7 consecutive days" },
-    "streak_30": { "name": "Month of steel", "description": "30 consecutive days" },
-    "workouts_10": { "name": "Regular", "description": "10 workouts completed" },
-    "workouts_50": { "name": "Determined", "description": "50 workouts completed" },
-    "workouts_100": { "name": "Legend", "description": "100 workouts completed" },
-    "runner_10km": { "name": "Runner", "description": "10 km run total" },
-    "runner_50km": { "name": "Marathon", "description": "50 km run total" },
-    "consistent_month": { "name": "Consistent", "description": "Weekly goal met 4 weeks in a row" },
+    "first_workout": {
+      "name": "First workout",
+      "description": "Complete your first workout"
+    },
+    "streak_7": {
+      "name": "Week on fire",
+      "description": "7 consecutive days"
+    },
+    "streak_30": {
+      "name": "Month of steel",
+      "description": "30 consecutive days"
+    },
+    "workouts_10": {
+      "name": "Regular",
+      "description": "10 workouts completed"
+    },
+    "workouts_50": {
+      "name": "Determined",
+      "description": "50 workouts completed"
+    },
+    "workouts_100": {
+      "name": "Legend",
+      "description": "100 workouts completed"
+    },
+    "runner_10km": {
+      "name": "Runner",
+      "description": "10 km run total"
+    },
+    "runner_50km": {
+      "name": "Marathon",
+      "description": "50 km run total"
+    },
+    "consistent_month": {
+      "name": "Consistent",
+      "description": "Weekly goal met 4 weeks in a row"
+    },
     "unlocked": "Unlocked!",
     "locked": "Locked"
   },
@@ -114,7 +143,6 @@
     "topExercise": "Top exercise of the month",
     "personalRecords": "Personal Records",
     "badges": "Badges",
-
     "noData": "No data yet",
     "noDataHint": "Your stats will appear here"
   },
@@ -156,20 +184,204 @@
       "detecting": "Detecting..."
     },
     "instructions": {
-      "pushups": { "default": "Place your phone face down under your chest", "camera": "Place your phone on the side to see yourself from the side" },
-      "situps": { "default": "Place your phone on your chest, screen up", "camera": "Place your phone on the side to see yourself from the side" },
-      "squats": { "default": "Hold the phone against your chest", "camera": "Place the phone in front of you or on the side" },
-      "jumpingJacks": { "default": "Hold the phone in your hand", "camera": "Place the phone in front of you facing you" },
-      "plank": { "default": "Place the phone on the side to see yourself from the side", "camera": "Place the phone on the side to see yourself from the side.\n\n💡 Tip: Turn up the volume to hear sounds!" }
+      "pushups": {
+        "default": "Place your phone face down under your chest",
+        "camera": "Place your phone on the side to see yourself from the side"
+      },
+      "situps": {
+        "default": "Place your phone on your chest, screen up",
+        "camera": "Place your phone on the side to see yourself from the side"
+      },
+      "squats": {
+        "default": "Hold the phone against your chest",
+        "camera": "Place the phone in front of you or on the side"
+      },
+      "jumpingJacks": {
+        "default": "Hold the phone in your hand",
+        "camera": "Place the phone in front of you facing you"
+      },
+      "plank": {
+        "default": "Place the phone on the side to see yourself from the side",
+        "camera": "Place the phone on the side to see yourself from the side.\n\n💡 Tip: Turn up the volume to hear sounds!"
+      }
     },
     "active": "Active",
     "trackedSession": "Track {{exercise}}",
     "motivations": {
-      "pushups": [{"text":"Keep going!","emoji":"💪"},{"text":"Pecs on fire!","emoji":"🔥"},{"text":"Excellent!","emoji":"⭐"},{"text":"Power!","emoji":"💥"},{"text":"Champion!","emoji":"🏆"},{"text":"Nice work!","emoji":"👏"},{"text":"Great form!","emoji":"⚡"},{"text":"Solid!","emoji":"🦾"},{"text":"Strong!","emoji":"💪"}],
-      "squats": [{"text":"Legs of steel!","emoji":"🦵"},{"text":"You're doing great!","emoji":"🔥"},{"text":"Excellent squat!","emoji":"⭐"},{"text":"Power!","emoji":"💥"},{"text":"Unbelievable!","emoji":"🚀"},{"text":"Keep going!","emoji":"💪"},{"text":"Strong thighs!","emoji":"⚡"},{"text":"Top!","emoji":"🏆"}],
-      "situps": [{"text":"Abs on fire!","emoji":"🔥"},{"text":"Six-pack incoming!","emoji":"💪"},{"text":"Keep going!","emoji":"⚡"},{"text":"Excellent!","emoji":"⭐"},{"text":"Strong core!","emoji":"💥"},{"text":"Nice work!","emoji":"👏"},{"text":"Power!","emoji":"🚀"},{"text":"You got this!","emoji":"🏆"}],
-      "jumpingJacks": [{"text":"Cardio on!","emoji":"❤️"},{"text":"Keep going!","emoji":"⚡"},{"text":"Excellent!","emoji":"⭐"},{"text":"Energy!","emoji":"🔋"},{"text":"You're on fire!","emoji":"🔥"},{"text":"Dynamic!","emoji":"💫"},{"text":"Super!","emoji":"🎉"},{"text":"Explosive!","emoji":"💥"}],
-      "plank": [{"text":"Hold on!","emoji":"💪"},{"text":"Keep it up!","emoji":"🔥"},{"text":"You're a machine!","emoji":"🤖"},{"text":"Breathe deep!","emoji":"🌬️"},{"text":"Core of steel!","emoji":"⚡"},{"text":"You got this!","emoji":"🏆"},{"text":"Champion mindset!","emoji":"🧠"},{"text":"Almost there!","emoji":"💥"}],
+      "pushups": [
+        {
+          "text": "Keep going!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Pecs on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Power!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Champion!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Nice work!",
+          "emoji": "👏"
+        },
+        {
+          "text": "Great form!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Solid!",
+          "emoji": "🦾"
+        },
+        {
+          "text": "Strong!",
+          "emoji": "💪"
+        }
+      ],
+      "squats": [
+        {
+          "text": "Legs of steel!",
+          "emoji": "🦵"
+        },
+        {
+          "text": "You're doing great!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Excellent squat!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Power!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Unbelievable!",
+          "emoji": "🚀"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Strong thighs!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Top!",
+          "emoji": "🏆"
+        }
+      ],
+      "situps": [
+        {
+          "text": "Abs on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Six-pack incoming!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Strong core!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Nice work!",
+          "emoji": "👏"
+        },
+        {
+          "text": "Power!",
+          "emoji": "🚀"
+        },
+        {
+          "text": "You got this!",
+          "emoji": "🏆"
+        }
+      ],
+      "jumpingJacks": [
+        {
+          "text": "Cardio on!",
+          "emoji": "❤️"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Energy!",
+          "emoji": "🔋"
+        },
+        {
+          "text": "You're on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Dynamic!",
+          "emoji": "💫"
+        },
+        {
+          "text": "Super!",
+          "emoji": "🎉"
+        },
+        {
+          "text": "Explosive!",
+          "emoji": "💥"
+        }
+      ],
+      "plank": [
+        {
+          "text": "Hold on!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Keep it up!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "You're a machine!",
+          "emoji": "🤖"
+        },
+        {
+          "text": "Breathe deep!",
+          "emoji": "🌬️"
+        },
+        {
+          "text": "Core of steel!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "You got this!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Champion mindset!",
+          "emoji": "🧠"
+        },
+        {
+          "text": "Almost there!",
+          "emoji": "💥"
+        }
+      ],
       "started": "Let's go! 💪",
       "plankSec": "{{seconds}}s - Well done!"
     },
@@ -210,6 +422,16 @@
     "visible": "Visible",
     "hidden": "Hidden",
     "labs": "Labs (Beta)",
+    "notifications": "Notifications",
+    "comingSoon": "Coming soon",
+    "privacyPolicyDesc": "GDPR & data protection",
+    "termsOfServiceDesc": "App usage rules",
+    "restoreSuccess": "{{entries}} entries restored. Level {{level}} with {{xp}} XP.",
+    "disableSocialConfirm": {
+      "title": "Disable social features?",
+      "message": "This will permanently delete your online data (profile, leaderboard, XP, friends, encouragements). Your local data (workouts, meals, measures) will be kept."
+    },
+    "disableSocialSuccess": "Online data deleted. Local mode active.",
     "goalSaved": "Weekly goal: {{goal}} workouts",
     "shareUnavailable": "Sharing is not available on this device",
     "backupError": "Unable to create backup",
@@ -219,7 +441,7 @@
     "visibilityError": "Unable to change visibility.",
     "streakReminderEnabled": "You'll get a daily reminder at {{time}} if you haven't worked out yet.",
     "reminderSet": "Reminder set for {{time}}",
-    "reminderInvalid": "Invalid time (00-23 : 00-59)" ,
+    "reminderInvalid": "Invalid time (00-23 : 00-59)",
     "cameraMode": "Camera mode",
     "cameraModeDesc": "Prefer pose detection",
     "debugCamera": "Camera debug",
@@ -269,7 +491,16 @@
       "hour": "Hour",
       "minute": "Minute"
     },
-    "saved": "Saved!"
+    "changeTimeDesc": "Pick the notification time",
+    "chooseFile": "Choose a file",
+    "futureFeatures": {
+      "notifications": "Smart notifications",
+      "multilang": "Multi-language translations"
+    },
+    "storageLabel": "Storage:",
+    "saved": "Saved!",
+    "healthConnect": "Health Connect",
+    "healthConnectDesc": "Sync health data"
   },
   "addEntry": {
     "title": "What do you want to add?",
@@ -302,11 +533,18 @@
     "includeAbs": "Include abs block",
     "absIncluded": "Abs block included",
     "mealTime": "Meal time",
-    "mealTimes": { "breakfast": "☀️ Breakfast", "lunch": "🌤️ Lunch", "dinner": "🌙 Dinner", "snack": "🍎 Snack" },
+    "mealTimes": {
+      "breakfast": "☀️ Breakfast",
+      "lunch": "🌤️ Lunch",
+      "dinner": "🌙 Dinner",
+      "snack": "🍎 Snack"
+    },
     "durationErrorPositive": "Invalid duration - enter a positive number of minutes",
     "durationError": "Invalid duration",
     "durationErrorNumber": "Invalid duration - enter a number of minutes",
-    "error": { "noExercise": "Add at least one exercise" },
+    "error": {
+      "noExercise": "Add at least one exercise"
+    },
     "homeSession": "Home session: {{name}}",
     "edit": "Edit",
     "editSubtitle": "Update your session data",
@@ -316,6 +554,7 @@
     "title": "Social",
     "leaderboard": "Leaderboard",
     "friends": "Friends",
+    "encouragements": "Encouragements",
     "addFriend": "Add friend",
     "friendCode": "Friend code",
     "yourCode": "Your code",
@@ -326,7 +565,51 @@
     "rank": "Rank",
     "you": "You",
     "sendEncouragement": "Send encouragement",
-    "encouragementSent": "Encouragement sent!"
+    "encouragementSent": "Encouragement sent!",
+
+    "authTitle": "Sign in to access social features",
+    "authSubtitle": "Compare your performance with friends, send encouragements and climb the leaderboard!",
+    "notConfiguredTitle": "Social features not configured",
+    "notConfiguredSubtitle": "This project is open-source. To enable social features, configure Supabase in the .env file",
+    "disabledTitle": "Social features disabled",
+    "disabledSubtitle": "You can re-enable social features in Settings.",
+
+    "syncSuccess": "Your local data was sent to the leaderboard.",
+    "syncError": "Unable to sync",
+
+    "requestSent": "Friend request sent!",
+    "requestText": "Wants to be your friend",
+    "searchPlaceholder": "Search for a user...",
+
+    "pendingRequests": "{{count}} pending request",
+    "pendingRequests_plural": "{{count}} pending requests",
+
+    "emptyLeaderboardGlobal": "No leaderboard this week",
+    "emptyLeaderboardFriends": "Add friends to see the leaderboard",
+
+    "syncModalTitle": "Sync your data",
+    "syncModalDescription": "Your local data will be sent to the leaderboard so friends can see your progress.",
+    "syncModalConfirm": "Sync",
+    "syncModalStatLabel": "Workouts this week",
+
+    "removeFriendConfirmTitle": "Remove friend?",
+    "removeFriendConfirmMessage": "You will no longer see their stats and they cannot send you encouragements.",
+    "friendRemoved": "Friend removed",
+
+    "global": "Global",
+    "results": "Results",
+    "pendingRequestsTitle": "Pending requests ({{count}})",
+    "myFriends": "My friends ({{count}})",
+    "unreadTitle": "Unread ({{count}})",
+    "recent": "Recent",
+    "noEncouragements": "No encouragements",
+    "noEncouragementsSubtitle": "Your friends can send you encouragements!",
+    "sync": "Sync",
+
+    "workouts": "Workouts",
+    "streak": "Streak",
+    "notificationsEnableError": "Unable to enable notifications",
+    "notificationsNetworkHint": "A VPN or ad blocker may prevent delivery"
   },
   "profile": {
     "title": "Profile",
@@ -344,8 +627,6 @@
     "title": "Tools",
     "repCounter": "Rep counter",
     "repCounterDesc": "Count your reps automatically",
-    "healthConnect": "Health Connect",
-    "healthConnectDesc": "Import health data",
     "workoutGenerator": "Workout generator",
     "workoutGeneratorDesc": "Create a personalized workout"
   },
@@ -361,7 +642,26 @@
     "noData": "No data to import",
     "error": "Error importing data",
     "lastSync": "Last sync",
-    "permissions": "Required permissions"
+    "permissions": "Required permissions",
+    "headerTitle": "Activity Sync",
+  "checkingStatus": "Connecting to Health Connect...",
+  "unavailableTitle": "Health Connect Unavailable",
+  "unavailableMessage": "The Health Connect app is not installed or not supported on this Android device.",
+  "installButton": "Install / Update",
+  "permissionsTitle": "Permissions Required",
+  "permissionsMessage": "Allow access to your exercise data to import workouts automatically.",
+  "grantAccessButton": "Grant Access",
+  "sourceLabel": "Source:",
+  "importedFrom": "Imported from Health Connect",
+  "importXpLabel": "Health Connect Import",
+  "importSuccess": "{{count}} workout(s) imported! +{{xp}} XP",
+  "importError": "Import error occurred",
+  "workoutsFound": "workouts found in the last {{days}} days",
+  "emptyTitle": "Nothing Here",
+  "emptyMessage": "No new workouts found.",
+  "selectedLabel": "Selected",
+  "sessions": "workout(s)",
+  "importButton": "Import"
   },
   "notifications": {
     "streakReminder": {
