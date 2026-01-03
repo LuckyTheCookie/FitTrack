@@ -213,11 +213,11 @@ export default function SettingsScreen() {
   const handleSaveGoal = useCallback(() => {
     const goal = parseInt(weeklyGoalInput, 10);
     if (isNaN(goal) || goal < 1 || goal > 14) {
-      Alert.alert('Erreur', 'L\'objectif doit être entre 1 et 14');
+      Alert.alert(t('common.error'), t('settings.weeklyGoalError'));
       return;
     }
     updateWeeklyGoal(goal);
-    Alert.alert('Sauvegardé !', `Objectif hebdo: ${goal} séances`);
+    Alert.alert(t('common.success'), t('settings.goalSaved', { goal }));
   }, [weeklyGoalInput, updateWeeklyGoal]);
 
   // Export JSON - Ouvre le modal
@@ -259,7 +259,7 @@ export default function SettingsScreen() {
               e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
             ).length;
             recalculateFromScratch({ ...totals, totalWorkouts: workoutCount });
-            Alert.alert('Recalculé !', 'Ton niveau et tes quêtes ont été mis à jour.');
+            Alert.alert(t('common.success'), t('settings.recalculateDone'));
           },
         },
       ]
@@ -293,11 +293,11 @@ export default function SettingsScreen() {
           dialogTitle: 'Sauvegarder FitTrack',
         });
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        Alert.alert(t('common.error'), t('settings.shareUnavailable'));
       }
     } catch (error) {
       console.error('Backup error:', error);
-      Alert.alert('Erreur', 'Impossible de créer la sauvegarde');
+      Alert.alert(t('common.error'), t('settings.backupError'));
     }
   }, [entries, settings, unlockedBadges, gamificationState]);
 
@@ -329,7 +329,7 @@ export default function SettingsScreen() {
               const backup = parseBackup(jsonString);
               
               if (!backup) {
-                Alert.alert('Erreur', 'Le fichier de sauvegarde est invalide ou corrompu');
+                Alert.alert(t('common.error'), t('settings.restoreInvalidFile'));
                 return;
               }
               
@@ -363,7 +363,7 @@ export default function SettingsScreen() {
               );
             } catch (error) {
               console.error('Restore error:', error);
-              Alert.alert('Erreur', 'Impossible de restaurer la sauvegarde');
+              Alert.alert(t('common.error'), t('settings.restoreError'));
             }
           },
         },
@@ -395,7 +395,7 @@ export default function SettingsScreen() {
                 'Tes données en ligne ont été supprimées. Mode local activé.'
               );
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer les données. Réessaie plus tard.');
+              Alert.alert(t('common.error'), t('settings.deleteDataError'));
             } finally {
               setIsDisablingSocial(false);
             }
@@ -411,7 +411,7 @@ export default function SettingsScreen() {
     try {
       await updateLeaderboardVisibility(newValue);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de modifier la visibilité.');
+      Alert.alert(t('common.error'), t('settings.visibilityError'));
     }
   }, [profile, updateLeaderboardVisibility]);
 
@@ -500,7 +500,7 @@ export default function SettingsScreen() {
                       streakReminderHour: hour,
                       streakReminderMinute: minute,
                     });
-                    Alert.alert('Rappel activé', `Tu recevras un rappel tous les jours à ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} si tu n'as pas encore fait de sport.`);
+                    Alert.alert(t('common.success'), t('settings.streakReminderEnabled', { time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` }));
                   } else {
                     await NotificationService.cancelStreakReminder();
                     updateSettings({ streakReminderEnabled: false });
@@ -560,8 +560,8 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<History size={20} color="#60a5fa" />}
             iconColor="#60a5fa"
-            title="Onglet Historique"
-            subtitle="Journal des séances"
+            title={t('settings.historyTab')}
+            subtitle={t('settings.historyTabDesc')}
             showChevron={false}
             rightElement={
               <View style={[styles.visibilityBadge, settings.hiddenTabs?.workout && styles.visibilityBadgeHidden]}>
@@ -571,7 +571,7 @@ export default function SettingsScreen() {
                   <Eye size={14} color="#4ade80" />
                 )}
                 <Text style={[styles.visibilityText, settings.hiddenTabs?.workout && styles.visibilityTextHidden]}>
-                  {settings.hiddenTabs?.workout ? 'Masqué' : 'Visible'}
+                  {settings.hiddenTabs?.workout ? t('settings.hidden') : t('settings.visible')}
                 </Text>
               </View>
             }

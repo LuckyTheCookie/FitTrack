@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { 
   Home, 
   Footprints, 
@@ -42,6 +43,8 @@ import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSa
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_HEIGHT = 150; // Hauteur estimée pour getItemLayout
 
+
+
 type FilterType = 'all' | 'home' | 'run' | 'beatsaber' | 'meal' | 'measure';
 
 interface FilterOption {
@@ -51,13 +54,14 @@ interface FilterOption {
   color: string;
 }
 
-const filterOptions: FilterOption[] = [
-  { value: 'all', label: 'Tout', icon: <Filter size={16} color={Colors.text} />, color: Colors.text },
-  { value: 'home', label: 'Maison', icon: <Home size={16} color="#4ade80" />, color: '#4ade80' },
-  { value: 'run', label: 'Course', icon: <Footprints size={16} color="#60a5fa" />, color: '#60a5fa' },
-  { value: 'beatsaber', label: 'Beat Saber', icon: <Gamepad2 size={16} color="#f472b6" />, color: '#f472b6' },
-  { value: 'meal', label: 'Repas', icon: <UtensilsCrossed size={16} color="#fbbf24" />, color: '#fbbf24' },
-  { value: 'measure', label: 'Mesures', icon: <Ruler size={16} color="#a78bfa" />, color: '#a78bfa' },
+// filterOptions are localized inside the component using `t()` for labels
+const FILTER_DEFINITIONS = [
+  { value: 'all', icon: <Filter size={16} color={Colors.text} />, color: Colors.text },
+  { value: 'home', icon: <Home size={16} color="#4ade80" />, color: '#4ade80' },
+  { value: 'run', icon: <Footprints size={16} color="#60a5fa" />, color: '#60a5fa' },
+  { value: 'beatsaber', icon: <Gamepad2 size={16} color="#f472b6" />, color: '#f472b6' },
+  { value: 'meal', icon: <UtensilsCrossed size={16} color="#fbbf24" />, color: '#fbbf24' },
+  { value: 'measure', icon: <Ruler size={16} color="#a78bfa" />, color: '#a78bfa' },
 ];
 
 const getEntryStyle = (type: string) => {
@@ -97,6 +101,7 @@ const FilterChip = React.memo(({ option, isActive, onPress }: { option: FilterOp
 // Composant EntryCard optimisé avec React.memo
 const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entry; onDelete: () => void; onPress?: () => void; index: number }) => {
   const entryStyle = getEntryStyle(entry.type);
+  const { t } = useTranslation();
   
   const renderContent = useCallback(() => {
     switch (entry.type) {
@@ -105,7 +110,7 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
         return (
           <>
             <Text style={styles.cardTitle} numberOfLines={1}>
-              {homeEntry.name || 'Séance maison'}
+              {homeEntry.name || t('workout.defaultHomeName')}
             </Text>
             <Text style={styles.cardDesc} numberOfLines={2}>
               {homeEntry.exercises}
@@ -114,13 +119,13 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
               {homeEntry.absBlock && (
                 <View style={styles.tag}>
                   <Flame size={12} color={Colors.cta} />
-                  <Text style={styles.tagText}>Abdos</Text>
+                  <Text style={styles.tagText}>{t('addEntry.absShort')}</Text>
                 </View>
               )}
               {homeEntry.totalReps && (
                 <View style={styles.tag}>
                   <TrendingUp size={12} color={Colors.muted} />
-                  <Text style={styles.tagText}>{homeEntry.totalReps} reps</Text>
+                  <Text style={styles.tagText}>{homeEntry.totalReps} {t('common.reps')}</Text>
                 </View>
               )}
             </View>
@@ -267,9 +272,18 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
 export default function WorkoutScreen() {
   const { entries, deleteEntry } = useAppStore();
   const { recalculateAllQuests } = useGamificationStore();
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+
+  // Localized filter options
+  const filterOptions = useMemo(() => FILTER_DEFINITIONS.map(def => ({
+    value: def.value as FilterType,
+    label: t(`workout.filters.${def.value}`),
+    icon: def.icon,
+    color: def.color,
+  } as FilterOption)), [t]);
 
   const filteredEntries = useMemo(() => {
     if (filter === 'all') return entries;
@@ -349,9 +363,9 @@ export default function WorkoutScreen() {
       
       <View style={styles.header}>
         <Animated.View entering={FadeIn.delay(100)}>
-          <Text style={styles.screenTitle}>Historique</Text>
+          <Text style={styles.screenTitle}>{t('workout.historyTitle')}</Text>
           <Text style={styles.subtitle}>
-            {quickStats.total} entrées • {quickStats.sport} séances • {quickStats.today} aujourd'hui
+            {t('workout.historySubtitle', { total: quickStats.total, sport: quickStats.sport, today: quickStats.today })}
           </Text>
         </Animated.View>
       </View>
@@ -385,10 +399,10 @@ export default function WorkoutScreen() {
         ListEmptyComponent={
           <EmptyState 
             icon="📋" 
-            title="Aucune entrée" 
+            title={t('workout.noEntriesTitle')} 
             subtitle={filter === 'all' 
-              ? "Commence à tracker tes activités !"
-              : "Aucune entrée de ce type"
+              ? t('workout.noEntriesAll')
+              : t('workout.noEntriesType')
             }
           />
         }

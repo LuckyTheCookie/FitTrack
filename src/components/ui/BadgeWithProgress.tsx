@@ -67,7 +67,7 @@ export function BadgeWithProgress({ badge, currentProgress, progressLabel }: Bad
             
             {isUnlocked ? (
               <View style={styles.unlockedSection}>
-                <Text style={styles.unlockedText}>🎉 Débloqué !</Text>
+                <Text style={styles.unlockedText}>🎉 {t('badges.unlocked')}</Text>
                 {badge.unlockedAt && (
                   <Text style={styles.unlockedDate}>
                     {formatDisplayDate(badge.unlockedAt)}
@@ -76,7 +76,7 @@ export function BadgeWithProgress({ badge, currentProgress, progressLabel }: Bad
               </View>
             ) : (
               <View style={styles.lockedSection}>
-                <Text style={styles.lockedText}>🔒 Verrouillé</Text>
+                <Text style={styles.lockedText}>🔒 {t('badges.locked')}</Text>
                 {progressLabel && (
                   <Text style={styles.progressLabel}>{progressLabel}</Text>
                 )}

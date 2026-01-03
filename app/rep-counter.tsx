@@ -66,59 +66,10 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/cons
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Messages motivants pour la gamification par exercice
-const MOTIVATIONAL_MESSAGES: Record<ExerciseType, Array<{ text: string; emoji: string }>> = {
-    pushups: [
-        { text: 'Continue comme ça!', emoji: '💪' },
-        { text: 'Pecs en feu!', emoji: '🔥' },
-        { text: 'Excellent!', emoji: '⭐' },
-        { text: 'Force!', emoji: '💥' },
-        { text: 'Champion!', emoji: '🏆' },
-        { text: 'Bravo!', emoji: '👏' },
-        { text: 'Super forme!', emoji: '⚡' },
-        { text: 'Solide!', emoji: '🦾' },
-        { text: 'Puissant!', emoji: '💪' },
-    ],
-    squats: [
-        { text: 'Jambes en acier!', emoji: '🦵' },
-        { text: 'Tu gères!', emoji: '🔥' },
-        { text: 'Excellent squat!', emoji: '⭐' },
-        { text: 'Puissance!', emoji: '💥' },
-        { text: 'Incroyable!', emoji: '🚀' },
-        { text: 'Continue!', emoji: '💪' },
-        { text: 'Solides cuisses!', emoji: '⚡' },
-        { text: 'Top!', emoji: '🏆' },
-    ],
-    situps: [
-        { text: 'Abdos en feu!', emoji: '🔥' },
-        { text: 'Tablette de chocolat!', emoji: '💪' },
-        { text: 'Continue!', emoji: '⚡' },
-        { text: 'Excellent!', emoji: '⭐' },
-        { text: 'Core solide!', emoji: '💥' },
-        { text: 'Bravo!', emoji: '👏' },
-        { text: 'Force!', emoji: '🚀' },
-        { text: 'Tu gères!', emoji: '🏆' },
-    ],
-    jumping_jacks: [
-        { text: 'Cardio à fond!', emoji: '❤️' },
-        { text: 'Continue!', emoji: '⚡' },
-        { text: 'Excellent!', emoji: '⭐' },
-        { text: 'Énergie!', emoji: '🔋' },
-        { text: 'Tu es en feu!', emoji: '🔥' },
-        { text: 'Dynamique!', emoji: '💫' },
-        { text: 'Super!', emoji: '🎉' },
-        { text: 'Explosif!', emoji: '💥' },
-    ],
-    plank: [
-        { text: 'Tiens bon!', emoji: '💪' },
-        { text: 'Continue comme ça!', emoji: '🔥' },
-        { text: 'Tu es une machine!', emoji: '🤖' },
-        { text: 'Respire profondément!', emoji: '🌬️' },
-        { text: 'Core en acier!', emoji: '⚡' },
-        { text: 'Tu gères!', emoji: '🏆' },
-        { text: 'Mental de champion!', emoji: '🧠' },
-        { text: 'Encore un peu!', emoji: '💥' },
-    ],
-};
+// Motivational messages are localized through i18n under `repCounter.motivations.<exerciseId>` (array of strings including emojis)
+// Example in locales: "repCounter": { "motivations": { "pushups": ["Keep going! 💪", "Pecs on fire! 🔥", ...] } }
+
+// Note: messages are looked up dynamically inside the component using `t(..., { returnObjects: true })`
 
 // Types d'exercices supportés
 type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank';
@@ -130,8 +81,10 @@ interface ExerciseConfig {
     name: string;
     icon: string;
     color: string;
-    instruction: string;
-    cameraInstruction: string;
+    instruction?: string;
+    cameraInstruction?: string;
+    instructionKey?: string;
+    cameraInstructionKey?: string;
     threshold: number; // Sensibilité de détection
     axis: 'x' | 'y' | 'z'; // Axe principal de mouvement
     cooldown: number; // Temps minimum entre 2 reps (ms)
@@ -146,8 +99,8 @@ const EXERCISES: ExerciseConfig[] = [
         name: 'Pompes',
         icon: '💪',
         color: '#4ade80',
-        instruction: 'Placez le téléphone face vers le bas, sous votre poitrine',
-        cameraInstruction: 'Posez le téléphone de côté pour vous voir de profil',
+        instructionKey: 'repCounter.instructions.pushups.default',
+        cameraInstructionKey: 'repCounter.instructions.pushups.camera',
         threshold: 0.4,
         axis: 'z',
         cooldown: 600,
@@ -159,8 +112,8 @@ const EXERCISES: ExerciseConfig[] = [
         name: 'Abdos',
         icon: '🔥',
         color: '#f97316',
-        instruction: 'Placez le téléphone sur votre poitrine, écran vers le haut',
-        cameraInstruction: 'Posez le téléphone de côté pour vous voir de profil',
+        instructionKey: 'repCounter.instructions.situps.default',
+        cameraInstructionKey: 'repCounter.instructions.situps.camera',
         threshold: 0.5,
         axis: 'z',
         cooldown: 800,
@@ -172,8 +125,8 @@ const EXERCISES: ExerciseConfig[] = [
         name: 'Squats',
         icon: '🦵',
         color: '#8b5cf6',
-        instruction: 'Tenez le téléphone contre votre poitrine',
-        cameraInstruction: 'Posez le téléphone devant vous ou de côté',
+        instructionKey: 'repCounter.instructions.squats.default',
+        cameraInstructionKey: 'repCounter.instructions.squats.camera',
         threshold: 0.35,
         axis: 'y',
         cooldown: 700,
@@ -185,8 +138,8 @@ const EXERCISES: ExerciseConfig[] = [
         name: 'Jumping Jacks',
         icon: '⭐',
         color: '#eab308',
-        instruction: 'Tenez le téléphone dans votre main',
-        cameraInstruction: 'Posez le téléphone devant vous face à vous',
+        instructionKey: 'repCounter.instructions.jumpingJacks.default',
+        cameraInstructionKey: 'repCounter.instructions.jumpingJacks.camera',
         threshold: 0.6,
         axis: 'y',
         cooldown: 400,
@@ -198,8 +151,8 @@ const EXERCISES: ExerciseConfig[] = [
         name: 'Planche',
         icon: '🧘',
         color: '#06b6d4',
-        instruction: 'Posez le téléphone de côté pour vous voir de profil',
-        cameraInstruction: 'Posez le téléphone de côté pour vous voir de profil.\n\n💡 Conseil : Augmente le volume pour entendre les sons !',
+        instructionKey: 'repCounter.instructions.plank.default',
+        cameraInstructionKey: 'repCounter.instructions.plank.camera',
         threshold: 0.3,
         axis: 'z',
         cooldown: 500,
@@ -310,6 +263,7 @@ const PositionScreen = ({
     onReady: () => void;
     detectionMode: DetectionMode;
 }) => {
+    const { t } = useTranslation();
     const bounce = useSharedValue(0);
 
     useEffect(() => {
@@ -328,8 +282,8 @@ const PositionScreen = ({
     }));
 
     const instruction = detectionMode === 'camera'
-        ? exercise.cameraInstruction
-        : exercise.instruction;
+        ? t((exercise.cameraInstructionKey || exercise.cameraInstruction) as string)
+        : t((exercise.instructionKey || exercise.instruction) as string);
 
     return (
         <Animated.View entering={FadeIn} style={styles.positionContainer}>
@@ -351,10 +305,10 @@ const PositionScreen = ({
             <Text style={styles.positionTitle}>{instruction}</Text>
             <Text style={styles.positionSubtitle}>
                 {exercise.isTimeBased
-                    ? 'Appuie sur Play pour lancer le chrono, puis Pause quand tu tombes'
+                    ? t('repCounter.pressPlay')
                     : detectionMode === 'camera'
-                        ? 'La caméra détectera vos mouvements'
-                        : 'Quand vous êtes prêt, appuyez sur Commencer'
+                        ? t('repCounter.cameraNote')
+                        : t('repCounter.whenReady')
                 }
             </Text>
 
@@ -363,7 +317,7 @@ const PositionScreen = ({
                 <View style={styles.volumeRecommendation}>
                     <Volume2 size={18} color="#facc15" />
                     <Text style={styles.volumeRecommendationText}>
-                        Monte le son pour les encouragements ! 🔊
+                        {t('repCounter.volumeHint')}
                     </Text>
                 </View>
             )}
@@ -376,7 +330,7 @@ const PositionScreen = ({
                     style={styles.readyButtonGradient}
                 >
                     <Play size={24} color="#fff" fill="#fff" />
-                    <Text style={styles.readyButtonText}>Commencer</Text>
+                    <Text style={styles.readyButtonText}>{t('common.start')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
         </Animated.View>
@@ -599,11 +553,13 @@ export default function RepCounterScreen() {
         if (feedback) {
             setAiFeedback(feedback);
         }
-        // Toujours afficher un message motivant adapté à l'exercice
+        // Localized motivational messages per exercise (objects with text + emoji)
         if (selectedExercise) {
-            const messages = MOTIVATIONAL_MESSAGES[selectedExercise.id];
-            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-            setMotivationalMessage(randomMessage);
+            const messages = t(`repCounter.motivations.${selectedExercise.id}`, { returnObjects: true }) as Array<{ text: string; emoji: string }>;
+            if (messages && messages.length > 0) {
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                setMotivationalMessage(randomMessage);
+            }
         }
         messageOpacity.value = withSequence(
             withTiming(1, { duration: 200 }),
@@ -614,7 +570,7 @@ export default function RepCounterScreen() {
             setMotivationalMessage(null);
             setAiFeedback(null);
         }, 2000);
-    }, [selectedExercise]);
+    }, [selectedExercise, t]);
 
     const messageStyle = useAnimatedStyle(() => ({
         opacity: messageOpacity.value,
@@ -705,12 +661,12 @@ export default function RepCounterScreen() {
         if (isInPlank && !isPlankActive) {
             // L'utilisateur entre en position de planche
             setIsPlankActive(true);
-            showMotivationalMessage('C\'est parti ! 💪');
+            showMotivationalMessage(t('repCounter.motivations.started'));
         } else if (!isInPlank && isPlankActive) {
             // L'utilisateur sort de la position de planche
             setIsPlankActive(false);
             if (plankSeconds > 0) {
-                showMotivationalMessage(`${plankSeconds}s - Bien joué !`);
+                showMotivationalMessage(t('repCounter.motivations.plankSec', { seconds: plankSeconds }));
             }
         }
     }, [isTracking, selectedExercise?.isTimeBased, isPlankActive, plankSeconds, showMotivationalMessage]);
@@ -761,18 +717,22 @@ export default function RepCounterScreen() {
     const startTracking = useCallback(async () => {
         if (!selectedExercise) return;
 
+        const isResuming = repCount > 0 || plankSeconds > 0 || elapsedTime > 0;
         setIsTracking(true);
-        setRepCount(0);
-        setElapsedTime(0);
-        setPlankSeconds(0);
-        setIsPlankActive(false);
-        hasBeatenRecord.current = false;
-        calibrationSamples.current = [];
-        recentValues.current = [];
-        isInRep.current = false;
-        lastRepTime.current = 0;
-        peakValue.current = 0;
-        wasAboveThreshold.current = false;
+        // If we're starting fresh (not resuming a paused session), reset counters and state
+        if (!isResuming) {
+            setRepCount(0);
+            setElapsedTime(0);
+            setPlankSeconds(0);
+            setIsPlankActive(false);
+            hasBeatenRecord.current = false;
+            calibrationSamples.current = [];
+            recentValues.current = [];
+            isInRep.current = false;
+            lastRepTime.current = 0;
+            peakValue.current = 0;
+            wasAboveThreshold.current = false;
+        }
 
         // Pour la planche en mode caméra, la détection de position se fait via la caméra
         if (selectedExercise.isTimeBased && detectionMode === 'camera') {
@@ -844,7 +804,7 @@ export default function RepCounterScreen() {
                 peakValue.current = 0;
             }
         });
-    }, [selectedExercise, incrementRep, detectionMode]);
+    }, [selectedExercise, incrementRep, detectionMode, repCount, plankSeconds, elapsedTime]);
 
     // Arrêter le tracking
     const stopTracking = useCallback(() => {
@@ -873,17 +833,16 @@ export default function RepCounterScreen() {
         playFinishedSound();
 
         const exerciseId = selectedExercise.id;
-        const exerciseLabelKey = exerciseId === 'jumping_jacks' ? 'jumpingJacks' : exerciseId;
-        const exerciseName = t(`repCounter.exercises.${exerciseLabelKey}`, { defaultValue: selectedExercise.name });
+        const displayName = t(`repCounter.exercises.${exerciseId}`);
         const exerciseText = isTimeBased 
-            ? `${exerciseId}: ${exerciseName}: ${plankSeconds}s`
-            : `${exerciseId}: ${exerciseName}: ${repCount} reps`;
+            ? `${displayName}: ${plankSeconds}s`
+            : `${displayName}: ${repCount} reps`;
         const durationMinutes = isTimeBased 
             ? Math.ceil(plankSeconds / 60) 
             : Math.floor(elapsedTime / 60);
 
         addHomeWorkout({
-            name: `Track ${exerciseName}`,
+            name: t('repCounter.trackedSession', { exercise: displayName }),
             exercises: exerciseText,
             totalReps: isTimeBased ? undefined : repCount,
             durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
@@ -1016,10 +975,10 @@ export default function RepCounterScreen() {
                         <ArrowLeft size={24} color={Colors.text} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>
-                        {step === 'select' && 'Choisir un exercice'}
-                        {step === 'position' && 'Positionnement'}
-                        {step === 'counting' && (selectedExercise?.name || 'Compteur')}
-                        {step === 'done' && 'Terminé !'}
+                        {step === 'select' && t('repCounter.selectExercise')}
+                        {step === 'position' && t('repCounter.positioning')}
+                        {step === 'counting' && (selectedExercise ? t(`repCounter.exercises.${selectedExercise.id}`) : t('repCounter.title'))}
+                        {step === 'done' && t('repCounter.done')}
                     </Text>
                     <View style={styles.headerRight} />
                 </View>
@@ -1029,9 +988,9 @@ export default function RepCounterScreen() {
                     {/* Étape 1: Sélection */}
                     {step === 'select' && (
                         <Animated.View entering={FadeIn} style={styles.stepContainer}>
-                            <Text style={styles.stepTitle}>Quel exercice ?</Text>
+                            <Text style={styles.stepTitle}>{t('repCounter.selectExercise')}</Text>
                             <Text style={styles.stepSubtitle}>
-                                Sélectionne l'exercice que tu veux tracker
+                                {t('repCounter.selectHint')}
                             </Text>
 
                             <ExerciseSelector
@@ -1044,7 +1003,7 @@ export default function RepCounterScreen() {
                                     {/* Mode de détection - caché pour la planche (caméra uniquement) */}
                                     {!selectedExercise.isTimeBased && (
                                         <View style={styles.modeSelector}>
-                                            <Text style={styles.modeSelectorLabel}>Mode de détection</Text>
+                                            <Text style={styles.modeSelectorLabel}>{t('repCounter.detectionMode')}</Text>
                                             <View style={styles.modeButtons}>
                                                 <TouchableOpacity
                                                     onPress={() => setDetectionMode('sensor')}
@@ -1058,7 +1017,7 @@ export default function RepCounterScreen() {
                                                         styles.modeButtonText,
                                                         detectionMode === 'sensor' && styles.modeButtonTextActive,
                                                     ]}>
-                                                        Capteur
+                                                        {t('repCounter.sensor')}
                                                     </Text>
                                                 </TouchableOpacity>
 
@@ -1076,14 +1035,14 @@ export default function RepCounterScreen() {
                                                             styles.modeButtonText,
                                                             detectionMode === 'camera' && styles.modeButtonTextActive,
                                                         ]}>
-                                                            Caméra
+                                                            {t('repCounter.camera')}
                                                         </Text>
                                                     </TouchableOpacity>
                                                 )}
                                             </View>
                                             {detectionMode === 'camera' && (
                                                 <Text style={styles.cameraModeNote}>
-                                                    📷 La caméra utilise l'IA pour détecter tes mouvements
+                                                    📷 {t('repCounter.cameraNote')}
                                                 </Text>
                                             )}
                                         </View>
@@ -1095,11 +1054,11 @@ export default function RepCounterScreen() {
                                             <View style={[styles.cameraRequiredBadge, { backgroundColor: `${selectedExercise.color}20` }]}>
                                                 <Camera size={18} color={selectedExercise.color} />
                                                 <Text style={[styles.cameraRequiredText, { color: selectedExercise.color }]}>
-                                                    Mode caméra uniquement
+                                                    {t('repCounter.cameraOnly')}
                                                 </Text>
                                             </View>
                                             <Text style={styles.cameraModeNote}>
-                                                📷 Positionne le téléphone de côté pour te voir de profil
+                                                📷 {t('repCounter.cameraPosition')}
                                             </Text>
                                         </View>
                                     )}
@@ -1115,7 +1074,7 @@ export default function RepCounterScreen() {
                                             end={{ x: 1, y: 0 }}
                                             style={styles.nextButtonGradient}
                                         >
-                                            <Text style={styles.nextButtonText}>Suivant</Text>
+                                            <Text style={styles.nextButtonText}>{t('common.next')}</Text>
                                             <ChevronRight size={20} color="#fff" />
                                         </LinearGradient>
                                     </TouchableOpacity>
@@ -1146,12 +1105,12 @@ export default function RepCounterScreen() {
                                             {selectedExercise.isTimeBased ? (
                                                 <>
                                                     <Text style={styles.repCount}>{plankSeconds}</Text>
-                                                    <Text style={styles.repLabel}>secondes</Text>
+                                                    <Text style={styles.repLabel}>{t('common.seconds')}</Text>
                                                     {isPlankActive && (
                                                         <View style={[styles.plankStatusBadge, { backgroundColor: Colors.success }]}>
-                                                            <Text style={styles.plankStatusText}>ACTIF</Text>
+                                                            <Text style={styles.plankStatusText}>{t('repCounter.active')}</Text>
                                                         </View>
-                                                    )}
+                                                    )} 
                                                 </>
                                             ) : (
                                                 <>
@@ -1171,7 +1130,7 @@ export default function RepCounterScreen() {
                                     style={styles.newRecordBanner}
                                 >
                                     <Text style={styles.newRecordEmoji}>🏆</Text>
-                                    <Text style={styles.newRecordText}>Nouveau record personnel !</Text>
+                                    <Text style={styles.newRecordText}>{t('repCounter.newRecord')}</Text>
                                 </Animated.View>
                             )}
 
@@ -1180,12 +1139,12 @@ export default function RepCounterScreen() {
                                 <View style={styles.liveStat}>
                                     <Timer size={18} color={Colors.muted} />
                                     <Text style={styles.liveStatValue}>{formatTime(elapsedTime)}</Text>
-                                    <Text style={styles.liveStatLabel}>Durée</Text>
+                                    <Text style={styles.liveStatLabel}>{t('repCounter.duration')}</Text>
                                 </View>
                                 <View style={[styles.liveStat, styles.liveStatHighlight]}>
                                     <Flame size={18} color={selectedExercise.color} />
                                     <Text style={[styles.liveStatValue, { color: selectedExercise.color }]}>{calories}</Text>
-                                    <Text style={styles.liveStatLabel}>kcal</Text>
+                                    <Text style={styles.liveStatLabel}>{t('common.kcal')}</Text>
                                 </View>
                                 {selectedExercise.isTimeBased ? (
                                     <View style={styles.liveStat}>
@@ -1193,7 +1152,7 @@ export default function RepCounterScreen() {
                                         <Text style={styles.liveStatValue}>
                                             {personalBest > 0 ? `${personalBest}s` : '-'}
                                         </Text>
-                                        <Text style={styles.liveStatLabel}>Record</Text>
+                                        <Text style={styles.liveStatLabel}>{t('repCounter.record')}</Text>
                                     </View>
                                 ) : (
                                     <View style={styles.liveStat}>
@@ -1201,7 +1160,7 @@ export default function RepCounterScreen() {
                                         <Text style={styles.liveStatValue}>
                                             {elapsedTime > 0 ? (repCount / (elapsedTime / 60)).toFixed(1) : '0'}
                                         </Text>
-                                        <Text style={styles.liveStatLabel}>rep/min</Text>
+                                        <Text style={styles.liveStatLabel}>{t('repCounter.repPerMin')}</Text>
                                     </View>
                                 )}
                             </View>
@@ -1220,7 +1179,7 @@ export default function RepCounterScreen() {
                                 </Text>
                             ) : (
                                 <Text style={styles.helpText}>
-                                    {t('repCounter.keepGoing')} {t(`repCounter.exercises.${selectedExercise.id === 'jumping_jacks' ? 'jumpingJacks' : selectedExercise.id}`).toLowerCase()} !
+                                    {t('repCounter.keepGoing')}
                                 </Text>
                             )}
 
@@ -1346,6 +1305,7 @@ export default function RepCounterScreen() {
                                 <Animated.View style={[styles.motivationalContainer, messageStyle]}>
                                     <BlurView intensity={20} tint="dark" style={styles.motivationalBlur} />
                                     <View style={styles.motivationalContent}>
+
                                         <View style={styles.motivationalEmojiCircle}>
                                             <Text style={styles.motivationalEmoji}>{motivationalMessage.emoji}</Text>
                                         </View>
@@ -1371,7 +1331,7 @@ export default function RepCounterScreen() {
                             </Animated.View>
 
                             <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.doneTitle}>
-                                {showNewRecord ? '🏆 Nouveau record !' : 'Bravo ! 🎉'}
+                                {showNewRecord ? `🏆 ${t('repCounter.newRecord')}` : t('repCounter.congrats')}
                             </Animated.Text>
 
                             <Animated.View entering={FadeInDown.delay(300).springify()}>
@@ -1382,19 +1342,19 @@ export default function RepCounterScreen() {
                                             <Text style={styles.summaryValue}>
                                                 {selectedExercise.isTimeBased ? `${plankSeconds}s` : repCount}
                                             </Text>
-                                            <Text style={styles.summaryLabel}>{selectedExercise.name}</Text>
+                                            <Text style={styles.summaryLabel}>{t(`repCounter.exercises.${selectedExercise.id}`)}</Text>
                                         </View>
                                         <View style={styles.summaryDivider} />
                                         <View style={styles.summaryItem}>
                                             <Timer size={20} color={Colors.muted} />
                                             <Text style={styles.summaryValue}>{formatTime(elapsedTime)}</Text>
-                                            <Text style={styles.summaryLabel}>Durée</Text>
+                                            <Text style={styles.summaryLabel}>{t('repCounter.duration')}</Text>
                                         </View>
                                         <View style={styles.summaryDivider} />
                                         <View style={styles.summaryItem}>
                                             <Flame size={20} color="#f97316" />
                                             <Text style={styles.summaryValue}>{calories}</Text>
-                                            <Text style={styles.summaryLabel}>kcal</Text>
+                                            <Text style={styles.summaryLabel}>{t('common.kcal')}</Text>
                                         </View>
                                     </View>
                                 </GlassCard>
@@ -1406,7 +1366,7 @@ export default function RepCounterScreen() {
                                     style={styles.doneButtonSecondary}
                                 >
                                     <RotateCcw size={20} color={Colors.text} />
-                                    <Text style={styles.doneButtonSecondaryText}>Recommencer</Text>
+                                    <Text style={styles.doneButtonSecondaryText}>{t('repCounter.restart')}</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -1424,7 +1384,7 @@ export default function RepCounterScreen() {
                                         style={styles.doneButtonPrimaryGradient}
                                     >
                                         <Check size={20} color="#fff" />
-                                        <Text style={styles.doneButtonPrimaryText}>Terminer</Text>
+                                        <Text style={styles.doneButtonPrimaryText}>{t('common.finish')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </Animated.View>
@@ -1442,22 +1402,22 @@ export default function RepCounterScreen() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Quitter le tracking ?</Text>
+                        <Text style={styles.modalTitle}>{t('repCounter.exitConfirm.title')}</Text>
                         <Text style={styles.modalSubtitle}>
-                            Ta progression ne sera pas sauvegardée.
+                            {t('repCounter.exitConfirm.message')}
                         </Text>
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
                                 onPress={handleExitCancel}
                                 style={styles.modalButtonSecondary}
                             >
-                                <Text style={styles.modalButtonSecondaryText}>Annuler</Text>
+                                <Text style={styles.modalButtonSecondaryText}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleExitConfirm}
                                 style={styles.modalButtonPrimary}
                             >
-                                <Text style={styles.modalButtonPrimaryText}>Quitter</Text>
+                                <Text style={styles.modalButtonPrimaryText}>{t('common.exit')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

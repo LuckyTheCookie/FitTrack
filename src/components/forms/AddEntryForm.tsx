@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Video, Calendar, Clock } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui';
 import { useAppStore, useGamificationStore } from '../../stores';
 import type { EntryType, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
@@ -46,20 +47,14 @@ interface AddEntryFormProps {
 type TabOption = { value: EntryType; label: string };
 type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-const tabs: TabOption[] = [
-    { value: 'home', label: '🏠 Maison' },
-    { value: 'run', label: '🏃 Course' },
-    { value: 'beatsaber', label: '🕹️ Beat Saber' },
-    { value: 'meal', label: '🍽️ Repas' },
-    { value: 'measure', label: '📏 Mesures' },
-];
-
 const mealTimeLabels: Record<MealTime, string> = {
     breakfast: '☀️ Petit-déj',
     lunch: '🌤️ Déjeuner',
     dinner: '🌙 Dîner',
     snack: '🍎 Collation',
 };
+
+// Note: `tabs` uses `t()` and is created inside the component so it can access the hook.
 
 const EXAMPLE_JSON = `{
   "exercises": [
@@ -78,8 +73,26 @@ export function AddEntryForm({
     includeAbsBlock = false,
     editEntry = null,
 }: AddEntryFormProps) {
+    const { t } = useTranslation();
     const isEditMode = editEntry !== null;
     const [activeTab, setActiveTab] = useState<EntryType>(editEntry?.type || initialTab);
+
+    // Tabs need translation, create them here
+    const tabs: TabOption[] = [
+        { value: 'home', label: t('addEntry.home') },
+        { value: 'run', label: t('addEntry.run') },
+        { value: 'beatsaber', label: t('addEntry.beatsaber') },
+        { value: 'meal', label: t('addEntry.meal') },
+        { value: 'measure', label: t('addEntry.measure') },
+    ];
+
+    // Localized meal time labels
+    const mealTimeLabelsLocalized: Record<MealTime, string> = {
+        breakfast: t('addEntry.mealTimes.breakfast'),
+        lunch: t('addEntry.mealTimes.lunch'),
+        dinner: t('addEntry.mealTimes.dinner'),
+        snack: t('addEntry.mealTimes.snack'),
+    };
     const [loading, setLoading] = useState(false);
     const [importModalVisible, setImportModalVisible] = useState(false);
     const [jsonInput, setJsonInput] = useState('');
@@ -261,9 +274,9 @@ export function AddEntryForm({
                 }
                 setImportModalVisible(false);
                 setJsonInput('');
-                Alert.alert('Importé !', `${newExercises.length} exercices ajoutés`);
+                Alert.alert(t('addEntry.imported'), t('addEntry.exercises', { count: newExercises.length }));
             } else {
-                Alert.alert('Erreur', 'Format JSON invalide');
+                Alert.alert(t('addEntry.invalid'), t('addEntry.invalidJSON'));
             }
         } catch (e) {
             Alert.alert('Erreur', 'JSON invalide');
@@ -287,7 +300,7 @@ export function AddEntryForm({
                 case 'home':
                     const validExercises = exercises.filter(ex => ex.name.trim());
                     if (validExercises.length === 0) {
-                        Alert.alert('Erreur', 'Ajoute au moins un exercice');
+                        Alert.alert(t('common.error'), t('addEntry.error.noExercise'));
                         return;
                     }
                     const exercisesText = formatExercisesToText(validExercises);
@@ -297,7 +310,7 @@ export function AddEntryForm({
                     const homeDurationMinutes = homeDurationClean ? Math.round(parseFloat(homeDurationClean)) : undefined;
                     
                     if (homeDurationClean && (isNaN(homeDurationMinutes!) || homeDurationMinutes! <= 0)) {
-                        Alert.alert('Erreur', 'Durée invalide - entre un nombre de minutes positif');
+                        Alert.alert(t('common.error'), t('addEntry.durationErrorPositive'));
                         return;
                     }
                     
@@ -331,7 +344,7 @@ export function AddEntryForm({
                         return;
                     }
                     if (isNaN(minutes) || minutes <= 0 || !minutesClean) {
-                        Alert.alert('Erreur', 'Durée invalide');
+                        Alert.alert(t('common.error'), t('addEntry.durationError'));
                         return;
                     }
                     const avgSpeed = minutes > 0 ? Math.round((km / (minutes / 60)) * 10) / 10 : 0;
@@ -361,7 +374,7 @@ export function AddEntryForm({
                     const bsMinutes = parseFloat(bsDurationClean);
                     
                     if (isNaN(bsMinutes) || bsMinutes <= 0 || !bsDurationClean) {
-                        Alert.alert('Erreur', 'Durée invalide - entre un nombre de minutes');
+                        Alert.alert(t('common.error'), t('addEntry.durationErrorNumber'));
                         return;
                     }
 
@@ -435,7 +448,7 @@ export function AddEntryForm({
 
             if (!isEditMode) {
                 if (activeTab === 'home') {
-                    addXp(50, `Séance maison : ${homeName || 'Workout'}`);
+                    addXp(50, t('addEntry.homeSession', { name: homeName || 'Workout' }));
                     updateQuestProgress('workouts', 1);
                     const reps = exercises.filter(ex => ex.name.trim()).reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
                     if (reps > 0) updateQuestProgress('exercises', reps);
@@ -495,8 +508,8 @@ export function AddEntryForm({
     if (!hasStarted) {
         return (
             <View style={styles.introContainer}>
-                <Text style={styles.introTitle}>Que veux-tu ajouter ?</Text>
-                <Text style={styles.introSubtitle}>Choisis une activité</Text>
+                <Text style={styles.introTitle}>{t('addEntry.title')}</Text>
+                <Text style={styles.introSubtitle}>{t('addEntry.subtitle')}</Text>
 
                 <TouchableOpacity
                     style={styles.realTimeButton}
@@ -511,13 +524,13 @@ export function AddEntryForm({
                     >
                         <Video size={24} color="#fff" />
                         <View style={styles.realTimeButtonText}>
-                            <Text style={styles.realTimeButtonTitle}>Tracking temps réel</Text>
-                            <Text style={styles.realTimeButtonSubtitle}>Détection IA par caméra</Text>
+                            <Text style={styles.realTimeButtonTitle}>{t('addEntry.tracking')}</Text>
+                            <Text style={styles.realTimeButtonSubtitle}>{t('addEntry.trackingDesc')}</Text>
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
 
-                <Text style={styles.orText}>— ou ajoute manuellement —</Text>
+                <Text style={styles.orText}>{t('addEntry.or')}</Text>
                 <ScrollView
                     nestedScrollEnabled={true}
                     contentContainerStyle={{ flexGrow: 1 }}
@@ -550,7 +563,7 @@ export function AddEntryForm({
         >
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => setHasStarted(false)} style={styles.backButton}>
-                    <Text style={styles.backButtonText}>← Retour</Text>
+                    <Text style={styles.backButtonText}>{t('addEntry.back')}</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{currentTabLabel}</Text>
                 <View style={{ width: 60 }} />
@@ -574,7 +587,7 @@ export function AddEntryForm({
                                 styles.customDateToggleText,
                                 useCustomDateTime && styles.customDateToggleTextActive
                             ]}>
-                                {useCustomDateTime ? 'Date personnalisée' : 'Aujourd\'hui'}
+                                {useCustomDateTime ? t('addEntry.customDate') : t('addEntry.today')}
                             </Text>
                             <Text style={styles.customDateToggleHint}>
                                 {useCustomDateTime ? (() => {
@@ -585,7 +598,7 @@ export function AddEntryForm({
                                         return format(d, 'dd MMM yyyy', { locale: fr });
                                     }
                                     return customDate;
-                                })() : 'Modifier'}
+                                })() : t('common.edit')}
                             </Text>
                         </TouchableOpacity>
                         
@@ -593,7 +606,7 @@ export function AddEntryForm({
                             <View style={styles.customDateInputs}>
                                 <View style={styles.customDateRow}>
                                     <InputField
-                                        label="Date (JJ/MM/AAAA)"
+                                        label={t('addEntry.date')}
                                         placeholder="31/12/2024"
                                         value={(() => {
                                             // Convert YYYY-MM-DD to DD/MM/YYYY for display
@@ -625,7 +638,7 @@ export function AddEntryForm({
                                         containerStyle={styles.dateInput}
                                     />
                                     <InputField
-                                        label="Heure (HH:MM)"
+                                        label={t('addEntry.time')}
                                         placeholder="14:30"
                                         value={customTime}
                                         onChangeText={(text) => {
@@ -656,14 +669,14 @@ export function AddEntryForm({
                     <View>
                         <View style={styles.rowInputs}>
                             <InputField
-                                label="Nom de la séance (optionnel)"
-                                placeholder="Séance chambre"
+                                label={t('addEntry.sessionName')}
+                                placeholder={t('addEntry.tracking')}
                                 value={homeName}
                                 onChangeText={setHomeName}
                                 containerStyle={styles.flexInput}
                             />
                             <InputField
-                                label="Durée (min)"
+                                label={t('addEntry.duration')}
                                 placeholder="30"
                                 value={homeDuration}
                                 onChangeText={setHomeDuration}
@@ -708,13 +721,13 @@ export function AddEntryForm({
 
                         <View style={styles.actionButtons}>
                             <Button
-                                title="+ Ajouter exercice"
+                                title={t('addEntry.addExercise')}
                                 variant="ghost"
                                 onPress={addExercise}
                                 style={styles.addButton}
                             />
                             <Button
-                                title="📥 Importer JSON"
+                                title={t('addEntry.importJSON')}
                                 variant="ghost"
                                 onPress={() => setImportModalVisible(true)}
                                 style={styles.importButton}
@@ -728,7 +741,7 @@ export function AddEntryForm({
                             <View style={[styles.checkbox, withAbsBlock && styles.checkboxChecked]}>
                                 {withAbsBlock && <Text style={styles.checkmark}>✓</Text>}
                             </View>
-                            <Text style={styles.absToggleText}>Inclure bloc abdos</Text>
+                            <Text style={styles.absToggleText}>{t('addEntry.includeAbs')}</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -746,7 +759,7 @@ export function AddEntryForm({
                                 containerStyle={styles.halfInput}
                             />
                             <InputField
-                                label="Durée (min)"
+                                label={t('addEntry.duration')}
                                 placeholder="28"
                                 value={runMinutes}
                                 onChangeText={setRunMinutes}
@@ -791,7 +804,7 @@ export function AddEntryForm({
                     <View>
                         <View style={styles.row}>
                             <InputField
-                                label="Durée (min)"
+                                label={t('addEntry.duration')}
                                 placeholder="10"
                                 value={bsDuration}
                                 onChangeText={setBsDuration}
@@ -832,7 +845,7 @@ export function AddEntryForm({
                 {/* MEAL - Avec sélection moment */}
                 {activeTab === 'meal' && (
                     <View>
-                        <Text style={styles.sectionLabel}>Moment du repas</Text>
+                        <Text style={styles.sectionLabel}>{t('addEntry.mealTime')}</Text>
                         <View style={styles.mealTimeRow}>
                             {(Object.keys(mealTimeLabels) as MealTime[]).map((time) => (
                                 <TouchableOpacity
@@ -841,7 +854,7 @@ export function AddEntryForm({
                                     onPress={() => setMealTime(time)}
                                 >
                                     <Text style={[styles.mealTimeText, mealTime === time && styles.mealTimeTextActive]}>
-                                        {mealTimeLabels[time]}
+                                        {mealTimeLabelsLocalized[time]}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
@@ -899,7 +912,7 @@ export function AddEntryForm({
                 )}
 
                 <Button
-                    title={isEditMode ? "Mettre à jour" : "Sauvegarder"}
+                    title={isEditMode ? t('addEntry.update') : t('addEntry.save')}
                     variant="primary"
                     onPress={handleSubmit}
                     loading={loading}

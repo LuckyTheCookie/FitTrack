@@ -18,6 +18,7 @@ import { Sparkles, Edit3 } from 'lucide-react-native';
 import { AddEntryForm } from '../forms';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import type { Entry } from '../../types';
+import { t } from 'i18next';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -103,12 +104,12 @@ export const AddEntryBottomSheet = forwardRef<AddEntryBottomSheetRef, AddEntryBo
                             </LinearGradient>
                             <View style={styles.titleTextContainer}>
                                 <Text style={styles.title}>
-                                    {editingEntry ? 'Modifier' : 'Nouvelle entrée'}
+                                    {editingEntry ? t('addEntry.edit') : t('addEntry.title')}
                                 </Text>
                                 <Text style={styles.subtitle}>
                                     {editingEntry 
-                                        ? 'Mets à jour tes données' 
-                                        : 'Ajoute une activité ou une mesure'
+                                        ? t('addEntry.editSubtitle') 
+                                        : t('addEntry.subtitle')
                                     }
                                 </Text>
                             </View>

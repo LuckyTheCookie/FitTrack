@@ -193,6 +193,7 @@ const HistoryItem = ({ item, index, isLast }: { item: any; index: number; isLast
 };
 
 export default function GamificationScreen() {
+    const { t } = useTranslation();
     const { xp, level, rank, quests, history, checkAndRefreshQuests } = useGamificationStore();
     const scale = useSharedValue(1);
     const glow = useSharedValue(0.2);
@@ -280,26 +281,26 @@ export default function GamificationScreen() {
                 <Animated.View entering={FadeInUp.delay(150).springify()} style={styles.statsRow}>
                     <View style={styles.statCard}>
                         <Text style={styles.statValue}>{level}</Text>
-                        <Text style={styles.statLabel}>Niveau</Text>
+                        <Text style={styles.statLabel}>{t('gamification.level')}</Text>
                     </View>
                     <View style={styles.statCardHighlight}>
                         <Text style={styles.statValueHighlight}>{completedQuests}/{quests.length}</Text>
-                        <Text style={styles.statLabelHighlight}>Quêtes</Text>
+                        <Text style={styles.statLabelHighlight}>{t('gamification.quests')}</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Text style={styles.statValue}>{history.filter(h => h.type === 'xp_gain' && h.amount > 0).length}</Text>
-                        <Text style={styles.statLabel}>Gains</Text>
+                        <Text style={styles.statLabel}>{t('gamification.gains')}</Text>
                     </View>
                 </Animated.View>
 
                 {/* QUESTS SECTION */}
                 <View style={styles.section}>
-                    <SectionHeader title="🎯 Quêtes Hebdomadaires" />
+                    <SectionHeader title={t('gamification.weeklyQuests')} />
                     <View style={styles.questsList}>
                         {quests.length === 0 ? (
                             <GlassCard style={styles.emptyCard}>
-                                <Text style={styles.emptyText}>Aucune quête active</Text>
-                                <Text style={styles.emptySubtext}>Les quêtes se génèrent automatiquement</Text>
+                                <Text style={styles.emptyText}>{t('gamification.noActiveQuests')}</Text>
+                                <Text style={styles.emptySubtext}>{t('gamification.noActiveQuestsDesc')}</Text>
                             </GlassCard>
                         ) : (
                             quests.map((quest, index) => (
@@ -311,13 +312,13 @@ export default function GamificationScreen() {
 
                 {/* HISTORY SECTION */}
                 <View style={styles.section}>
-                    <SectionHeader title="📜 Derniers gains" />
+                    <SectionHeader title={t('gamification.recentGains')} />
                     <GlassCard style={styles.historyCard}>
                         {recentHistory.length === 0 ? (
                             <View style={styles.emptyHistory}>
                                 <Sparkles size={32} color={Colors.muted2} />
-                                <Text style={styles.emptyHistoryText}>Aucune activité récente</Text>
-                                <Text style={styles.emptyHistorySubtext}>Tes gains d'XP apparaîtront ici</Text>
+                                <Text style={styles.emptyHistoryText}>{t('gamification.noRecentActivity')}</Text>
+                                <Text style={styles.emptyHistorySubtext}>{t('gamification.noRecentActivityDesc')}</Text>
                             </View>
                         ) : (
                             recentHistory.map((item, index) => (

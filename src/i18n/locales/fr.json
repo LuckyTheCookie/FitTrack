@@ -3,6 +3,7 @@
     "save": "Enregistrer",
     "seeAll": "Voir tout →",
     "cancel": "Annuler",
+    "exit": "Quitter",
     "delete": "Supprimer",
     "edit": "Modifier",
     "confirm": "Confirmer",
@@ -53,7 +54,9 @@
     "workouts_100": { "name": "Légende", "description": "100 séances complétées" },
     "runner_10km": { "name": "Coureur", "description": "10 km parcourus au total" },
     "runner_50km": { "name": "Marathon", "description": "50 km parcourus au total" },
-    "consistent_month": { "name": "Constant", "description": "Objectif hebdo atteint 4 semaines de suite" }
+    "consistent_month": { "name": "Constant", "description": "Objectif hebdo atteint 4 semaines de suite" },
+    "unlocked": "Débloqué !",
+    "locked": "Verrouillé"
   },
   "home": {
     "title": "Aujourd'hui",
@@ -126,6 +129,9 @@
     "cameraNote": "La caméra utilise l'IA pour détecter tes mouvements",
     "cameraOnly": "Mode caméra uniquement",
     "cameraPosition": "Positionne le téléphone de côté pour te voir de profil",
+    "cameraSearching": "Recherche de caméra...",
+    "cameraPermissionRequired": "Permission caméra requise",
+    "allowCamera": "Autoriser la caméra",
     "volumeHint": "Monte le son pour les encouragements ! 🔊",
     "aiActive": "Détection IA active",
     "keepGoing": "Continue !",
@@ -139,9 +145,33 @@
     "newRecordTitle": "Nouveau record !",
     "congrats": "Bravo ! 🎉",
     "restart": "Recommencer",
+    "whenReady": "Quand tu es prêt, appuie sur Commencer",
     "exitConfirm": {
       "title": "Quitter le tracking ?",
       "message": "Ta progression ne sera pas sauvegardée."
+    },
+    "pose": {
+      "detected": "Pose détectée",
+      "noPose": "Aucune pose",
+      "detecting": "Détection..."
+    },
+    "instructions": {
+      "pushups": { "default": "Placez le téléphone face vers le bas, sous votre poitrine", "camera": "Posez le téléphone de côté pour vous voir de profil" },
+      "situps": { "default": "Placez le téléphone sur votre poitrine, écran vers le haut", "camera": "Posez le téléphone de côté pour vous voir de profil" },
+      "squats": { "default": "Tenez le téléphone contre votre poitrine", "camera": "Posez le téléphone devant vous ou de côté" },
+      "jumpingJacks": { "default": "Tenez le téléphone dans votre main", "camera": "Posez le téléphone devant vous face à vous" },
+      "plank": { "default": "Posez le téléphone de côté pour vous voir de profil", "camera": "Posez le téléphone de côté pour vous voir de profil.\n\n💡 Conseil : Augmente le volume pour entendre les sons !" }
+    },
+    "active": "ACTIF",
+    "trackedSession": "Séance {{exercise}}",
+    "motivations": {
+      "pushups": [{"text":"Continue comme ça!","emoji":"💪"},{"text":"Pecs en feu!","emoji":"🔥"},{"text":"Excellent!","emoji":"⭐"},{"text":"Force!","emoji":"💥"},{"text":"Champion!","emoji":"🏆"},{"text":"Bravo!","emoji":"👏"},{"text":"Super forme!","emoji":"⚡"},{"text":"Solide!","emoji":"🦾"},{"text":"Puissant!","emoji":"💪"}],
+      "squats": [{"text":"Jambes en acier!","emoji":"🦵"},{"text":"Tu gères!","emoji":"🔥"},{"text":"Excellent squat!","emoji":"⭐"},{"text":"Puissance!","emoji":"💥"},{"text":"Incroyable!","emoji":"🚀"},{"text":"Continue!","emoji":"💪"},{"text":"Solides cuisses!","emoji":"⚡"},{"text":"Top!","emoji":"🏆"}],
+      "situps": [{"text":"Abdos en feu!","emoji":"🔥"},{"text":"Tablette de chocolat!","emoji":"💪"},{"text":"Continue!","emoji":"⚡"},{"text":"Excellent!","emoji":"⭐"},{"text":"Core solide!","emoji":"💥"},{"text":"Bravo!","emoji":"👏"},{"text":"Force!","emoji":"🚀"},{"text":"Tu gères!","emoji":"🏆"}],
+      "jumpingJacks": [{"text":"Cardio à fond!","emoji":"❤️"},{"text":"Continue!","emoji":"⚡"},{"text":"Excellent!","emoji":"⭐"},{"text":"Énergie!","emoji":"🔋"},{"text":"Tu es en feu!","emoji":"🔥"},{"text":"Dynamique!","emoji":"💫"},{"text":"Super!","emoji":"🎉"},{"text":"Explosif!","emoji":"💥"}],
+      "plank": [{"text":"Tiens bon!","emoji":"💪"},{"text":"Continue comme ça!","emoji":"🔥"},{"text":"Tu es une machine!","emoji":"🤖"},{"text":"Respire profondément!","emoji":"🌬️"},{"text":"Core en acier!","emoji":"⚡"},{"text":"Tu gères!","emoji":"🏆"},{"text":"Mental de champion!","emoji":"🧠"},{"text":"Encore un peu!","emoji":"💥"}],
+      "started": "C'est parti ! 💪",
+      "plankSec": "{{seconds}}s - Bien joué !"
     },
     "exercises": {
       "pushups": "Pompes",
@@ -180,6 +210,16 @@
     "visible": "Visible",
     "hidden": "Masqué",
     "labs": "Labs (Beta)",
+    "goalSaved": "Objectif hebdo: {{goal}} séances",
+    "shareUnavailable": "Le partage n'est pas disponible sur cet appareil",
+    "backupError": "Impossible de créer la sauvegarde",
+    "restoreInvalidFile": "Le fichier de sauvegarde est invalide ou corrompu",
+    "restoreError": "Impossible de restaurer la sauvegarde",
+    "deleteDataError": "Impossible de supprimer les données. Réessaie plus tard.",
+    "visibilityError": "Impossible de modifier la visibilité.",
+    "streakReminderEnabled": "Tu recevras un rappel tous les jours à {{time}} si tu n'as pas encore fait de sport.",
+    "reminderSet": "Rappel programmé à {{time}}",
+    "reminderInvalid": "Heure invalide (00-23 : 00-59)" ,
     "cameraMode": "Mode caméra",
     "cameraModeDesc": "Préférer la détection de pose",
     "debugCamera": "Debug caméra",
@@ -230,6 +270,47 @@
       "minute": "Minute"
     },
     "saved": "Sauvegardé !"
+  },
+  "addEntry": {
+    "title": "Que veux-tu ajouter ?",
+    "subtitle": "Choisis une activité",
+    "tracking": "Tracking temps réel",
+    "trackingDesc": "Détection IA par caméra",
+    "or": "— ou ajoute manuellement —",
+    "addExercise": "+ Ajouter exercice",
+    "importJSON": "📥 Importer JSON",
+    "invalid": "Invalide",
+    "imported": "Importé !",
+    "exercises": "{{count}} exercices ajoutés",
+    "invalidJSON": "Format JSON invalide",
+    "save": "Sauvegarder",
+    "update": "Mettre à jour",
+    "back": "← Retour",
+    "sessionName": "Nom de la séance (optionnel)",
+    "duration": "Durée (min)",
+    "meals": "Repas",
+    "measures": "Mesures",
+    "today": "Aujourd'hui",
+    "customDate": "Date personnalisée",
+    "date": "Date (JJ/MM/AAAA)",
+    "time": "Heure (HH:MM)",
+    "home": "🏠 Maison",
+    "run": "🏃 Course",
+    "beatsaber": "🕹️ Beat Saber",
+    "meal": "🍽️ Repas",
+    "measure": "📏 Mesures",
+    "includeAbs": "Inclure bloc abdos",
+    "absIncluded": "Bloc abdos inclus",
+    "mealTime": "Moment du repas",
+    "mealTimes": { "breakfast": "☀️ Petit-déj", "lunch": "🌤️ Déjeuner", "dinner": "🌙 Dîner", "snack": "🍎 Collation" },
+    "durationErrorPositive": "Durée invalide - entre un nombre de minutes positif",
+    "durationError": "Durée invalide",
+    "durationErrorNumber": "Durée invalide - entre un nombre de minutes",
+    "error": { "noExercise": "Ajoute au moins un exercice" },
+    "homeSession": "Séance maison : {{name}}",
+    "edit": "Modifier",
+    "editSubtitle": "Mets à jour tes données",
+    "absShort": "Abdos"
   },
   "social": {
     "title": "Social",
@@ -297,13 +378,19 @@
     "xp": "XP",
     "level": "Niveau",
     "quests": "Quêtes",
+    "gains": "Gains",
     "dailyQuests": "Quêtes quotidiennes",
     "weeklyQuests": "Quêtes hebdomadaires",
     "completed": "Terminé",
     "inProgress": "En cours",
     "claimed": "Réclamé",
     "claim": "Réclamer",
-    "questProgress": "{{current}}/{{target}}"
+    "questProgress": "{{current}}/{{target}}",
+    "noActiveQuests": "Aucune quête active",
+    "noActiveQuestsDesc": "Les quêtes se génèrent automatiquement",
+    "recentGains": "Derniers gains",
+    "noRecentActivity": "Aucune activité récente",
+    "noRecentActivityDesc": "Tes gains d'XP apparaîtront ici"
   },
   "entries": {
     "workout": "Séance",
@@ -321,7 +408,20 @@
   },
     "workout": {
     "homeLabel": "Séance maison",
-    "defaultHomeName": "Séance maison"
+    "defaultHomeName": "Séance maison",
+    "historyTitle": "Historique",
+    "historySubtitle": "{{total}} entrées • {{sport}} séances • {{today}} aujourd'hui",
+    "noEntriesTitle": "Aucune entrée",
+    "noEntriesAll": "Commence à tracker tes activités !",
+    "noEntriesType": "Aucune entrée de ce type",
+    "filters": {
+      "all": "Tous",
+      "home": "Maison",
+      "run": "Course",
+      "beatsaber": "Beat Saber",
+      "meal": "Repas",
+      "measure": "Mesures"
+    }
   },
   "forms": {
     "workoutName": "Nom de la séance",

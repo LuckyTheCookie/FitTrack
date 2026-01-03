@@ -19,6 +19,7 @@ import { X, Check, Calendar, FileJson, Download } from 'lucide-react-native';
 import { format, subDays, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { GlassCard } from './GlassCard';
+import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import type { Entry, StreakInfo } from '../../types';
@@ -48,6 +49,7 @@ const categoryOptions: { value: ExportCategory; label: string; icon: string }[] 
 ];
 
 export function ExportModal({ visible, onClose, entries, streak }: ExportModalProps) {
+  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState<ExportPeriod>('week');
   const [selectedCategories, setSelectedCategories] = useState<ExportCategory[]>(['workouts', 'meals', 'measures']);
 
@@ -260,7 +262,7 @@ export function ExportModal({ visible, onClose, entries, streak }: ExportModalPr
                   )}
                   {selectedCategories.includes('meals') && (
                     <View style={styles.previewRow}>
-                      <Text style={styles.previewLabel}>Repas</Text>
+                      <Text style={styles.previewLabel}>{t('addEntry.meal')}</Text>
                       <Text style={styles.previewValue}>
                         {filteredEntries.filter(e => e.type === 'meal').length}
                       </Text>

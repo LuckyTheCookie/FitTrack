@@ -28,6 +28,7 @@ import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Line } from 'react-native-svg';
 
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../constants';
+import { useTranslation } from 'react-i18next';
 import { 
     ExerciseType, 
     PoseLandmarks,
@@ -94,6 +95,7 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     const [currentPose, setCurrentPose] = useState<PoseLandmarks | null>(null);
     const [cameraLayout, setCameraLayout] = useState({ width: 1, height: 1 });
     const [poseStatus, setPoseStatus] = useState<'detecting' | 'pose' | 'no-pose'>('detecting');
+    const { t } = useTranslation();
     
     const countRef = useRef(currentCount);
     const exerciseTypeRef = useRef(exerciseType);
@@ -281,14 +283,14 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
             <View style={[styles.container, style]}>
                 <View style={styles.permissionContainer}>
                     <Text style={styles.permissionText}>
-                        Permission caméra requise
+                        {t('repCounter.cameraPermissionRequired')}
                     </Text>
                     <TouchableOpacity 
                         style={styles.permissionButton}
                         onPress={requestPermission}
                     >
                         <Text style={styles.permissionButtonText}>
-                            Autoriser la caméra
+                            {t('repCounter.allowCamera')}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -302,7 +304,7 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
             <View style={[styles.container, style]}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.cta} />
-                    <Text style={styles.loadingText}>Recherche de caméra...</Text>
+                    <Text style={styles.loadingText}>{t('repCounter.cameraSearching')}</Text>
                 </View>
             </View>
         );
@@ -336,8 +338,8 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                                           poseStatus === 'no-pose' ? Colors.error : Colors.warning }
                     ]} />
                     <Text style={styles.statusText}>
-                        {poseStatus === 'pose' ? 'Pose détectée' : 
-                         poseStatus === 'no-pose' ? 'Aucune pose' : 'Détection...'}
+                        {poseStatus === 'pose' ? t('repCounter.pose.detected') : 
+                         poseStatus === 'no-pose' ? t('repCounter.pose.noPose') : t('repCounter.pose.detecting')}
                     </Text>
                 </View>
             )}
@@ -346,7 +348,7 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
             {!isReady && (
                 <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color={Colors.cta} />
-                    <Text style={styles.loadingText}>Initialisation...</Text>
+                    <Text style={styles.loadingText}>{t('common.loading')}</Text>
                 </View>
             )}
         </View>
