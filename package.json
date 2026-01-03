@@ -1,7 +1,7 @@
 {
   "name": "fittrack-app",
   "version": "3.0.0",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "AGPL-3.0-or-later",
   "author": "LuckyTheCookie - Lucas THIEBAUT",
   "main": "expo-router/entry",
   "scripts": {
