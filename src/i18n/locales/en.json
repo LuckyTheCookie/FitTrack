@@ -44,6 +44,17 @@
     "tools": "Tools",
     "profile": "Profile"
   },
+  "badges": {
+    "first_workout": { "name": "First workout", "description": "Complete your first workout" },
+    "streak_7": { "name": "Week on fire", "description": "7 consecutive days" },
+    "streak_30": { "name": "Month of steel", "description": "30 consecutive days" },
+    "workouts_10": { "name": "Regular", "description": "10 workouts completed" },
+    "workouts_50": { "name": "Determined", "description": "50 workouts completed" },
+    "workouts_100": { "name": "Legend", "description": "100 workouts completed" },
+    "runner_10km": { "name": "Runner", "description": "10 km run total" },
+    "runner_50km": { "name": "Marathon", "description": "50 km run total" },
+    "consistent_month": { "name": "Consistent", "description": "Weekly goal met 4 weeks in a row" }
+  },
   "home": {
     "title": "Today",
     "today": "Today",
@@ -100,6 +111,7 @@
     "topExercise": "Top exercise of the month",
     "personalRecords": "Personal Records",
     "badges": "Badges",
+
     "noData": "No data yet",
     "noDataHint": "Your stats will appear here"
   },

@@ -4,8 +4,10 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { Badge } from '../../types';
 import { Colors, BorderRadius, FontSize, FontWeight, Spacing } from '../../constants';
+import { formatDisplayDate } from '../../utils/date';
 
 interface BadgeWithProgressProps {
   badge: Badge;
@@ -15,8 +17,12 @@ interface BadgeWithProgressProps {
 
 export function BadgeWithProgress({ badge, currentProgress, progressLabel }: BadgeWithProgressProps) {
   const [modalVisible, setModalVisible] = useState(false);
+  const { t } = useTranslation();
   const isUnlocked = !!badge.unlockedAt;
   const progress = currentProgress || 0;
+
+  const localizedName = t(`badges.${badge.id}.name`, { defaultValue: badge.name });
+  const localizedDesc = t(`badges.${badge.id}.description`, { defaultValue: badge.description });
 
   return (
     <>
@@ -32,7 +38,7 @@ export function BadgeWithProgress({ badge, currentProgress, progressLabel }: Bad
         
         <View style={styles.info}>
           <Text style={[styles.name, !isUnlocked && styles.textLocked]}>
-            {badge.name}
+            {localizedName}
           </Text>
           
           {!isUnlocked && currentProgress !== undefined && (
@@ -56,15 +62,15 @@ export function BadgeWithProgress({ badge, currentProgress, progressLabel }: Bad
         <Pressable style={styles.modalBackdrop} onPress={() => setModalVisible(false)}>
           <View style={styles.modalContent}>
             <Text style={styles.modalIcon}>{badge.icon}</Text>
-            <Text style={styles.modalTitle}>{badge.name}</Text>
-            <Text style={styles.modalDescription}>{badge.description}</Text>
+            <Text style={styles.modalTitle}>{localizedName}</Text>
+            <Text style={styles.modalDescription}>{localizedDesc}</Text>
             
             {isUnlocked ? (
               <View style={styles.unlockedSection}>
                 <Text style={styles.unlockedText}>🎉 Débloqué !</Text>
                 {badge.unlockedAt && (
                   <Text style={styles.unlockedDate}>
-                    {new Date(badge.unlockedAt).toLocaleDateString('fr-FR')}
+                    {formatDisplayDate(badge.unlockedAt)}
                   </Text>
                 )}
               </View>
@@ -86,7 +92,7 @@ export function BadgeWithProgress({ badge, currentProgress, progressLabel }: Bad
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.closeButtonText}>Fermer</Text>
+              <Text style={styles.closeButtonText}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

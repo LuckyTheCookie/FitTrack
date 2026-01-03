@@ -59,6 +59,7 @@ import {
 import { GlassCard, PoseCameraView } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import type { PlankDebugInfo } from '../src/utils/poseDetection';
+import { useTranslation } from 'react-i18next';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
@@ -263,6 +264,8 @@ const ExerciseSelector = ({
     onSelect: (exercise: ExerciseConfig) => void;
     selectedExercise: ExerciseConfig | null;
 }) => {
+    const { t } = useTranslation();
+
     return (
         <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.exerciseGrid}>
             {EXERCISES.map((exercise, index) => (
@@ -283,7 +286,7 @@ const ExerciseSelector = ({
                             style={styles.exerciseCardGradient}
                         >
                             <Text style={styles.exerciseIcon}>{exercise.icon}</Text>
-                            <Text style={styles.exerciseName}>{exercise.name}</Text>
+                            <Text style={styles.exerciseName}>{t(`repCounter.exercises.${exercise.id === 'jumping_jacks' ? 'jumpingJacks' : exercise.id}`)}</Text>
                             {selectedExercise?.id === exercise.id && (
                                 <View style={[styles.selectedBadge, { backgroundColor: exercise.color }]}>
                                     <Check size={12} color="#fff" strokeWidth={3} />
@@ -401,6 +404,8 @@ export default function RepCounterScreen() {
     const [plankDebugInfo, setPlankDebugInfo] = useState<PlankDebugInfo | null>(null); // Debug info for plank
     const [showNewRecord, setShowNewRecord] = useState(false); // Affichage du message de nouveau record
     const [personalBest, setPersonalBest] = useState(0); // Record personnel pour cet exercice
+
+    const { t } = useTranslation();
 
     // Sound effects avec expo-audio
     const repSound = useAudioPlayer(require('../assets/rep.mp3'));
@@ -867,10 +872,12 @@ export default function RepCounterScreen() {
         // Jouer le son finished
         playFinishedSound();
 
-        const exerciseName = selectedExercise.name;
+        const exerciseId = selectedExercise.id;
+        const exerciseLabelKey = exerciseId === 'jumping_jacks' ? 'jumpingJacks' : exerciseId;
+        const exerciseName = t(`repCounter.exercises.${exerciseLabelKey}`, { defaultValue: selectedExercise.name });
         const exerciseText = isTimeBased 
-            ? `${exerciseName}: ${plankSeconds}s`
-            : `${exerciseName}: ${repCount} reps`;
+            ? `${exerciseId}: ${exerciseName}: ${plankSeconds}s`
+            : `${exerciseId}: ${exerciseName}: ${repCount} reps`;
         const durationMinutes = isTimeBased 
             ? Math.ceil(plankSeconds / 60) 
             : Math.floor(elapsedTime / 60);
@@ -893,8 +900,8 @@ export default function RepCounterScreen() {
             setTimeout(() => {
                 try {
                     const description = isTimeBased 
-                        ? `Tracking ${exerciseName} (${plankSeconds}s)` 
-                        : `Tracking ${exerciseName} (${repCount} reps)`;
+                        ? `Tracking ${exerciseId} (${plankSeconds}s)` 
+                        : `Tracking ${exerciseId} (${repCount} reps)`;
                     addXp(xpGained, description);
                     updateQuestProgress('workouts', 1);
                     if (!isTimeBased && repCount > 0) updateQuestProgress('exercises', repCount);
@@ -1203,17 +1210,17 @@ export default function RepCounterScreen() {
                             {detectionMode === 'camera' ? (
                                 <View style={styles.modeIndicator}>
                                     <Camera size={16} color={selectedExercise.color} />
-                                    <Text style={[styles.modeIndicatorText, { color: selectedExercise.color }]}>
-                                        Détection IA active
+                                    <Text style={[styles.modeIndicatorText, { color: selectedExercise.color }]}> 
+                                        {t('repCounter.aiActive')}
                                     </Text>
                                 </View>
                             ) : selectedExercise.isTimeBased ? (
                                 <Text style={styles.helpText}>
-                                    {isPlankActive ? 'Tiens bon ! 💪' : 'Appuie sur ▶️ pour démarrer le chrono'}
+                                    {isPlankActive ? t('repCounter.holdOn') : t('repCounter.pressPlay')}
                                 </Text>
                             ) : (
                                 <Text style={styles.helpText}>
-                                    Continue tes {selectedExercise.name.toLowerCase()} !
+                                    {t('repCounter.keepGoing')} {t(`repCounter.exercises.${selectedExercise.id === 'jumping_jacks' ? 'jumpingJacks' : selectedExercise.id}`).toLowerCase()} !
                                 </Text>
                             )}
 

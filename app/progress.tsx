@@ -442,18 +442,19 @@ export default function ProgressScreen() {
         
         // Exercices à tracker (doit correspondre à ceux du rep-counter)
         const trackedExercises = [
-            { id: 'pushups', name: 'Pompes', icon: '💪', type: 'reps' as const },
-            { id: 'situps', name: 'Abdos', icon: '🔥', type: 'reps' as const },
-            { id: 'squats', name: 'Squats', icon: '🦵', type: 'reps' as const },
-            { id: 'jumping_jacks', name: 'Jumping Jacks', icon: '⭐', type: 'reps' as const },
-            { id: 'plank', name: 'Planche', icon: '🧘', type: 'time' as const },
+            { id: 'pushups', name: t('repCounter.exercises.pushups'), icon: '💪', type: 'reps' as const },
+            { id: 'situps', name: t('repCounter.exercises.situps'), icon: '🔥', type: 'reps' as const },
+            { id: 'squats', name: t('repCounter.exercises.squats'), icon: '🦵', type: 'reps' as const },
+            { id: 'jumping_jacks', name: t('repCounter.exercises.jumpingJacks'), icon: '⭐', type: 'reps' as const },
+            { id: 'plank', name: t('repCounter.exercises.plank'), icon: '🧘', type: 'time' as const },
         ];
 
         for (const exercise of trackedExercises) {
             const relevantWorkouts = entries.filter(
-                (e): e is HomeWorkoutEntry => 
-                    e.type === 'home' && 
+                (e): e is HomeWorkoutEntry => e.type === 'home' && (
+                    e.exercises.toLowerCase().includes(`${exercise.id.toLowerCase()}:`) ||
                     (e.name?.toLowerCase().includes(exercise.name.toLowerCase()) ?? false)
+                )
             );
 
             let bestValue = 0;
@@ -487,7 +488,7 @@ export default function ProgressScreen() {
         }
 
         return prs;
-    }, [entries]);
+    }, [entries, t]);
 
     // Top exercice du mois
     const topExercise = useMemo(() => {
@@ -546,7 +547,7 @@ export default function ProgressScreen() {
             >
                 {/* Header */}
                 <Animated.View entering={FadeIn.delay(50)}>
-                    <Text style={styles.screenTitle}>Progression</Text>
+                    <Text style={styles.screenTitle}>{t('progress.title')}</Text>
                 </Animated.View>
 
                 {/* Streak Hero */}
@@ -557,28 +558,28 @@ export default function ProgressScreen() {
                     <StatCard
                         icon={<Dumbbell size={20} color="#4ade80" />}
                         value={totalWorkouts}
-                        label="Séances"
+                        label={t('progress.stats.workouts')}
                         color="#4ade80"
                         delay={150}
                     />
                     <StatCard
                         icon={<Footprints size={20} color="#60a5fa" />}
                         value={totalDistance.toFixed(1)}
-                        label="km parcourus"
+                        label={t('progress.stats.distance')}
                         color="#60a5fa"
                         delay={200}
                     />
                     <StatCard
                         icon={<Zap size={20} color="#fbbf24" />}
                         value={totalDuration}
-                        label="minutes"
+                        label={t('progress.stats.duration')}
                         color="#fbbf24"
                         delay={250}
                     />
                     <StatCard
                         icon={<Target size={20} color={Colors.cta} />}
                         value={settings.weeklyGoal}
-                        label="objectif/sem"
+                        label={t('progress.stats.weeklyGoal')}
                         color={Colors.cta}
                         delay={300}
                     />
@@ -621,7 +622,7 @@ export default function ProgressScreen() {
                                 </View>
                                 <View style={styles.topExerciseInfo}>
                                     <Text style={styles.topExerciseLabel}>{t('progress.topExercise')}</Text>
-                                    <Text style={styles.topExerciseName}>{topExercise.name}</Text>
+                                    <Text style={styles.topExerciseName}>{t(`repCounter.exercises.${topExercise.name === 'jumping_jacks' ? 'jumpingJacks' : topExercise.name}`, { defaultValue: topExercise.name })}</Text>
                                 </View>
                                 <View style={styles.topExerciseCount}>
                                     <Text style={styles.topExerciseCountValue}>{topExercise.count}×</Text>
@@ -653,7 +654,7 @@ export default function ProgressScreen() {
                 )}
                 {/* Badges */}
                 <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.badgesSection}>
-                    <SectionHeader title="🏆 Badges" />
+                    <SectionHeader title={`🏆 ${t('progress.badges')}`} />
                     <View style={styles.badgesList}>
                         {badges.map((badge) => {
                             const progress = badgeProgress[badge.id];

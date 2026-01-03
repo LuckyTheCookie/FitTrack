@@ -44,6 +44,17 @@
     "tools": "Outils",
     "profile": "Profil"
   },
+  "badges": {
+    "first_workout": { "name": "Premier pas", "description": "Complète ta première séance" },
+    "streak_7": { "name": "Semaine de feu", "description": "7 jours consécutifs" },
+    "streak_30": { "name": "Mois de fer", "description": "30 jours consécutifs" },
+    "workouts_10": { "name": "Régulier", "description": "10 séances complétées" },
+    "workouts_50": { "name": "Déterminé", "description": "50 séances complétées" },
+    "workouts_100": { "name": "Légende", "description": "100 séances complétées" },
+    "runner_10km": { "name": "Coureur", "description": "10 km parcourus au total" },
+    "runner_50km": { "name": "Marathon", "description": "50 km parcourus au total" },
+    "consistent_month": { "name": "Constant", "description": "Objectif hebdo atteint 4 semaines de suite" }
+  },
   "home": {
     "title": "Aujourd'hui",
     "today": "Aujourd'hui",
@@ -100,6 +111,7 @@
     "topExercise": "Top exercice du mois",
     "personalRecords": "Records Personnels",
     "badges": "Badges",
+
     "noData": "Pas encore de données",
     "noDataHint": "Tes stats apparaîtront ici"
   },
@@ -294,10 +306,6 @@
     "questProgress": "{{current}}/{{target}}"
   },
   "entries": {
-  "workout": {
-    "homeLabel": "Séance maison",
-    "defaultHomeName": "Séance maison"
-  },
     "workout": "Séance",
     "run": "Course",
     "beatsaber": "Beat Saber",
@@ -310,6 +318,10 @@
       "title": "Supprimer cette entrée ?",
       "message": "Cette action est irréversible."
     }
+  },
+    "workout": {
+    "homeLabel": "Séance maison",
+    "defaultHomeName": "Séance maison"
   },
   "forms": {
     "workoutName": "Nom de la séance",
