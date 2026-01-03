@@ -3,6 +3,7 @@
 // ============================================================================
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import type { HomeWorkoutEntry, RunEntry, BeatSaberEntry } from '../../types';
 import { GlassCard } from './GlassCard';
@@ -18,7 +19,8 @@ export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
   const isRun = entry.type === 'run';
   const isBeat = entry.type === 'beatsaber';
   const icon = isRun ? '🏃' : (isBeat ? '🕹️' : '🏠');
-  const title = isRun ? 'Course' : (isBeat ? 'Beat Saber' : (entry.name || 'Séance maison'));
+  const { t } = useTranslation();
+  const title = isRun ? t('entries.run') : (isBeat ? t('entries.beatsaber') : (entry.name || t('workout.defaultHomeName')));
   
   const getDescription = () => {
     if (entry.type === 'run') {
@@ -45,7 +47,7 @@ export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
           <View style={styles.iconDot}>
             <Text>{icon}</Text>
           </View>
-          <Text style={styles.tagText}>{isRun ? 'Course' : 'Maison'}</Text>
+          <Text style={styles.tagText}>{isRun ? t('entries.run') : t('workout.homeLabel')}</Text>
         </View>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.when}>{getRelativeTime(entry.createdAt)}</Text>

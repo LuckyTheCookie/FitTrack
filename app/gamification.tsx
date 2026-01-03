@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, SectionHeader } from '../src/components/ui';
+import { useTranslation } from 'react-i18next';
 import { useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import Animated, { 
@@ -90,6 +91,7 @@ const QuestIcon = ({ type, completed }: { type: string; completed: boolean }) =>
 
 // Composant pour une carte de quête améliorée
 const QuestCard = ({ quest, index }: { quest: any; index: number }) => {
+    const { t } = useTranslation();
     const progressPercent = Math.min((quest.current / quest.target) * 100, 100);
 
     return (
@@ -117,7 +119,7 @@ const QuestCard = ({ quest, index }: { quest: any; index: number }) => {
                                 </Text>
                                 {quest.completed && (
                                     <View style={styles.completedBadge}>
-                                        <Text style={styles.completedBadgeText}>Terminé</Text>
+                                        <Text style={styles.completedBadgeText}>{t('gamification.completed')}</Text>
                                     </View>
                                 )}
                             </View>
@@ -150,6 +152,7 @@ const QuestCard = ({ quest, index }: { quest: any; index: number }) => {
 
 // Composant pour un item d'historique
 const HistoryItem = ({ item, index, isLast }: { item: any; index: number; isLast: boolean }) => {
+    const { t } = useTranslation();
     const formatDate = (isoString: string) => {
         const d = new Date(isoString);
         return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -176,7 +179,7 @@ const HistoryItem = ({ item, index, isLast }: { item: any; index: number; isLast
             {!isLevelUp && (
                 <View style={[styles.historyAmountContainer, isNegative && styles.historyAmountNegative]}>
                     <Text style={[styles.historyAmountText, isNegative && styles.historyAmountTextNegative]}>
-                        {isNegative ? '' : '+'}{item.amount} XP
+                        {isNegative ? '' : '+'}{item.amount} {t('gamification.xp')}
                     </Text>
                 </View>
             )}

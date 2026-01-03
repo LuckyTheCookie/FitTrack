@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { 
   GlassCard, 
   ProgressRing, 
@@ -30,6 +31,7 @@ import { calculateQuestTotals } from '../src/utils/questCalculator';
 import type { Entry, HomeWorkoutEntry, RunEntry } from '../src/types';
 
 export default function TodayScreen() {
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<AddEntryBottomSheetRef>(null);
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -106,16 +108,16 @@ export default function TodayScreen() {
           <View style={styles.topLeft}>
             <ProgressRing current={weekWorkoutsCount} goal={weeklyGoal} />
             <View style={styles.topMeta}>
-              <Text style={styles.kicker}>WEEKLY GOAL</Text>
+              <Text style={styles.kicker}>{t('home.weeklyGoal').toUpperCase()}</Text>
               <Text style={styles.topValue}>
-                {weekWorkoutsCount} / {weeklyGoal} séances
+                {t('home.weeklyProgress', { current: weekWorkoutsCount, goal: weeklyGoal })}
               </Text>
             </View>
           </View>
           <View style={styles.topRight}>
-            <Text style={styles.kicker}>BEST STREAK</Text>
+            <Text style={styles.kicker}>{t('progress.streak.record').toUpperCase()}</Text>
             <Text style={styles.streakValue}>
-              🔥 {streak.best} {streak.best > 1 ? 'jours' : 'jour'}
+              🔥 {streak.best} {streak.best > 1 ? t('common.days') : t('common.day')}
             </Text>
           </View>
         </GlassCard>
@@ -123,9 +125,9 @@ export default function TodayScreen() {
         {/* THIS WEEK */}
         <GlassCard style={styles.section}>
           <SectionHeader 
-            title="THIS WEEK" 
+            title={t('home.thisWeek').toUpperCase()} 
             muted 
-            rightText={`${weekWorkoutsCount} of ${weeklyGoal}`}
+            rightText={t('home.weeklyProgressRight', { current: weekWorkoutsCount, goal: weeklyGoal })}
           />
           <View style={styles.weekRow}>
             {weekDays.map((day) => (
@@ -142,7 +144,7 @@ export default function TodayScreen() {
 
         {/* CTA */}
         <Button
-          title="Start New Workout"
+          title={t('home.quickActions.addWorkout')}
           icon="+"
           variant="cta"
           onPress={handleOpenModal}
@@ -152,8 +154,8 @@ export default function TodayScreen() {
         {/* RECENT WORKOUTS */}
         <View style={styles.section}>
           <SectionHeader 
-            title="Recent Workouts" 
-            actionLabel={sportEntries.length > 5 ? 'See All →' : undefined}
+            title={t('home.recentActivity')} 
+            actionLabel={sportEntries.length > 5 ? t('common.seeAll') : undefined}
             /* Navigate to progress tab */
             onAction={() => {}}
           />
@@ -174,8 +176,8 @@ export default function TodayScreen() {
           ) : (
             <EmptyState 
               icon="💪" 
-              title="Aucune séance" 
-              subtitle="Commence ta première séance !"
+              title={t('home.noActivity')} 
+              subtitle={t('home.noActivityHint')}
             />
           )}
         </View>
@@ -183,8 +185,8 @@ export default function TodayScreen() {
         {/* MONTHLY PROGRESS */}
         <View style={styles.section}>
           <SectionHeader 
-            title="Monthly Progress" 
-            actionLabel="See All →"
+            title={t('progress.monthlyProgress')} 
+            actionLabel={t('common.seeAll')}
             onAction={() => {/* Navigate to progress tab */}}
           />
           <View style={styles.monthGrid}>

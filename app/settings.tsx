@@ -119,10 +119,11 @@ function SectionTitle({ title, delay = 0 }: { title: string; delay?: number }) {
 }
 
 // Stats Card Hero
-function StatsHero({ sportCount, mealCount, measureCount }: { 
+function StatsHero({ sportCount, mealCount, measureCount, labels }: { 
   sportCount: number; 
   mealCount: number; 
   measureCount: number;
+  labels: { title: string; sessions: string; meals: string; measures: string };
 }) {
   return (
     <Animated.View entering={FadeInDown.delay(100).springify()}>
@@ -134,22 +135,22 @@ function StatsHero({ sportCount, mealCount, measureCount }: {
       >
         <View style={styles.statsHeroHeader}>
           <Database size={20} color={Colors.cta} />
-          <Text style={styles.statsHeroTitle}>Tes données</Text>
+          <Text style={styles.statsHeroTitle}>{labels.title}</Text>
         </View>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{sportCount}</Text>
-            <Text style={styles.statLabel}>Séances</Text>
+            <Text style={styles.statLabel}>{labels.sessions}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{mealCount}</Text>
-            <Text style={styles.statLabel}>Repas</Text>
+            <Text style={styles.statLabel}>{labels.meals}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{measureCount}</Text>
-            <Text style={styles.statLabel}>Mesures</Text>
+            <Text style={styles.statLabel}>{labels.measures}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -433,11 +434,17 @@ export default function SettingsScreen() {
         <StatsHero 
           sportCount={stats.sport} 
           mealCount={stats.meal} 
-          measureCount={stats.measure} 
+          measureCount={stats.measure}
+          labels={{
+            title: t('settings.yourData'),
+            sessions: t('settings.sessions'),
+            meals: t('settings.meals'),
+            measures: t('settings.measures'),
+          }}
         />
 
         {/* OBJECTIFS */}
-        <SectionTitle title="Objectifs" delay={150} />
+        <SectionTitle title={t('settings.preferences')} delay={150} />
         <GlassCard style={styles.settingsCard}>
           <View style={styles.goalSection}>
             <View style={styles.goalHeader}>
@@ -445,8 +452,8 @@ export default function SettingsScreen() {
                 <Target size={20} color="#4ade80" />
               </View>
               <View style={styles.goalInfo}>
-                <Text style={styles.settingTitle}>Objectif hebdomadaire</Text>
-                <Text style={styles.settingSubtitle}>Nombre de séances par semaine</Text>
+                <Text style={styles.settingTitle}>{t('settings.weeklyGoal')}</Text>
+                <Text style={styles.settingSubtitle}>{t('settings.weeklyGoalDesc', { count: settings.weeklyGoal })}</Text>
               </View>
             </View>
             <View style={styles.goalInputRow}>
@@ -474,10 +481,10 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<Bell size={20} color="#fbbf24" />}
             iconColor="#fbbf24"
-            title="Rappel de série"
+            title={t('settings.streakReminder')}
             subtitle={settings.streakReminderEnabled 
-              ? `Rappel à ${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}`
-              : 'Désactivé'
+              ? t('settings.reminderTimeDesc', { time: `${String(settings.streakReminderHour ?? 20).padStart(2, '0')}:${String(settings.streakReminderMinute ?? 0).padStart(2, '0')}` })
+              : t('settings.socialDisabled')
             }
             showChevron={false}
             rightElement={
@@ -522,7 +529,7 @@ export default function SettingsScreen() {
         </GlassCard>
 
         {/* NAVIGATION */}
-        <SectionTitle title="Affichage" delay={200} />
+        <SectionTitle title={t('settings.visibility')} delay={200} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
             icon={<Zap size={20} color="#a78bfa" />}
@@ -579,13 +586,13 @@ export default function SettingsScreen() {
         </GlassCard>
 
         {/* LABS */}
-        <SectionTitle title="Labs (Beta)" delay={280} />
+        <SectionTitle title={t('settings.labs')} delay={280} />
         <GlassCard style={[styles.settingsCard, styles.labsCard]}>
           <SettingItem
             icon={<Camera size={20} color="#60a5fa" />}
             iconColor="#60a5fa"
-            title="Mode caméra"
-            subtitle="Préférer la détection de pose"
+            title={t('settings.cameraMode')}
+            subtitle={t('settings.cameraModeDesc')}
             showChevron={false}
             rightElement={
               <Switch
@@ -600,8 +607,8 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<Eye size={20} color="#fbbf24" />}
             iconColor="#fbbf24"
-            title="Debug caméra"
-            subtitle="Afficher les points de tracking"
+            title={t('settings.debugCamera')}
+            subtitle={t('settings.debugCameraDesc')}
             showChevron={false}
             rightElement={
               <Switch
@@ -613,15 +620,16 @@ export default function SettingsScreen() {
             }
             delay={340}
           />
+
         </GlassCard>
 
         {/* LANGUE */}
-        <SectionTitle title="🌍 Langue" delay={350} />
+        <SectionTitle title={`🌍 ${t('settings.language')}`} delay={350} />
         <GlassCard style={styles.settingsCard}>
           <SettingItem
             icon={<Languages size={20} color="#a78bfa" />}
             iconColor="#a78bfa"
-            title="Langue de l'app"
+            title={t('settings.language')}
             subtitle={`${LANGUAGES[currentLanguage].flag} ${LANGUAGES[currentLanguage].nativeName}`}
             onPress={() => setLanguageModalVisible(true)}
             delay={355}
@@ -909,7 +917,7 @@ export default function SettingsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.timePickerModal}>
-            <Text style={styles.timePickerTitle}>🌍 Choisir la langue</Text>
+            <Text style={styles.timePickerTitle}>🌍 {t('settings.chooseLanguage')}</Text>
             
             <View style={styles.languageOptions}>
               {(Object.entries(LANGUAGES) as [LanguageCode, typeof LANGUAGES[LanguageCode]][]).map(([code, lang]) => (
@@ -941,7 +949,7 @@ export default function SettingsScreen() {
               style={styles.timePickerCancelButton}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={styles.timePickerCancelText}>Fermer</Text>
+              <Text style={styles.timePickerCancelText}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
