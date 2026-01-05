@@ -23,22 +23,31 @@ import Animated, {
     withSpring,
     runOnJS,
     useAnimatedReaction,
+    useAnimatedProps,
 } from 'react-native-reanimated';
 import { Dumbbell, Timer, Flame, Target, Trophy, Sparkles, TrendingUp, Clock, CheckCircle2 } from 'lucide-react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
 
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedText = Animated.createAnimatedComponent(Text);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLOPPY_IMAGE = require('../assets/ploppy.png');
 
-// Composant pour l'anneau de progression XP
-const XPRing = ({ progress, size = 180 }: { progress: number; size?: number }) => {
+// Composant pour l'anneau de progression XP avec animation optimisée
+const XPRing = ({ progress, animatedProgress, size = 180 }: { progress: number; animatedProgress: Animated.SharedValue<number>; size?: number }) => {
     const strokeWidth = 8;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference * (1 - progress);
+
+    // Animation fluide avec useAnimatedProps
+    const animatedProps = useAnimatedProps(() => {
+        const offset = circumference * (1 - animatedProgress.value);
+        return {
+            strokeDashoffset: offset,
+        };
+    });
 
     return (
         <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
@@ -58,8 +67,8 @@ const XPRing = ({ progress, size = 180 }: { progress: number; size?: number }) =
                     strokeWidth={strokeWidth}
                     fill="transparent"
                 />
-                {/* Progress circle */}
-                <Circle
+                {/* Animated progress circle */}
+                <AnimatedCircle
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
@@ -67,9 +76,9 @@ const XPRing = ({ progress, size = 180 }: { progress: number; size?: number }) =
                     strokeWidth={strokeWidth}
                     fill="transparent"
                     strokeDasharray={`${circumference}`}
-                    strokeDashoffset={strokeDashoffset}
                     strokeLinecap="round"
                     transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                    animatedProps={animatedProps}
                 />
             </Svg>
         </View>
@@ -327,9 +336,6 @@ export default function GamificationScreen() {
         []
     );
 
-    // Progress based on animated displayed XP (for smoother ring updates)
-    const animatedProgress = Math.min(Math.max(displayedXpNumber / xpForNextLevel, 0), 1);
-
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar style="light" />
@@ -367,7 +373,7 @@ export default function GamificationScreen() {
                     {/* Ploppy avec anneau XP */}
                     <View style={styles.ploppyWrapper}>
                         <Animated.View style={[styles.glowEffect, glowStyle]} />
-                        <XPRing progress={animatedProgress} size={200} />
+                        <XPRing progress={progress} animatedProgress={progressAnimated} size={200} />
                         <View style={styles.ploppyInner}>
                             <Animated.Image
                                 source={PLOPPY_IMAGE}

@@ -11,7 +11,9 @@ import {
   Pressable, 
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 
@@ -23,12 +25,12 @@ interface EntryDetailModalProps {
   onDelete?: (id: string) => void;
 }
 
-const typeLabels: Record<string, { icon: string; label: string; color: string }> = {
-  home: { icon: '🏠', label: 'Séance maison', color: 'rgba(147, 51, 234, 0.20)' },
-  run: { icon: '🏃', label: 'Course', color: 'rgba(34, 197, 94, 0.20)' },
-  beatsaber: { icon: '🕹️', label: 'Beat Saber', color: 'rgba(244, 63, 94, 0.12)' },
-  meal: { icon: '🍽️', label: 'Repas', color: 'rgba(251, 191, 36, 0.20)' },
-  measure: { icon: '📏', label: 'Mesures', color: 'rgba(59, 130, 246, 0.20)' },
+const typeConfigs: Record<string, { icon: string; labelKey: string; color: string }> = {
+  home: { icon: '🏠', labelKey: 'entries.workout', color: 'rgba(147, 51, 234, 0.20)' },
+  run: { icon: '🏃', labelKey: 'entries.run', color: 'rgba(34, 197, 94, 0.20)' },
+  beatsaber: { icon: '🕹️', labelKey: 'entries.beatsaber', color: 'rgba(244, 63, 94, 0.12)' },
+  meal: { icon: '🍽️', labelKey: 'entries.meal', color: 'rgba(251, 191, 36, 0.20)' },
+  measure: { icon: '📏', labelKey: 'entries.measure', color: 'rgba(59, 130, 246, 0.20)' },
 };
 
 function formatDate(dateStr: string): string {
@@ -184,13 +186,33 @@ export function EntryDetailModal({
   onEdit, 
   onDelete 
 }: EntryDetailModalProps) {
+  const { t } = useTranslation();
+  
   if (!entry) return null;
 
-  const typeInfo = typeLabels[entry.type];
+  const typeConfig = typeConfigs[entry.type];
+  const typeInfo = {
+    icon: typeConfig.icon,
+    label: t(typeConfig.labelKey),
+    color: typeConfig.color,
+  };
 
   const handleDelete = () => {
-    onDelete?.(entry.id);
-    onClose();
+    Alert.alert(
+      t('entries.deleteConfirm.title'),
+      t('entries.deleteConfirm.message'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { 
+          text: t('common.delete'), 
+          style: 'destructive',
+          onPress: () => {
+            onDelete?.(entry.id);
+            onClose();
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -228,7 +250,7 @@ export function EntryDetailModal({
                 onPress={() => { onEdit(entry); onClose(); }}
               >
                 <Text style={styles.actionIcon}>✏️</Text>
-                <Text style={styles.actionLabel}>Modifier</Text>
+                <Text style={styles.actionLabel}>{t('common.edit')}</Text>
               </TouchableOpacity>
             )}
             {onDelete && (
@@ -237,14 +259,14 @@ export function EntryDetailModal({
                 onPress={handleDelete}
               >
                 <Text style={styles.actionIcon}>🗑️</Text>
-                <Text style={[styles.actionLabel, styles.deleteLabel]}>Supprimer</Text>
+                <Text style={[styles.actionLabel, styles.deleteLabel]}>{t('common.delete')}</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* Close button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Fermer</Text>
+            <Text style={styles.closeButtonText}>{t('common.close')}</Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>

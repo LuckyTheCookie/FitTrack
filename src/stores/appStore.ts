@@ -25,6 +25,8 @@ import {
     getLastSixMonths,
 } from '../utils/date';
 import { checkBadges } from '../utils/badges';
+import { calculateQuestTotals } from '../utils/questCalculator';
+import { useGamificationStore } from './gamificationStore';
 
 // ============================================================================
 // TYPES DU STORE
@@ -52,6 +54,10 @@ interface AppState {
     // Actions - Data management
     resetAllData: () => void;
     restoreFromBackup: (data: { entries: Entry[]; settings: Partial<UserSettings>; unlockedBadges: BadgeId[] }) => void;
+    
+    // Gamification sync helper
+    syncGamificationAfterChange: (entries: Entry[]) => void;
+    recheckBadges: (entries: Entry[]) => void;
 
     // Computed (recalculées à chaque appel)
     getStreak: () => { current: number; best: number };
@@ -108,17 +114,13 @@ export const useAppStore = create<AppState>()(
 
                 set((state) => {
                     const newEntries = [entry, ...state.entries];
-                    const newBadges = checkBadges(
-                        newEntries,
-                        get().getStreak().current,
-                        get().getStreak().best,
-                        0 // TODO: calculer semaines consécutives
-                    );
-                    return {
-                        entries: newEntries,
-                        unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
-                    };
+                    return { entries: newEntries };
                 });
+                
+                // Sync gamification after adding entry
+                setTimeout(() => {
+                    get().syncGamificationAfterChange(get().entries);
+                }, 0);
             },
 
             addRun: (data, customDate) => {
@@ -138,17 +140,13 @@ export const useAppStore = create<AppState>()(
 
                 set((state) => {
                     const newEntries = [entry, ...state.entries];
-                    const newBadges = checkBadges(
-                        newEntries,
-                        get().getStreak().current,
-                        get().getStreak().best,
-                        0
-                    );
-                    return {
-                        entries: newEntries,
-                        unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
-                    };
+                    return { entries: newEntries };
                 });
+                
+                // Sync gamification after adding entry
+                setTimeout(() => {
+                    get().syncGamificationAfterChange(get().entries);
+                }, 0);
             },
 
             addBeatSaber: (data, customDate) => {
@@ -162,17 +160,13 @@ export const useAppStore = create<AppState>()(
 
                 set((state) => {
                     const newEntries = [entry, ...state.entries];
-                    const newBadges = checkBadges(
-                        newEntries,
-                        get().getStreak().current,
-                        get().getStreak().best,
-                        0
-                    );
-                    return {
-                        entries: newEntries,
-                        unlockedBadges: [...new Set([...state.unlockedBadges, ...newBadges])],
-                    };
+                    return { entries: newEntries };
                 });
+                
+                // Sync gamification after adding entry
+                setTimeout(() => {
+                    get().syncGamificationAfterChange(get().entries);
+                }, 0);
             },
 
             addMeal: (data, customDate) => {
@@ -254,6 +248,39 @@ export const useAppStore = create<AppState>()(
                     },
                     unlockedBadges: data.unlockedBadges || [],
                 });
+            },
+
+            // ========================================
+            // GAMIFICATION SYNC
+            // ========================================
+
+            syncGamificationAfterChange: (entries) => {
+                // Recalculate quest totals and sync with gamification store
+                const totals = calculateQuestTotals(entries);
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.recalculateAllQuests(totals);
+                
+                // Recheck badges and update
+                get().recheckBadges(entries);
+            },
+
+            recheckBadges: (entries) => {
+                // Calculate streak based on current entries
+                const sportDates = entries
+                    .filter((e) => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber')
+                    .map((e) => e.date);
+                const streak = calculateStreak(sportDates);
+                
+                // Get all badges that should be unlocked based on current state
+                const shouldHaveBadges = checkBadges(
+                    entries,
+                    streak.current,
+                    streak.best,
+                    0 // TODO: calculate consecutive weeks
+                );
+                
+                // Update badges - this can remove badges if conditions no longer met
+                set({ unlockedBadges: shouldHaveBadges });
             },
 
             // ========================================

@@ -532,7 +532,26 @@
     "emptyMessage": "No new workouts found.",
     "selectedLabel": "Selected",
     "sessions": "workout(s)",
-    "importButton": "Import"
+    "importButton": "Import",
+    "settings": {
+      "title": "Sync Settings",
+      "subtitle": "Choose how Health Connect syncs",
+      "manualTitle": "Manual",
+      "manualDesc": "Add sessions manually",
+      "notifyTitle": "Notify on startup",
+      "notifyDesc": "Offer to import new activities when app launches",
+      "autoTitle": "Auto-import",
+      "autoDesc": "Automatically import sessions on startup"
+    },
+    "newActivitiesTitle": "New Activities Detected",
+    "newActivitiesMessage": "Found {{count}} new workouts in Health Connect. Would you like to import them?",
+    "viewActivities": "View activities",
+    "startup": {
+      "title": "New Activities Detected",
+      "message": "New workouts were found in Health Connect. Would you like to import them?",
+      "import": "Import",
+      "skip": "Skip"
+    }
   },
   "notifications": {
     "defaultChannel": "Default",

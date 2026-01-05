@@ -35,8 +35,10 @@ import {
     Trash2,
     Calendar,
     Zap,
+    Settings,
 } from 'lucide-react-native';
 import { GlassCard, Button } from '../src/components/ui';
+import { HealthConnectSettingsSheet, type HealthConnectSettingsSheetRef } from '../src/components/sheets';
 import { useTranslation } from 'react-i18next';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
@@ -215,8 +217,9 @@ export default function HealthConnectScreen() {
     const [daysBack, setDaysBack] = useState(7);
     const [isLoadingWorkouts, setIsLoadingWorkouts] = useState(false);
     const hasLoadedOnce = useRef(false);
+    const settingsSheetRef = useRef<HealthConnectSettingsSheetRef>(null);
 
-    const { addHomeWorkout, addRun, addBeatSaber, entries } = useAppStore();
+    const { addHomeWorkout, addRun, addBeatSaber, entries, syncGamificationAfterChange } = useAppStore();
     const { addXp, updateQuestProgress, recalculateAllQuests } = useGamificationStore();
 
     useEffect(() => {
@@ -407,13 +410,21 @@ export default function HealthConnectScreen() {
                     <ChevronLeft size={24} color={Colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t('healthConnect.headerTitle')}</Text>
-                <TouchableOpacity 
-                    onPress={loadWorkouts} 
-                    style={styles.iconButton}
-                    disabled={status === 'loading'}
-                >
-                    <RefreshCw size={20} color={status === 'loading' ? Colors.muted : Colors.cta} />
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                    <TouchableOpacity 
+                        onPress={loadWorkouts} 
+                        style={styles.iconButton}
+                        disabled={status === 'loading'}
+                    >
+                        <RefreshCw size={20} color={status === 'loading' ? Colors.muted : Colors.cta} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        onPress={() => settingsSheetRef.current?.present()} 
+                        style={styles.iconButton}
+                    >
+                        <Settings size={20} color={Colors.text} />
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
     );
@@ -548,6 +559,7 @@ export default function HealthConnectScreen() {
                 <Header />
                 {renderContent()}
             </SafeAreaView>
+            <HealthConnectSettingsSheet ref={settingsSheetRef} />
         </View>
     );
 }
@@ -583,6 +595,11 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         fontWeight: FontWeight.bold,
         color: Colors.text,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
     },
     iconButton: {
         width: 40,

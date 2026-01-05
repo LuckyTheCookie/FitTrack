@@ -2,7 +2,7 @@
 // TODAY SCREEN - Écran principal
 // ============================================================================
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -28,6 +28,7 @@ import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { getWeekDaysInfo } from '../src/utils/date';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
+import { checkHealthConnectOnStartup } from '../src/services/healthConnectStartup';
 import type { Entry, HomeWorkoutEntry, RunEntry } from '../src/types';
 
 export default function TodayScreen() {
@@ -40,6 +41,7 @@ export default function TodayScreen() {
     entries, 
     settings,
     deleteEntry,
+    syncGamificationAfterChange,
     getStreak,
     getWeekWorkoutsCount,
     getSportEntries,
@@ -49,8 +51,17 @@ export default function TodayScreen() {
   const { recalculateAllQuests } = useGamificationStore();
   const { entryToEdit, setEntryToEdit } = useEditorStore();
 
+  // Health Connect startup check
+  useEffect(() => {
+    // Small delay to ensure stores are hydrated
+    const timer = setTimeout(() => {
+      checkHealthConnectOnStartup();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Listen for entry edits from other screens
-  React.useEffect(() => {
+  useEffect(() => {
     if (entryToEdit) {
       bottomSheetRef.current?.edit(entryToEdit);
       setEntryToEdit(null);
@@ -89,11 +100,10 @@ export default function TodayScreen() {
   const handleDeleteEntry = useCallback((id: string) => {
     // Supprimer l'entrée
     deleteEntry(id);
-    // Recalculer les quêtes avec les entrées restantes
+    // Sync gamification with updated entries
     const remainingEntries = entries.filter(e => e.id !== id);
-    const totals = calculateQuestTotals(remainingEntries);
-    recalculateAllQuests(totals);
-  }, [deleteEntry, entries, recalculateAllQuests]);
+    syncGamificationAfterChange(remainingEntries);
+  }, [deleteEntry, entries, syncGamificationAfterChange]);
 
   const handleEditEntry = useCallback((entry: Entry) => {
     setDetailModalVisible(false);

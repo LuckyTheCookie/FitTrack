@@ -123,6 +123,9 @@ export interface GeneratedWorkout {
 // SETTINGS
 // ============================================================================
 
+// Health Connect sync modes
+export type HealthConnectSyncMode = 'manual' | 'notify' | 'auto';
+
 export interface UserSettings {
   weeklyGoal: number; // Nombre de séances sport par semaine (défaut: 4)
   units: {
@@ -143,6 +146,8 @@ export interface UserSettings {
   streakReminderMinute?: number; // Minute du rappel (0-59)
   // Navigation bar opacity
   fullOpacityNavbar?: boolean; // Navbar avec opacité complète (sans glassmorphism)
+  // Health Connect sync settings
+  healthConnectSyncMode?: HealthConnectSyncMode; // 'manual' (default), 'notify', or 'auto'
 }
 
 // ============================================================================

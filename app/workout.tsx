@@ -270,7 +270,7 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
 });
 
 export default function WorkoutScreen() {
-  const { entries, deleteEntry } = useAppStore();
+  const { entries, deleteEntry, syncGamificationAfterChange } = useAppStore();
   const { recalculateAllQuests } = useGamificationStore();
   const { setEntryToEdit } = useEditorStore();
   const { t } = useTranslation();
@@ -302,25 +302,28 @@ export default function WorkoutScreen() {
     };
   }, [entries]);
 
+  // Handler for delete with gamification sync - called from modal or long press
+  const handleDeleteEntry = useCallback((entryId: string) => {
+    deleteEntry(entryId);
+    // Sync gamification after deletion
+    const remainingEntries = entries.filter(e => e.id !== entryId);
+    syncGamificationAfterChange(remainingEntries);
+  }, [deleteEntry, entries, syncGamificationAfterChange]);
+
   const handleDelete = useCallback((entry: Entry) => {
     Alert.alert(
-      'Supprimer cette entrée ?',
-      'Cette action est irréversible.',
+      t('entries.deleteConfirm.title'),
+      t('entries.deleteConfirm.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Supprimer', 
+          text: t('common.delete'), 
           style: 'destructive',
-          onPress: () => {
-            deleteEntry(entry.id);
-            const remainingEntries = entries.filter(e => e.id !== entry.id);
-            const totals = calculateQuestTotals(remainingEntries);
-            recalculateAllQuests(totals);
-          },
+          onPress: () => handleDeleteEntry(entry.id),
         },
       ]
     );
-  }, [deleteEntry, entries, recalculateAllQuests]);
+  }, [handleDeleteEntry, t]);
 
   const handleEntryPress = useCallback((entry: Entry) => {
     setSelectedEntry(entry);
@@ -425,7 +428,7 @@ export default function WorkoutScreen() {
             });
           }, 300);
         }}
-        onDelete={deleteEntry}
+        onDelete={handleDeleteEntry}
       />
     </SafeAreaView>
   );

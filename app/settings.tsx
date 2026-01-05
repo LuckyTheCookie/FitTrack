@@ -34,7 +34,6 @@ import {
   Eye,
   EyeOff,
   ChevronRight,
-  RefreshCw,
   Rocket,
   Zap,
   History,
@@ -58,7 +57,6 @@ import {
 } from '../src/components/ui';
 import { useAppStore, useGamificationStore, useSocialStore } from '../src/stores';
 import { isSocialAvailable } from '../src/services/supabase';
-import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { generateFullBackup, exportFullBackup, parseBackup } from '../src/utils/export';
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
@@ -173,7 +171,6 @@ export default function SettingsScreen() {
 
   const gamificationState = useGamificationStore();
   const { 
-    recalculateFromScratch,
     restoreFromBackup: restoreGamificationFromBackup,
   } = gamificationState;
   const { 
@@ -243,28 +240,6 @@ export default function SettingsScreen() {
       ]
     );
   }, [resetAllData]);   
-
-  // Recalculer les quêtes et le niveau
-  const handleRecalculateQuests = useCallback(() => {
-    Alert.alert(
-      t('settings.recalculateConfirm.title'),
-      t('settings.recalculateConfirm.message'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { 
-          text: t('settings.recalculate'), 
-          onPress: () => {
-            const totals = calculateQuestTotals(entries);
-            const workoutCount = entries.filter(e => 
-              e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
-            ).length;
-            recalculateFromScratch({ ...totals, totalWorkouts: workoutCount });
-            Alert.alert(t('common.success'), t('settings.recalculateDone'));
-          },
-        },
-      ]
-    );
-  }, [entries, recalculateFromScratch]);
 
   // Sauvegarde complète
   const handleFullBackup = useCallback(async () => {
@@ -783,20 +758,12 @@ export default function SettingsScreen() {
             delay={400}
           />
           <SettingItem
-            icon={<RefreshCw size={20} color="#a78bfa" />}
-            iconColor="#a78bfa"
-            title={t('settings.recalculate')}
-            subtitle={t('settings.recalculateDesc')}
-            onPress={handleRecalculateQuests}
-            delay={420}
-          />
-          <SettingItem
             icon={<Heart size={20} color="#f43f5e" />}
             iconColor="#f43f5e"
             title={t('settings.healthConnect')}
             subtitle={t('settings.healthConnectDesc')}
             onPress={() => router.push('/health-connect')}
-            delay={440}
+            delay={420}
           />
         </GlassCard>
 
