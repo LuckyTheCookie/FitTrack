@@ -2,7 +2,7 @@
 // GAMIFICATION SCREEN - Ploppy & Quêtes avec design amélioré
 // ============================================================================
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -20,9 +20,12 @@ import Animated, {
     withRepeat, 
     withSequence, 
     withTiming,
+    withSpring,
+    runOnJS,
 } from 'react-native-reanimated';
 import { Dumbbell, Timer, Flame, Target, Trophy, Sparkles, TrendingUp, Clock, CheckCircle2 } from 'lucide-react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import { useFocusEffect } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLOPPY_IMAGE = require('../assets/ploppy.png');
@@ -197,6 +200,11 @@ export default function GamificationScreen() {
     const { xp, level, rank, quests, history, checkAndRefreshQuests } = useGamificationStore();
     const scale = useSharedValue(1);
     const glow = useSharedValue(0.2);
+    const xpDisplayed = useSharedValue(xp);
+    const levelDisplayed = useSharedValue(level);
+    const [showLevelUp, setShowLevelUp] = useState(false);
+    const [previousLevel, setPreviousLevel] = useState(level);
+    const [previousXp, setPreviousXp] = useState(xp);
 
     // Animation de respiration pour Ploppy
     useEffect(() => {
@@ -222,6 +230,41 @@ export default function GamificationScreen() {
         checkAndRefreshQuests();
     }, []);
 
+    // Animation de mise à jour XP quand l'écran reprend le focus
+    useFocusEffect(
+        React.useCallback(() => {
+            // Vérifier s'il y a eu un changement de niveau
+            if (level > previousLevel) {
+                setShowLevelUp(true);
+                // Masquer après 3 secondes
+                const timeout = setTimeout(() => setShowLevelUp(false), 3000);
+                
+                // Animation du niveau
+                levelDisplayed.value = previousLevel;
+                levelDisplayed.value = withSpring(level, {
+                    damping: 12,
+                    stiffness: 100,
+                });
+
+                return () => clearTimeout(timeout);
+            }
+
+            // Animation de l'XP
+            if (xp !== previousXp) {
+                xpDisplayed.value = previousXp;
+                xpDisplayed.value = withTiming(xp, {
+                    duration: 1000,
+                });
+            }
+
+            // Mettre à jour les valeurs précédentes
+            setPreviousLevel(level);
+            setPreviousXp(xp);
+
+            return () => {};
+        }, [level, xp])
+    );
+
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
@@ -236,9 +279,38 @@ export default function GamificationScreen() {
     const completedQuests = useMemo(() => quests.filter(q => q.completed).length, [quests]);
     const recentHistory = useMemo(() => history.slice(0, 10), [history]);
 
+    // Style animé pour le niveau affiché
+    const animatedLevelStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: levelDisplayed.value === level ? 1 : 0.8 }],
+    }));
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar style="light" />
+
+            {/* Badge de Level Up */}
+            {showLevelUp && (
+                <Animated.View 
+                    entering={FadeInDown.springify().damping(12)}
+                    style={styles.levelUpNotification}
+                >
+                    <LinearGradient
+                        colors={['rgba(251, 191, 36, 0.9)', 'rgba(245, 158, 11, 0.9)']}
+                        style={styles.levelUpGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                    >
+                        <Trophy size={28} color={Colors.text} />
+                        <View style={styles.levelUpTextContainer}>
+                            <Text style={styles.levelUpTitle}>{t('gamification.levelUp')}</Text>
+                            <Text style={styles.levelUpSubtitle}>
+                                {t('gamification.level')} {level} - {rank}
+                            </Text>
+                        </View>
+                        <Sparkles size={24} color={Colors.text} />
+                    </LinearGradient>
+                </Animated.View>
+            )}
 
             <ScrollView
                 contentContainerStyle={styles.content}
@@ -670,5 +742,40 @@ const styles = StyleSheet.create({
     },
     spacer: {
         height: 40,
+    },
+    levelUpNotification: {
+        position: 'absolute',
+        top: 80,
+        left: Spacing.lg,
+        right: Spacing.lg,
+        zIndex: 1000,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        shadowColor: Colors.warning,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 16,
+        elevation: 12,
+    },
+    levelUpGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.lg,
+        gap: Spacing.md,
+    },
+    levelUpTextContainer: {
+        flex: 1,
+    },
+    levelUpTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.extrabold,
+        color: Colors.text,
+        marginBottom: 2,
+    },
+    levelUpSubtitle: {
+        fontSize: FontSize.sm,
+        fontWeight: FontWeight.semibold,
+        color: Colors.text,
+        opacity: 0.9,
     },
 });

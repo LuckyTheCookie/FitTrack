@@ -5,6 +5,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import i18n from '../../i18n';
 
 // Configuration handler - affichage même en foreground
 Notifications.setNotificationHandler({
@@ -49,7 +50,7 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
     // Configurer le canal Android
     if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
-            name: 'Default',
+            name: i18n.t('notifications.defaultChannel') || 'Default',
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
             lightColor: '#D79686',
@@ -57,8 +58,8 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
 
         // Canal pour les encouragements
         await Notifications.setNotificationChannelAsync('encouragements', {
-            name: 'Encouragements',
-            description: 'Notifications d\'encouragement de tes amis',
+            name: i18n.t('notifications.encouragementsChannel') || 'Encouragements',
+            description: i18n.t('notifications.encouragementsChannelDesc') || 'Notifications d\'encouragement de tes amis',
             importance: Notifications.AndroidImportance.HIGH,
             vibrationPattern: [0, 100, 100, 100],
             lightColor: '#E3A090',
@@ -66,8 +67,8 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
 
         // Canal pour les demandes d'amis
         await Notifications.setNotificationChannelAsync('friends', {
-            name: 'Amis',
-            description: 'Demandes d\'ami et acceptations',
+            name: i18n.t('notifications.friendsChannel') || 'Amis',
+            description: i18n.t('notifications.friendsChannelDesc') || 'Demandes d\'ami et acceptations',
             importance: Notifications.AndroidImportance.HIGH,
             vibrationPattern: [0, 200],
             lightColor: '#4ade80',
@@ -125,7 +126,7 @@ export async function showEncouragementNotification(
 ): Promise<void> {
     await Notifications.scheduleNotificationAsync({
         content: {
-            title: `${emoji} ${senderName} t'encourage !`,
+            title: i18n.t('notifications.encouragementTitle', { emoji, senderName }),
             body: message,
             sound: 'default',
             data: { type: 'encouragement' },
@@ -142,8 +143,8 @@ export async function showFriendRequestNotification(
 ): Promise<void> {
     await Notifications.scheduleNotificationAsync({
         content: {
-            title: '👋 Nouvelle demande d\'ami',
-            body: `${senderName} veut être ton ami !`,
+            title: i18n.t('notifications.friendRequestTitle'),
+            body: i18n.t('notifications.friendRequestBody', { senderName }),
             sound: 'default',
             data: { type: 'friend_request' },
         },
@@ -159,8 +160,8 @@ export async function showFriendAcceptedNotification(
 ): Promise<void> {
     await Notifications.scheduleNotificationAsync({
         content: {
-            title: '🎉 Demande acceptée',
-            body: `${friendName} et toi êtes maintenant amis !`,
+            title: i18n.t('notifications.friendAcceptedTitle'),
+            body: i18n.t('notifications.friendAcceptedBody', { friendName }),
             sound: 'default',
             data: { type: 'friend_accepted' },
         },
@@ -180,8 +181,8 @@ export async function scheduleStreakReminder(
 
     const identifier = await Notifications.scheduleNotificationAsync({
         content: {
-            title: '🔥 N\'oublie pas ta séance !',
-            body: 'Continue ta streak et reste motivé !',
+            title: i18n.t('notifications.streakReminderTitle'),
+            body: i18n.t('notifications.streakReminderBody'),
             sound: 'default',
             data: { type: 'streak_reminder' },
         },

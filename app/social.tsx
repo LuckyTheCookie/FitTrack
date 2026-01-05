@@ -26,7 +26,6 @@ import {
     UserPlus,
     Check,
     X,
-    Send,
     Crown,
     Medal,
     Flame,
@@ -35,9 +34,7 @@ import {
     LogIn,
     UserCircle,
     Settings,
-    Upload,
     Bell,
-    CheckCircle,
     UserX,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -98,6 +95,7 @@ function LeaderboardItem({
     onEncourage,
     isFriend,
     onPress,
+    onBlock,
 }: { 
     entry: LeaderboardEntry;
     rank: number;
@@ -105,6 +103,7 @@ function LeaderboardItem({
     onEncourage?: () => void;
     isFriend?: boolean;
     onPress?: () => void;
+    onBlock?: () => void;
 }) {
     const getRankIcon = () => {
         if (rank === 1) return <Crown size={20} color="#fbbf24" fill="#fbbf24" />;
@@ -148,6 +147,15 @@ function LeaderboardItem({
                         onPress={onEncourage}
                     >
                         <Heart size={18} color={Colors.cta} />
+                    </TouchableOpacity>
+                )}
+                {/* Afficher le bouton de blocage si ce n'est pas un ami */}
+                {!isMe && !isFriend && onBlock && (
+                    <TouchableOpacity 
+                        style={styles.blockButton}
+                        onPress={onBlock}
+                    >
+                        <UserX size={18} color={Colors.error} />
                     </TouchableOpacity>
                 )}
             </GlassCard>
@@ -265,13 +273,13 @@ export default function SocialScreen() {
     const [isSearching, setIsSearching] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const [showSyncModal, setShowSyncModal] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(false);
     const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'granted' | 'denied' | 'network_error'>('unknown');
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [selectedFriend, setSelectedFriend] = useState<Profile | null>(null);
     const [showFriendModal, setShowFriendModal] = useState(false);
-    const [hasSyncedThisSession, setHasSyncedThisSession] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+    const [selectedUserForBlock, setSelectedUserForBlock] = useState<Profile | null>(null);
+    const [showBlockModal, setShowBlockModal] = useState(false);
 
     // Local data from app store
     const { entries, getStreak } = useAppStore();
@@ -304,6 +312,8 @@ export default function SocialScreen() {
         initializeNotifications,
         setupRealtimeSubscriptions,
         savePushToken,
+        blockUser,
+        isUserBlocked,
     } = useSocialStore();
 
     // Helper pour vérifier si un utilisateur est ami
@@ -364,38 +374,51 @@ export default function SocialScreen() {
             fetchFriends();
             fetchPendingRequests();
             fetchEncouragements();
-            
-            // Auto sync on page open (only once per session)
-            if (!hasSyncedThisSession) {
-                setHasSyncedThisSession(true);
-                // Sync silently without modal
-                const autoSync = async () => {
-                    try {
-                        const streakData = getStreak();
-                        await syncStats({
-                            workouts: localStats.weeklyWorkouts,
-                            distance: localStats.weeklyDistance,
-                            duration: localStats.weeklyDuration,
-                            xp: xp,
-                            streak: streakData.current,
-                            bestStreak: streakData.best,
-                            totalXp: xp,
-                            level,
-                        });
-                    } catch {
-                        // Silent fail for auto sync
-                    }
-                };
-                autoSync();
-            }
         }
     }, [isAuthenticated, socialEnabled]);
+
+    // Auto-sync when local data changes (entries, XP, level)
+    useEffect(() => {
+        if (!isAuthenticated || !socialEnabled) return;
+        
+        // Debounce: sync only if enough time has passed since last sync
+        const now = new Date();
+        if (lastSyncTime && (now.getTime() - lastSyncTime.getTime()) < 5000) return;
+        
+        const performSync = async () => {
+            try {
+                const streakData = getStreak();
+                await syncStats({
+                    workouts: localStats.weeklyWorkouts,
+                    distance: localStats.weeklyDistance,
+                    duration: localStats.weeklyDuration,
+                    // Envoyer les XP hebdomadaires calculés correctement
+                    xp: localStats.weeklyXp,
+                    streak: streakData.current,
+                    bestStreak: streakData.best,
+                    totalXp: xp,
+                    level,
+                });
+                setLastSyncTime(new Date());
+                // Refresh leaderboards after sync
+                fetchGlobalLeaderboard();
+                fetchFriendsLeaderboard();
+            } catch {
+                // Silent fail for auto sync
+            }
+        };
+        
+        performSync();
+    }, [entries.length, xp, level]);
 
     // Calculate local stats for sync
     const localStats = useMemo(() => {
         const now = new Date();
         const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
+        // Lundi comme début de semaine
+        const dayOfWeek = now.getDay();
+        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        weekStart.setDate(now.getDate() + diff);
         weekStart.setHours(0, 0, 0, 0);
 
         const sportEntries = entries.filter(e => 
@@ -409,9 +432,26 @@ export default function SocialScreen() {
         const weeklyWorkouts = weeklyEntries.length;
         const weeklyDistance = weeklyEntries
             .filter(e => e.type === 'run')
-            .reduce((sum, e) => sum + ((e as any).distance || 0), 0);
+            .reduce((sum, e) => sum + ((e as any).distanceKm || 0), 0);
         const weeklyDuration = weeklyEntries
-            .reduce((sum, e) => sum + ((e as any).duration || 0), 0);
+            .reduce((sum, e) => sum + ((e as any).durationMinutes || 0), 0);
+        
+        // Calcul des XP de la semaine basé sur la vraie logique XP :
+        // Home: 50 XP base
+        // Run: 30 + (km * 5) XP
+        // Beat Saber: 15 + (duration / 5) XP
+        let weeklyXp = 0;
+        weeklyEntries.forEach(entry => {
+            if (entry.type === 'home') {
+                weeklyXp += 50; // 50 XP par séance maison
+            } else if (entry.type === 'run') {
+                const km = (entry as any).distanceKm || 0;
+                weeklyXp += 30 + Math.floor(km * 5);
+            } else if (entry.type === 'beatsaber') {
+                const minutes = (entry as any).durationMinutes || 0;
+                weeklyXp += 15 + Math.floor(minutes / 5);
+            }
+        });
 
         const streakData = getStreak();
 
@@ -420,38 +460,13 @@ export default function SocialScreen() {
             weeklyWorkouts,
             weeklyDistance,
             weeklyDuration,
+            weeklyXp,
             xp,
             level,
             streak: streakData.current,
             bestStreak: streakData.best,
         };
     }, [entries, xp, level, getStreak]);
-
-    // Sync local data to Supabase
-    const handleSyncData = useCallback(async () => {
-        setIsSyncing(true);
-        try {
-            await syncStats({
-                workouts: localStats.weeklyWorkouts,
-                distance: localStats.weeklyDistance,
-                duration: localStats.weeklyDuration,
-                xp: xp, // Weekly XP approximation
-                streak: localStats.streak,
-                bestStreak: localStats.bestStreak,
-                totalXp: xp,
-                level,
-            });
-            Alert.alert('✅ Synchronisé !', 'Tes données locales ont été envoyées au classement.');
-            setShowSyncModal(false);
-            // Refresh leaderboard
-            await fetchGlobalLeaderboard();
-            await fetchFriendsLeaderboard();
-        } catch (error: any) {
-            Alert.alert('Erreur', error.message || 'Impossible de synchroniser');
-        } finally {
-            setIsSyncing(false);
-        }
-    }, [localStats, xp, level, syncStats]);
 
     // Refresh handler
     const handleRefresh = useCallback(async () => {
@@ -535,6 +550,27 @@ export default function SocialScreen() {
         setSelectedFriend(friend);
         setShowFriendModal(true);
     }, []);
+
+    // Handler pour ouvrir le modal de blocage
+    const handleOpenBlockModal = useCallback((user: Profile) => {
+        setSelectedUserForBlock(user);
+        setShowBlockModal(true);
+    }, []);
+
+    // Handler pour bloquer un utilisateur
+    const handleBlockUser = useCallback(async (userId: string) => {
+        try {
+            await blockUser(userId);
+            Alert.alert('✓ Utilisateur bloqué', 'Cet utilisateur ne pourra plus te voir dans le classement.');
+            setShowBlockModal(false);
+            setSelectedUserForBlock(null);
+            // Refresh leaderboards
+            await fetchGlobalLeaderboard();
+            await fetchFriendsLeaderboard();
+        } catch (error: any) {
+            Alert.alert('Erreur', error.message || 'Impossible de bloquer cet utilisateur');
+        }
+    }, [blockUser, fetchGlobalLeaderboard, fetchFriendsLeaderboard]);
 
     // Not configured
     if (!isSocialAvailable()) {
@@ -644,31 +680,23 @@ export default function SocialScreen() {
                             </View>
                             <View style={styles.myStatsRow}>
                                 <View style={styles.myStat}>
-                                    <Text style={styles.myStatValue}>{profile.weekly_xp}</Text>
+                                    <Text style={styles.myStatValue}>{profile?.weekly_xp ?? localStats.weeklyXp}</Text>
                                     <Text style={styles.myStatLabel}>{t('social.weeklyXP')}</Text>
                                 </View>
                                 <View style={styles.myStatDivider} />
                                 <View style={styles.myStat}>
-                                    <Text style={styles.myStatValue}>{profile.weekly_workouts}</Text>
+                                    <Text style={styles.myStatValue}>{profile?.weekly_workouts ?? localStats.weeklyWorkouts}</Text>
                                     <Text style={styles.myStatLabel}>{t('social.workouts')}</Text>
                                 </View>
                                 <View style={styles.myStatDivider} />
                                 <View style={styles.myStat}>
                                     <View style={styles.streakRow}>
                                         <Flame size={16} color={Colors.warning} />
-                                        <Text style={styles.myStatValue}>{profile.current_streak}</Text>
+                                        <Text style={styles.myStatValue}>{profile?.current_streak ?? localStats.streak}</Text>
                                     </View>
                                     <Text style={styles.myStatLabel}>{t('social.streak')}</Text>
                                 </View>
                             </View>
-                            {/* Sync button */}
-                            <TouchableOpacity 
-                                style={styles.syncButton}
-                                onPress={() => setShowSyncModal(true)}
-                            >
-                                <Upload size={16} color={Colors.cta} />
-                                <Text style={styles.syncButtonText}>{t('social.sync')}</Text>
-                            </TouchableOpacity>
                         </LinearGradient>
                     </Animated.View>
                 )}
@@ -779,6 +807,11 @@ export default function SocialScreen() {
                                     onPress={
                                         entry.id !== profile?.id && isFriend(entry.id)
                                             ? () => handleOpenFriendModal(entry as any)
+                                            : undefined
+                                    }
+                                    onBlock={
+                                        entry.id !== profile?.id && !isFriend(entry.id)
+                                            ? () => handleOpenBlockModal(entry as any)
                                             : undefined
                                     }
                                 />
@@ -972,74 +1005,6 @@ export default function SocialScreen() {
                 <View style={{ height: 100 }} />
             </ScrollView>
 
-            {/* Sync Modal */}
-            <Modal
-                visible={showSyncModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowSyncModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <Animated.View 
-                        entering={FadeInDown.springify()}
-                        style={styles.syncModal}
-                    >
-                        <View style={styles.syncModalHeader}>
-                            <Upload size={32} color={Colors.cta} />
-                            <Text style={styles.syncModalTitle}>{t('social.syncModalTitle')}</Text>
-                        </View>
-                        
-                        <Text style={styles.syncModalDescription}>{t('social.syncModalDescription')}</Text>
-
-                        <GlassCard style={styles.syncStatsCard}>
-                            <View style={styles.syncStatRow}>
-                                <Text style={styles.syncStatLabel}>{t('social.syncModalStatLabel')}</Text>
-                                <Text style={styles.syncStatValue}>{localStats.weeklyWorkouts}</Text>
-                            </View>
-                            <View style={styles.syncStatRow}>
-                                <Text style={styles.syncStatLabel}>Distance (km)</Text>
-                                <Text style={styles.syncStatValue}>{localStats.weeklyDistance.toFixed(1)}</Text>
-                            </View>
-                            <View style={styles.syncStatRow}>
-                                <Text style={styles.syncStatLabel}>XP total</Text>
-                                <Text style={styles.syncStatValue}>{xp}</Text>
-                            </View>
-                            <View style={styles.syncStatRow}>
-                                <Text style={styles.syncStatLabel}>Niveau</Text>
-                                <Text style={styles.syncStatValue}>{level}</Text>
-                            </View>
-                            <View style={styles.syncStatRow}>
-                                <Text style={styles.syncStatLabel}>Streak actuel</Text>
-                                <Text style={styles.syncStatValue}>{localStats.streak} jours</Text>
-                            </View>
-                        </GlassCard>
-
-                        <View style={styles.syncModalActions}>
-                            <TouchableOpacity 
-                                style={styles.syncModalCancelBtn}
-                                onPress={() => setShowSyncModal(false)}
-                            >
-                                <Text style={styles.syncModalCancelText}>Annuler</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={styles.syncModalConfirmBtn}
-                                onPress={handleSyncData}
-                                disabled={isSyncing}
-                            >
-                                {isSyncing ? (
-                                    <ActivityIndicator color="#fff" size="small" />
-                                ) : (
-                                    <>
-                                        <CheckCircle size={18} color="#fff" />
-                                        <Text style={styles.syncModalConfirmText}>Synchroniser</Text>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    </Animated.View>
-                </View>
-            </Modal>
-
             {/* Friend Management Modal */}
             <Modal
                 visible={showFriendModal}
@@ -1112,6 +1077,53 @@ export default function SocialScreen() {
                                 >
                                     <Text style={styles.friendModalCloseText}>Fermer</Text>
                                 </TouchableOpacity>
+                            </>
+                        )}
+                    </Animated.View>
+                </View>
+            </Modal>
+
+            {/* Block User Modal */}
+            <Modal
+                visible={showBlockModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowBlockModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <Animated.View 
+                        entering={FadeInDown.springify()}
+                        style={styles.blockModal}
+                    >
+                        {selectedUserForBlock && (
+                            <>
+                                <View style={styles.blockModalHeader}>
+                                    <UserX size={40} color={Colors.error} />
+                                    <Text style={styles.blockModalTitle}>
+                                        Bloquer {selectedUserForBlock.display_name || selectedUserForBlock.username}?
+                                    </Text>
+                                </View>
+
+                                <Text style={styles.blockModalDescription}>
+                                    Cette personne ne pourra plus te voir dans le classement et tu ne verras plus ses stats.
+                                </Text>
+
+                                <View style={styles.blockModalActions}>
+                                    <TouchableOpacity
+                                        style={styles.blockModalCancelBtn}
+                                        onPress={() => setShowBlockModal(false)}
+                                    >
+                                        <Text style={styles.blockModalCancelText}>Annuler</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.blockModalConfirmBtn}
+                                        onPress={() => handleBlockUser(selectedUserForBlock.id)}
+                                    >
+                                        <UserX size={18} color="#fff" />
+                                        <Text style={styles.blockModalConfirmText}>Bloquer</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </>
                         )}
                     </Animated.View>
@@ -1224,23 +1236,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-    },
-
-    // Sync button
-    syncButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        backgroundColor: 'rgba(215, 150, 134, 0.2)',
-        borderRadius: BorderRadius.md,
-        paddingVertical: Spacing.sm,
-        marginTop: Spacing.md,
-    },
-    syncButtonText: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.semibold,
-        color: Colors.cta,
     },
 
     // Notification warning
@@ -1389,6 +1384,14 @@ const styles = StyleSheet.create({
         height: 36,
         borderRadius: 18,
         backgroundColor: 'rgba(215, 150, 134, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    blockButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1604,88 +1607,13 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
 
-    // Sync Modal
+    // Modal Overlay
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: Spacing.lg,
-    },
-    syncModal: {
-        backgroundColor: Colors.cardSolid,
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.xl,
-        width: '100%',
-        maxWidth: 400,
-    },
-    syncModalHeader: {
-        alignItems: 'center',
-        gap: Spacing.md,
-        marginBottom: Spacing.lg,
-    },
-    syncModalTitle: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
-        color: Colors.text,
-        textAlign: 'center',
-    },
-    syncModalDescription: {
-        fontSize: FontSize.sm,
-        color: Colors.muted,
-        textAlign: 'center',
-        lineHeight: 20,
-        marginBottom: Spacing.lg,
-    },
-    syncStatsCard: {
-        padding: Spacing.md,
-        marginBottom: Spacing.lg,
-    },
-    syncStatRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: Spacing.xs,
-    },
-    syncStatLabel: {
-        fontSize: FontSize.sm,
-        color: Colors.muted,
-    },
-    syncStatValue: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.bold,
-        color: Colors.text,
-    },
-    syncModalActions: {
-        flexDirection: 'row',
-        gap: Spacing.md,
-    },
-    syncModalCancelBtn: {
-        flex: 1,
-        paddingVertical: Spacing.md,
-        alignItems: 'center',
-        borderRadius: BorderRadius.lg,
-        backgroundColor: Colors.card,
-    },
-    syncModalCancelText: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
-        color: Colors.muted,
-    },
-    syncModalConfirmBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: Spacing.sm,
-        paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        backgroundColor: Colors.cta,
-    },
-    syncModalConfirmText: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.bold,
-        color: '#fff',
     },
 
     // Loading container
@@ -1794,5 +1722,65 @@ const styles = StyleSheet.create({
         fontSize: FontSize.md,
         color: Colors.muted,
         fontWeight: FontWeight.medium,
+    },
+
+    // Block Modal
+    blockModal: {
+        backgroundColor: Colors.cardSolid,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        width: '100%',
+        maxWidth: 350,
+        alignItems: 'center',
+    },
+    blockModalHeader: {
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+        gap: Spacing.md,
+    },
+    blockModalTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        textAlign: 'center',
+    },
+    blockModalDescription: {
+        fontSize: FontSize.sm,
+        color: Colors.muted,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: Spacing.xl,
+    },
+    blockModalActions: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        width: '100%',
+    },
+    blockModalCancelBtn: {
+        flex: 1,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: Colors.card,
+        alignItems: 'center',
+    },
+    blockModalCancelText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
+        color: Colors.muted,
+    },
+    blockModalConfirmBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: Colors.error,
+    },
+    blockModalConfirmText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.bold,
+        color: '#fff',
     },
 });

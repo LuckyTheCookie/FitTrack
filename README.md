@@ -57,3 +57,34 @@ Contributions et suggestions sont les bienvenues via les issues ou PRs sur GitHu
 --- 
 
 Développé avec ❤️, de la whey et zéro tracker publicitaire par Lucky 💪
+
+---
+
+## 📦 Changelog (modifications récentes)
+
+- **Blocage d'utilisateurs** : ajout d'une table `blocked_users`, politiques RLS, API (block/unblock) et UI pour masquer/bloquer des utilisateurs.
+- **Sync XP hebdomadaire fiable** : recalcul des XP hebdo côté client selon la vraie formule par type d'activité, migration SQL pour reset hebdomadaire, fonctions `sync_user_stats` et `reset_weekly_stats`.
+- **Améliorations de la page Social** : sync automatique des stats, suppression du modal manuel, affichage des stats serveur (fallback local), UI améliorée et modal de blocage depuis le classement.
+- **Gamification & animations** : animations d'XP et bannière passage de niveau, vérification des niveaux (Novice → Maître).
+- **Option navbar opaque** : toggle dans les paramètres pour désactiver l'effet glassmorphism de la barre de navigation.
+- **Corrections & traductions** : fix du sélecteur de langue, traduction des notifications, correction de la persistance du Rep Counter.
+
+---
+
+## ✅ Suggested Git commit
+
+**Title**
+
+feat(social): add user blocking, weekly XP sync & improve social UX
+
+**Description**
+
+- Add `blocked_users` migration and RLS policies
+- Add block/unblock API, store actions and UI (block modal in leaderboard)
+- Implement weekly XP sync, add `sync_user_stats` and `reset_weekly_stats` SQL functions, and cron scheduling notes
+- Auto-sync local stats to server and prefer server values in header quick-stats
+- Remove manual sync modal and improve social UI/flows
+- Add XP/level-up animations and navbar opacity setting
+- Fix language selector, notification translations and rep-counter persistence
+
+---

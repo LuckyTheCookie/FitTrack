@@ -299,6 +299,9 @@
     "visible": "Visible",
     "hidden": "Hidden",
     "labs": "Labs (Beta)",
+    "appearance": "Appearance",
+    "fullOpacityNavbar": "Opaque navigation bar",
+    "fullOpacityNavbarDesc": "Disable glassmorphism effect",
     "notifications": "Notifications",
     "comingSoon": "Coming soon",
     "privacyPolicyDesc": "GDPR & data protection",
@@ -532,6 +535,18 @@
     "importButton": "Import"
   },
   "notifications": {
+    "defaultChannel": "Default",
+    "encouragementsChannel": "Encouragements",
+    "encouragementsChannelDesc": "Encouragement notifications from your friends",
+    "friendsChannel": "Friends",
+    "friendsChannelDesc": "Friend requests and acceptances",
+    "encouragementTitle": "{{emoji}} {{senderName}} is cheering you on!",
+    "friendRequestTitle": "👋 New friend request",
+    "friendRequestBody": "{{senderName}} wants to be your friend!",
+    "friendAcceptedTitle": "🎉 Request accepted",
+    "friendAcceptedBody": "{{friendName}} and you are now friends!",
+    "streakReminderTitle": "🔥 Don't forget your workout!",
+    "streakReminderBody": "Keep your streak going and stay motivated!",
     "streakReminder": {
       "title": "Don't forget your workout! 🏋️",
       "body": "Keep your {{count}} day streak going!"
@@ -545,6 +560,7 @@
     "title": "Gamification",
     "xp": "XP",
     "level": "Level",
+    "levelUp": "Level Up!",
     "quests": "Quests",
     "gains": "Gains",
     "dailyQuests": "Daily quests",

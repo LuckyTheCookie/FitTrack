@@ -585,6 +585,27 @@ export default function SettingsScreen() {
           />
         </GlassCard>
 
+        {/* APPEARANCE */}
+        <SectionTitle title={t('settings.appearance')} delay={260} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Eye size={20} color="#a78bfa" />}
+            iconColor="#a78bfa"
+            title={t('settings.fullOpacityNavbar')}
+            subtitle={t('settings.fullOpacityNavbarDesc')}
+            showChevron={false}
+            rightElement={
+              <Switch
+                value={settings.fullOpacityNavbar ?? false}
+                onValueChange={(value) => updateSettings({ fullOpacityNavbar: value })}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            }
+            delay={265}
+          />
+        </GlassCard>
+
         {/* LABS */}
         <SectionTitle title={t('settings.labs')} delay={280} />
         <GlassCard style={[styles.settingsCard, styles.labsCard]}>

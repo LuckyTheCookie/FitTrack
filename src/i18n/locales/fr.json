@@ -422,6 +422,9 @@
     "visible": "Visible",
     "hidden": "Masqué",
     "labs": "Labs (Beta)",
+    "appearance": "Apparence",
+    "fullOpacityNavbar": "Barre de navigation opaque",
+    "fullOpacityNavbarDesc": "Désactiver l'effet glassmorphism",
     "notifications": "Notifications",
     "comingSoon": "Prochainement",
     "privacyPolicyDesc": "RGPD et protection des données",
@@ -664,6 +667,18 @@
   "importButton": "Importer"
   },
   "notifications": {
+    "defaultChannel": "Par défaut",
+    "encouragementsChannel": "Encouragements",
+    "encouragementsChannelDesc": "Notifications d'encouragement de tes amis",
+    "friendsChannel": "Amis",
+    "friendsChannelDesc": "Demandes d'ami et acceptations",
+    "encouragementTitle": "{{emoji}} {{senderName}} t'encourage !",
+    "friendRequestTitle": "👋 Nouvelle demande d'ami",
+    "friendRequestBody": "{{senderName}} veut être ton ami !",
+    "friendAcceptedTitle": "🎉 Demande acceptée",
+    "friendAcceptedBody": "{{friendName}} et toi êtes maintenant amis !",
+    "streakReminderTitle": "🔥 N'oublie pas ta séance !",
+    "streakReminderBody": "Continue ta streak et reste motivé !",
     "streakReminder": {
       "title": "N'oublie pas ta séance ! 🏋️",
       "body": "Maintiens ton streak de {{count}} jours !"
@@ -677,6 +692,7 @@
     "title": "Gamification",
     "xp": "XP",
     "level": "Niveau",
+    "levelUp": "Passage de niveau !",
     "quests": "Quêtes",
     "gains": "Gains",
     "dailyQuests": "Quêtes quotidiennes",

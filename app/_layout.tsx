@@ -96,6 +96,7 @@ const TabButton = ({ route, descriptor, isFocused, navigation, config }: any) =>
 function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
     const insets = useSafeAreaInsets();
     const pathname = usePathname();
+    const settings = useSettings();
 
     // Cacher la tab bar sur l'écran rep-counter
     if (pathname === '/rep-counter') {
@@ -114,10 +115,14 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
 
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md }]}>
-            <View style={styles.floatingBarWrapper}>
-                <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-                {/* Fallback background semi-transparent pour Android si BlurView bug */}
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
+            <View style={[styles.floatingBarWrapper, settings.fullOpacityNavbar && styles.floatingBarOpaque]}>
+                {!settings.fullOpacityNavbar && (
+                    <>
+                        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+                        {/* Fallback background semi-transparent pour Android si BlurView bug */}
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
+                    </>
+                )}
 
                 <View style={styles.tabBarContent}>
                     {visibleRoutes.map((route: any) => {
@@ -205,6 +210,10 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4,
         shadowRadius: 16,
         elevation: 8,
+    },
+    floatingBarOpaque: {
+        backgroundColor: Colors.cardSolid,
+        borderColor: Colors.stroke,
     },
     tabBarContent: {
         flexDirection: 'row',

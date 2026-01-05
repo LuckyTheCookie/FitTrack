@@ -141,6 +141,8 @@ export interface UserSettings {
   streakReminderEnabled?: boolean;
   streakReminderHour?: number; // Heure du rappel (0-23)
   streakReminderMinute?: number; // Minute du rappel (0-59)
+  // Navigation bar opacity
+  fullOpacityNavbar?: boolean; // Navbar avec opacité complète (sans glassmorphism)
 }
 
 // ============================================================================

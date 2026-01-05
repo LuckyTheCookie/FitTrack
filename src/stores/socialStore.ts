@@ -31,6 +31,9 @@ interface SocialState {
     friends: Profile[];
     pendingRequests: (Friendship & { requester: Profile })[];
     
+    // Blocked users
+    blockedUsers: Profile[];
+    
     // Encouragements
     unreadEncouragements: (Encouragement & { sender: Profile })[];
     recentEncouragements: (Encouragement & { sender: Profile })[];
@@ -76,6 +79,12 @@ interface SocialState {
     removeFriend: (friendshipId: string) => Promise<void>;
     searchUsers: (query: string) => Promise<any[]>;
     
+    // Actions - Blocked Users
+    fetchBlockedUsers: () => Promise<void>;
+    blockUser: (userId: string) => Promise<void>;
+    unblockUser: (userId: string) => Promise<void>;
+    isUserBlocked: (userId: string) => Promise<boolean>;
+    
     // Actions - Encouragements
     fetchEncouragements: () => Promise<void>;
     sendEncouragement: (userId: string, message?: string) => Promise<void>;
@@ -105,6 +114,7 @@ export const useSocialStore = create<SocialState>()(
             friendsLeaderboard: [],
             friends: [],
             pendingRequests: [],
+            blockedUsers: [],
             unreadEncouragements: [],
             recentEncouragements: [],
 
@@ -176,6 +186,7 @@ export const useSocialStore = create<SocialState>()(
                     friendsLeaderboard: [],
                     friends: [],
                     pendingRequests: [],
+                    blockedUsers: [],
                     unreadEncouragements: [],
                     recentEncouragements: [],
                 });
@@ -228,6 +239,7 @@ export const useSocialStore = create<SocialState>()(
                         friendsLeaderboard: [],
                         friends: [],
                         pendingRequests: [],
+                        blockedUsers: [],
                         unreadEncouragements: [],
                         recentEncouragements: [],
                     });
@@ -253,6 +265,19 @@ export const useSocialStore = create<SocialState>()(
             syncStats: async (stats) => {
                 if (!get().isAuthenticated || !get().socialEnabled) return;
                 await SocialService.syncWeeklyStats(stats);
+                // Refresh local profile from server so UI shows authoritative weekly stats
+                try {
+                    const profile = await SocialService.getMyProfile();
+                    if (profile) {
+                        set({ profile });
+                    }
+                } catch (err) {
+                    console.warn('Failed to refresh profile after sync', err);
+                }
+
+                // Refresh leaderboards to reflect updated values
+                get().fetchGlobalLeaderboard();
+                get().fetchFriendsLeaderboard();
             },
 
             // ========================================
@@ -306,6 +331,36 @@ export const useSocialStore = create<SocialState>()(
             searchUsers: async (query) => {
                 if (!get().isAuthenticated) return [];
                 return SocialService.searchUsers(query);
+            },
+
+            // ========================================
+            // BLOCKED USERS
+            // ========================================
+
+            fetchBlockedUsers: async () => {
+                if (!get().isAuthenticated || !get().socialEnabled) return;
+                const data = await SocialService.getBlockedUsers();
+                set({ blockedUsers: data });
+            },
+
+            blockUser: async (userId) => {
+                await SocialService.blockUser(userId);
+                // Refresh blocked list and friends/leaderboards
+                get().fetchBlockedUsers();
+                get().fetchFriends();
+                get().fetchGlobalLeaderboard();
+                get().fetchFriendsLeaderboard();
+            },
+
+            unblockUser: async (userId) => {
+                await SocialService.unblockUser(userId);
+                get().fetchBlockedUsers();
+                get().fetchGlobalLeaderboard();
+            },
+
+            isUserBlocked: async (userId) => {
+                if (!get().isAuthenticated) return false;
+                return SocialService.isUserBlocked(userId);
             },
 
             // ========================================

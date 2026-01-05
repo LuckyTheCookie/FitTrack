@@ -886,6 +886,18 @@ export default function RepCounterScreen() {
             setTimeout(() => {
                 const totals = calculateQuestTotals(entries);
                 recalculateAllQuests(totals);
+                
+                // Reset les stats après quêtes recalculées
+                setTimeout(() => {
+                    setRepCount(0);
+                    setElapsedTime(0);
+                    setPlankSeconds(0);
+                    setIsPlankActive(false);
+                    hasBeatenRecord.current = false;
+                    setWorkoutSaved(false);
+                    setStep('select');
+                    setSelectedExercise(null);
+                }, 200);
             }, 100);
         }
     }, [workoutSaved, entries, recalculateAllQuests]);
