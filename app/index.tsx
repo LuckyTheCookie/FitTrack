@@ -24,7 +24,7 @@ import {
   EntryDetailModal,
 } from '../src/components/ui';
 import { AddEntryBottomSheet, AddEntryBottomSheetRef } from '../src/components/sheets';
-import { useAppStore, useGamificationStore } from '../src/stores';
+import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { getWeekDaysInfo } from '../src/utils/date';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
@@ -47,6 +47,15 @@ export default function TodayScreen() {
   } = useAppStore();
 
   const { recalculateAllQuests } = useGamificationStore();
+  const { entryToEdit, setEntryToEdit } = useEditorStore();
+
+  // Listen for entry edits from other screens
+  React.useEffect(() => {
+    if (entryToEdit) {
+      bottomSheetRef.current?.edit(entryToEdit);
+      setEntryToEdit(null);
+    }
+  }, [entryToEdit, setEntryToEdit]);
 
   const streak = getStreak();
   const weekWorkoutsCount = getWeekWorkoutsCount();

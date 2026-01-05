@@ -23,6 +23,8 @@ export interface GamificationState {
     rank: string;
     quests: Quest[];
     lastQuestWeek?: string; // Dernière semaine où les quêtes ont été générées
+    lastSeenXp?: number; // Dernière valeur XP vue (pour animation progressive)
+    lastSeenLevel?: number; // Dernier niveau vu
 
     // History
     history: GamificationLog[];
@@ -37,6 +39,7 @@ export interface GamificationState {
     recalculateFromScratch: (totals: { exercises: number; workouts: number; duration: number; distance: number; totalWorkouts: number }) => void;
     generateWeeklyQuests: () => void;
     checkAndRefreshQuests: () => void; // Vérifie si on doit régénérer les quêtes
+    updateLastSeen: () => void; // Met à jour les valeurs lastSeenXp et lastSeenLevel
     restoreFromBackup: (data: { xp: number; level: number; history: GamificationLog[]; quests: Quest[] }) => void;
 }
 
@@ -70,6 +73,8 @@ export const useGamificationStore = create<GamificationState>()(
             quests: [],
             history: [],
             lastQuestWeek: undefined,
+            lastSeenXp: 0,
+            lastSeenLevel: 1,
 
             addXp: (amount, reason) => {
                 const { xp, level, history } = get();
@@ -378,6 +383,14 @@ export const useGamificationStore = create<GamificationState>()(
                 if (lastQuestWeek !== currentWeekId) {
                     generateWeeklyQuests();
                 }
+            },
+
+            updateLastSeen: () => {
+                const { xp, level } = get();
+                set({
+                    lastSeenXp: xp,
+                    lastSeenLevel: level,
+                });
             },
 
             restoreFromBackup: (data) => {

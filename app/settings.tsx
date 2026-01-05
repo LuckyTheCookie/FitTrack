@@ -810,7 +810,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={styles.appName}>FitTrack</Text>
-                <Text style={styles.appVersion}>{t('settings.version', { version: (Constants as any).manifest?.version ?? (Constants as any).expoConfig?.version ?? '3.0.0' })}</Text>
+                <Text style={styles.appVersion}>{t('settings.version', { version: Constants.default.expoConfig?.version ?? '3.0.0' })}</Text>
               </View>
             </View>
             
@@ -937,8 +937,8 @@ export default function SettingsScreen() {
         onRequestClose={() => setLanguageModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.timePickerModal}>
-            <Text style={styles.timePickerTitle}>🌍 {t('settings.chooseLanguage')}</Text>
+          <View style={styles.languageModal}>
+            <Text style={styles.languageModalTitle}>🌍 {t('settings.chooseLanguage')}</Text>
             
             <View style={styles.languageOptions}>
               {(Object.entries(LANGUAGES) as [LanguageCode, typeof LANGUAGES[LanguageCode]][]).map(([code, lang]) => (
@@ -967,10 +967,10 @@ export default function SettingsScreen() {
             </View>
 
             <TouchableOpacity
-              style={styles.timePickerCancelButton}
+              style={styles.languageModalCloseButton}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={styles.timePickerCancelText}>{t('common.close')}</Text>
+              <Text style={styles.languageModalCloseText}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1337,6 +1337,33 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   // Language picker
+  languageModal: {
+    backgroundColor: Colors.cardSolid,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    width: '90%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: Colors.stroke,
+  },
+  languageModalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+  },
+  languageModalCloseButton: {
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.overlay,
+    alignItems: 'center',
+  },
+  languageModalCloseText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.text,
+  },
   languageOptions: {
     gap: Spacing.sm,
     marginBottom: Spacing.lg,

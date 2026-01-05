@@ -34,7 +34,7 @@ import {
   EmptyState,
   EntryDetailModal,
 } from '../src/components/ui';
-import { useAppStore, useGamificationStore } from '../src/stores';
+import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
@@ -272,6 +272,7 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
 export default function WorkoutScreen() {
   const { entries, deleteEntry } = useAppStore();
   const { recalculateAllQuests } = useGamificationStore();
+  const { setEntryToEdit } = useEditorStore();
   const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
@@ -412,7 +413,18 @@ export default function WorkoutScreen() {
         entry={selectedEntry}
         visible={detailModalVisible}
         onClose={() => setDetailModalVisible(false)}
-        onEdit={() => {}}
+        onEdit={(entry) => {
+          setDetailModalVisible(false);
+          // Set the entry to edit in the global store
+          // The home screen will pick it up and open the bottom sheet
+          setTimeout(() => {
+            setEntryToEdit(entry);
+            // Navigate to home to show the edit form
+            import('expo-router').then(({ router }) => {
+              router.push('/');
+            });
+          }, 300);
+        }}
         onDelete={deleteEntry}
       />
     </SafeAreaView>

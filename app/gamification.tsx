@@ -22,10 +22,13 @@ import Animated, {
     withTiming,
     withSpring,
     runOnJS,
+    useAnimatedReaction,
 } from 'react-native-reanimated';
 import { Dumbbell, Timer, Flame, Target, Trophy, Sparkles, TrendingUp, Clock, CheckCircle2 } from 'lucide-react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
+
+const AnimatedText = Animated.createAnimatedComponent(Text);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLOPPY_IMAGE = require('../assets/ploppy.png');
@@ -197,14 +200,12 @@ const HistoryItem = ({ item, index, isLast }: { item: any; index: number; isLast
 
 export default function GamificationScreen() {
     const { t } = useTranslation();
-    const { xp, level, rank, quests, history, checkAndRefreshQuests } = useGamificationStore();
+    const { xp, level, rank, quests, history, lastSeenXp, lastSeenLevel, checkAndRefreshQuests, updateLastSeen } = useGamificationStore();
     const scale = useSharedValue(1);
     const glow = useSharedValue(0.2);
-    const xpDisplayed = useSharedValue(xp);
-    const levelDisplayed = useSharedValue(level);
+    const xpDisplayed = useSharedValue(lastSeenXp ?? xp);
+    const levelDisplayed = useSharedValue(lastSeenLevel ?? level);
     const [showLevelUp, setShowLevelUp] = useState(false);
-    const [previousLevel, setPreviousLevel] = useState(level);
-    const [previousXp, setPreviousXp] = useState(xp);
 
     // Animation de respiration pour Ploppy
     useEffect(() => {
@@ -233,36 +234,46 @@ export default function GamificationScreen() {
     // Animation de mise à jour XP quand l'écran reprend le focus
     useFocusEffect(
         React.useCallback(() => {
+            const previousLevelValue = lastSeenLevel ?? level;
+            const previousXpValue = lastSeenXp ?? xp;
+            let timeoutId: NodeJS.Timeout | null = null;
+            let updateTimeoutId: NodeJS.Timeout | null = null;
+
             // Vérifier s'il y a eu un changement de niveau
-            if (level > previousLevel) {
+            if (level > previousLevelValue) {
                 setShowLevelUp(true);
                 // Masquer après 3 secondes
-                const timeout = setTimeout(() => setShowLevelUp(false), 3000);
+                timeoutId = setTimeout(() => setShowLevelUp(false), 3000);
                 
                 // Animation du niveau
-                levelDisplayed.value = previousLevel;
+                levelDisplayed.value = previousLevelValue;
                 levelDisplayed.value = withSpring(level, {
                     damping: 12,
                     stiffness: 100,
                 });
 
-                return () => clearTimeout(timeout);
-            }
-
-            // Animation de l'XP
-            if (xp !== previousXp) {
-                xpDisplayed.value = previousXp;
+                // Mettre à jour les dernières valeurs vues après l'animation
+                updateTimeoutId = setTimeout(() => {
+                    updateLastSeen();
+                }, 1000);
+            } else if (xp !== previousXpValue) {
+                // Animation de l'XP (seulement si pas de level up)
+                xpDisplayed.value = previousXpValue;
                 xpDisplayed.value = withTiming(xp, {
                     duration: 1000,
                 });
+                
+                // Mettre à jour les dernières valeurs vues après l'animation
+                updateTimeoutId = setTimeout(() => {
+                    updateLastSeen();
+                }, 1000);
             }
 
-            // Mettre à jour les valeurs précédentes
-            setPreviousLevel(level);
-            setPreviousXp(xp);
-
-            return () => {};
-        }, [level, xp])
+            return () => {
+                if (timeoutId) clearTimeout(timeoutId);
+                if (updateTimeoutId) clearTimeout(updateTimeoutId);
+            };
+        }, [level, xp, lastSeenLevel, lastSeenXp, updateLastSeen, setShowLevelUp])
     );
 
     const animatedStyle = useAnimatedStyle(() => ({
@@ -274,7 +285,15 @@ export default function GamificationScreen() {
     }));
 
     const xpForNextLevel = level * 100;
-    const progress = Math.min(Math.max(xp / xpForNextLevel, 0), 1);
+    const progressAnimated = useSharedValue(Math.min(Math.max((lastSeenXp ?? xp) / xpForNextLevel, 0), 1));
+    
+    // Update progress animation when XP changes
+    useEffect(() => {
+        const currentProgress = Math.min(Math.max(xp / xpForNextLevel, 0), 1);
+        progressAnimated.value = withTiming(currentProgress, { duration: 1000 });
+    }, [xp, xpForNextLevel, progressAnimated]);
+    
+    const progress = Math.min(Math.max((lastSeenXp ?? xp) / xpForNextLevel, 0), 1);
 
     const completedQuests = useMemo(() => quests.filter(q => q.completed).length, [quests]);
     const recentHistory = useMemo(() => history.slice(0, 10), [history]);
@@ -283,6 +302,33 @@ export default function GamificationScreen() {
     const animatedLevelStyle = useAnimatedStyle(() => ({
         transform: [{ scale: levelDisplayed.value === level ? 1 : 0.8 }],
     }));
+
+    // Animated numbers: keep a React state in sync from worklets using runOnJS
+    const [displayedLevelNumber, setDisplayedLevelNumber] = useState(level);
+    const [displayedXpNumber, setDisplayedXpNumber] = useState(xp);
+
+    useAnimatedReaction(
+        () => levelDisplayed.value,
+        (current, previous) => {
+            if (current !== previous) {
+                runOnJS(setDisplayedLevelNumber)(Math.round(current));
+            }
+        },
+        []
+    );
+
+    useAnimatedReaction(
+        () => xpDisplayed.value,
+        (current, previous) => {
+            if (current !== previous) {
+                runOnJS(setDisplayedXpNumber)(Math.round(current));
+            }
+        },
+        []
+    );
+
+    // Progress based on animated displayed XP (for smoother ring updates)
+    const animatedProgress = Math.min(Math.max(displayedXpNumber / xpForNextLevel, 0), 1);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -321,7 +367,7 @@ export default function GamificationScreen() {
                     {/* Ploppy avec anneau XP */}
                     <View style={styles.ploppyWrapper}>
                         <Animated.View style={[styles.glowEffect, glowStyle]} />
-                        <XPRing progress={progress} size={200} />
+                        <XPRing progress={animatedProgress} size={200} />
                         <View style={styles.ploppyInner}>
                             <Animated.Image
                                 source={PLOPPY_IMAGE}
@@ -336,7 +382,7 @@ export default function GamificationScreen() {
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                             >
-                                <Text style={styles.levelText}>{level}</Text>
+                                <Text style={styles.levelText}>{displayedLevelNumber}</Text>
                             </LinearGradient>
                         </View>
                     </View>
@@ -345,7 +391,7 @@ export default function GamificationScreen() {
                     <Text style={styles.rankTitle}>{rank}</Text>
                     <View style={styles.xpInfo}>
                         <Sparkles size={14} color={Colors.cta} />
-                        <Text style={styles.xpText}>{xp} / {xpForNextLevel} XP</Text>
+                        <Text style={styles.xpText}>{displayedXpNumber} / {xpForNextLevel} XP</Text>
                     </View>
                 </Animated.View>
 

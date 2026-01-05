@@ -194,9 +194,9 @@ export function AddEntryForm({
     const initialMeasure = getInitialMeasure();
 
     // Date/heure personnalisée
-    const [useCustomDateTime, setUseCustomDateTime] = useState(false);
-    const [customDate, setCustomDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-    const [customTime, setCustomTime] = useState(format(new Date(), 'HH:mm'));
+    const [useCustomDateTime, setUseCustomDateTime] = useState(!!editEntry);
+    const [customDate, setCustomDate] = useState(editEntry?.date || format(new Date(), 'yyyy-MM-dd'));
+    const [customTime, setCustomTime] = useState(editEntry ? format(new Date(editEntry.createdAt), 'HH:mm') : format(new Date(), 'HH:mm'));
 
     // Home workout - nouveau format
     const [homeName, setHomeName] = useState(initialHome.name);
@@ -321,6 +321,7 @@ export function AddEntryForm({
                             absBlock: withAbsBlock ? 'Bloc abdos inclus' : undefined,
                             totalReps: homeTotalReps > 0 ? homeTotalReps : undefined,
                             durationMinutes: homeDurationMinutes && homeDurationMinutes > 0 ? homeDurationMinutes : undefined,
+                            date: entryDate || editEntry.date,
                         });
                     } else {
                         addHomeWorkout({
@@ -357,6 +358,7 @@ export function AddEntryForm({
                             bpmAvg: runBpmAvg ? parseInt(runBpmAvg, 10) : undefined,
                             bpmMax: runBpmMax ? parseInt(runBpmMax, 10) : undefined,
                             cardiacLoad: runCardiacLoad ? parseInt(runCardiacLoad, 10) : undefined,
+                            date: entryDate || editEntry.date,
                         });
                     } else {
                         addRun({
@@ -386,6 +388,7 @@ export function AddEntryForm({
                             cardiacLoad: bsCardiacLoad ? parseInt(bsCardiacLoad, 10) : undefined,
                             bpmAvg: bsBpmAvg ? parseInt(bsBpmAvg, 10) : undefined,
                             bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
+                            date: entryDate || editEntry.date,
                         });
                     } else {
                         addBeatSaber({
@@ -410,6 +413,7 @@ export function AddEntryForm({
                         updateEntry(editEntry.id, {
                             mealName: mealTimeLabels[mealTime],
                             description: mealDescription.trim(),
+                            date: entryDate || editEntry.date,
                         });
                     } else {
                         addMeal({
@@ -439,7 +443,7 @@ export function AddEntryForm({
                     };
 
                     if (isEditMode && editEntry) {
-                        updateEntry(editEntry.id, data);
+                        updateEntry(editEntry.id, { ...data, date: entryDate || editEntry.date });
                     } else {
                         addMeasure(data, entryDate);
                     }
@@ -574,35 +578,34 @@ export function AddEntryForm({
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Option date personnalisée - seulement en mode création */}
-                {!isEditMode && (
-                    <View style={styles.customDateSection}>
-                        <TouchableOpacity
-                            style={styles.customDateToggle}
-                            onPress={() => setUseCustomDateTime(!useCustomDateTime)}
-                            activeOpacity={0.7}
-                        >
-                            <Calendar size={18} color={useCustomDateTime ? Colors.cta : Colors.muted} />
-                            <Text style={[
-                                styles.customDateToggleText,
-                                useCustomDateTime && styles.customDateToggleTextActive
-                            ]}>
-                                {useCustomDateTime ? t('addEntry.customDate') : t('addEntry.today')}
-                            </Text>
-                            <Text style={styles.customDateToggleHint}>
-                                {useCustomDateTime ? (() => {
-                                    // Parse YYYY-MM-DD and format for display
-                                    const parts = customDate.split('-');
-                                    if (parts.length === 3) {
-                                        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                                        return format(d, 'dd MMM yyyy', { locale: fr });
-                                    }
-                                    return customDate;
-                                })() : t('common.edit')}
-                            </Text>
-                        </TouchableOpacity>
-                        
-                        {useCustomDateTime && (
+                {/* Option date personnalisée */}
+                <View style={styles.customDateSection}>
+                    <TouchableOpacity
+                        style={styles.customDateToggle}
+                        onPress={() => setUseCustomDateTime(!useCustomDateTime)}
+                        activeOpacity={0.7}
+                    >
+                        <Calendar size={18} color={useCustomDateTime ? Colors.cta : Colors.muted} />
+                        <Text style={[
+                            styles.customDateToggleText,
+                            useCustomDateTime && styles.customDateToggleTextActive
+                        ]}>
+                            {useCustomDateTime ? t('addEntry.customDate') : t('addEntry.today')}
+                        </Text>
+                        <Text style={styles.customDateToggleHint}>
+                            {useCustomDateTime ? (() => {
+                                // Parse YYYY-MM-DD and format for display
+                                const parts = customDate.split('-');
+                                if (parts.length === 3) {
+                                    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                    return format(d, 'dd MMM yyyy', { locale: fr });
+                                }
+                                return customDate;
+                            })() : t('common.edit')}
+                        </Text>
+                    </TouchableOpacity>
+                    
+                    {useCustomDateTime && (
                             <View style={styles.customDateInputs}>
                                 <View style={styles.customDateRow}>
                                     <InputField
@@ -661,8 +664,7 @@ export function AddEntryForm({
                                 </View>
                             </View>
                         )}
-                    </View>
-                )}
+                </View>
 
                 {/* HOME WORKOUT - Nouveau format */}
                 {activeTab === 'home' && (
