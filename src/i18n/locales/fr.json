@@ -117,7 +117,61 @@
     "weeklyGoal": "Objectif hebdo",
     "weeklyProgress": "{{current}}/{{goal}} séances",
     "weeklyProgressRight": "{{current}} / {{goal}} séances",
-    "thisWeek": "Cette semaine"
+    "thisWeek": "Cette semaine",
+    "goalAchieved": "OBJECTIF ATTEINT !",
+    "daysActive": "Actifs",
+    "longPressHint": "Appui long pour le compteur",
+    "motivational": {
+      "morning": "Prêt pour une séance matinale ?",
+      "afternoon": "Un bon moment pour s'entraîner !",
+      "evening": "Prêt pour votre séance du jour ?"
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Bienvenue sur FitTrack",
+      "subtitle": "Ton compagnon fitness personnel pour atteindre tes objectifs",
+      "button": "Commencer"
+    },
+    "goal": {
+      "label": "Étape 1",
+      "title": "Quel est ton objectif principal ?",
+      "description": "Cela nous aidera à personnaliser ton expérience",
+      "button": "Continuer",
+      "options": {
+        "loseWeight": "Perdre du poids",
+        "buildMuscle": "Prendre du muscle",
+        "improveCardio": "Améliorer mon cardio",
+        "stayHealthy": "Rester en forme / Santé"
+      }
+    },
+    "level": {
+      "label": "Étape 2",
+      "title": "Quel est ton niveau actuel ?",
+      "description": "Pas de pression, on commence tous quelque part !",
+      "button": "Continuer",
+      "options": {
+        "beginner": "Débutant",
+        "beginnerDesc": "Je commence tout juste",
+        "intermediate": "Intermédiaire",
+        "intermediateDesc": "Je m'entraîne de temps en temps",
+        "advanced": "Avancé",
+        "advancedDesc": "Le sport c'est ma vie"
+      }
+    },
+    "frequency": {
+      "label": "Étape 3",
+      "title": "Combien de fois par semaine veux-tu t'entraîner ?",
+      "description": "Cela définira ton objectif hebdomadaire",
+      "button": "Terminer",
+      "times": "fois par semaine"
+    },
+    "ready": {
+      "title": "C'est parti ! 🚀",
+      "subtitle": "Tu es prêt à commencer ton parcours fitness. Chaque séance compte !",
+      "button": "Commencer l'aventure"
+    },
+    "skip": "Passer"
   },
   "progress": {
     "title": "Progression",
@@ -425,6 +479,8 @@
     "appearance": "Apparence",
     "fullOpacityNavbar": "Barre de navigation opaque",
     "fullOpacityNavbarDesc": "Désactiver l'effet glassmorphism",
+    "onboarding": "Revoir l'introduction",
+    "onboardingDesc": "Réafficher le tutoriel de bienvenue",
     "notifications": "Notifications",
     "comingSoon": "Prochainement",
     "privacyPolicyDesc": "RGPD et protection des données",

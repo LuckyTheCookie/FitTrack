@@ -1,302 +1,433 @@
 // ============================================================================
-// TODAY SCREEN - Écran principal
+// TODAY SCREEN - Écran principal avec design premium et cozy
 // ============================================================================
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView,
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
-import { 
-  GlassCard, 
-  ProgressRing, 
-  Button, 
-  DayBadge, 
-  WorkoutCard,
-  MonthCard,
-  SectionHeader,
-  EmptyState,
-  EntryDetailModal,
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import {
+    GlassCard,
+    ProgressRing,
+    Button,
+    DayBadge,
+    WorkoutCard,
+    MonthCard,
+    SectionHeader,
+    EmptyState,
+    EntryDetailModal,
 } from '../src/components/ui';
 import { AddEntryBottomSheet, AddEntryBottomSheetRef } from '../src/components/sheets';
 import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Gradients } from '../src/constants';
 import { getWeekDaysInfo } from '../src/utils/date';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { checkHealthConnectOnStartup } from '../src/services/healthConnectStartup';
 import type { Entry, HomeWorkoutEntry, RunEntry } from '../src/types';
 
+// Helper pour obtenir la salutation selon l'heure
+const getGreeting = (): string => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+};
+
+// Helper pour obtenir un message motivationnel selon l'heure
+const getMotivationalMessage = (t: (key: string) => string): string => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('home.motivational.morning');
+    if (hour < 18) return t('home.motivational.afternoon');
+    return t('home.motivational.evening');
+};
+
 export default function TodayScreen() {
-  const { t } = useTranslation();
-  const bottomSheetRef = useRef<AddEntryBottomSheetRef>(null);
-  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  
-  const { 
-    entries, 
-    settings,
-    deleteEntry,
-    syncGamificationAfterChange,
-    getStreak,
-    getWeekWorkoutsCount,
-    getSportEntries,
-    getMonthlyStats,
-  } = useAppStore();
+    const { t } = useTranslation();
+    const router = useRouter();
+    const bottomSheetRef = useRef<AddEntryBottomSheetRef>(null);
+    const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+    const [detailModalVisible, setDetailModalVisible] = useState(false);
 
-  const { recalculateAllQuests } = useGamificationStore();
-  const { entryToEdit, setEntryToEdit } = useEditorStore();
+    const {
+        entries,
+        settings,
+        deleteEntry,
+        syncGamificationAfterChange,
+        getStreak,
+        getWeekWorkoutsCount,
+        getSportEntries,
+        getMonthlyStats,
+    } = useAppStore();
 
-  // Health Connect startup check
-  useEffect(() => {
-    // Small delay to ensure stores are hydrated
-    const timer = setTimeout(() => {
-      checkHealthConnectOnStartup();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const { recalculateAllQuests } = useGamificationStore();
+    const { entryToEdit, setEntryToEdit } = useEditorStore();
 
-  // Listen for entry edits from other screens
-  useEffect(() => {
-    if (entryToEdit) {
-      bottomSheetRef.current?.edit(entryToEdit);
-      setEntryToEdit(null);
-    }
-  }, [entryToEdit, setEntryToEdit]);
+    // Health Connect startup check
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            checkHealthConnectOnStartup();
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
 
-  const streak = getStreak();
-  const weekWorkoutsCount = getWeekWorkoutsCount();
-  const weeklyGoal = settings.weeklyGoal;
-  const sportEntries = getSportEntries();
-  const monthlyStats = getMonthlyStats();
-  const weekDays = getWeekDaysInfo();
+    // Listen for entry edits from other screens
+    useEffect(() => {
+        if (entryToEdit) {
+            bottomSheetRef.current?.edit(entryToEdit);
+            setEntryToEdit(null);
+        }
+    }, [entryToEdit, setEntryToEdit]);
 
-  // Jours avec activité cette semaine
-  const daysWithActivity = useMemo(() => {
-    const dates = new Set<string>();
-    sportEntries.forEach(e => {
-      if (weekDays.some(d => d.date === e.date)) {
-        dates.add(e.date);
-      }
-    });
-    return dates;
-  }, [sportEntries, weekDays]);
+    const streak = getStreak();
+    const weekWorkoutsCount = getWeekWorkoutsCount();
+    const weeklyGoal = settings.weeklyGoal;
+    const sportEntries = getSportEntries();
+    const monthlyStats = getMonthlyStats();
+    const weekDays = getWeekDaysInfo();
 
-  const recentWorkouts = sportEntries.slice(0, 5);
+    // L'objectif est atteint ?
+    const goalAchieved = weekWorkoutsCount >= weeklyGoal;
 
-  const handleOpenModal = useCallback(() => {
-    bottomSheetRef.current?.present();
-  }, []);
+    // Jours avec activité cette semaine
+    const daysWithActivity = useMemo(() => {
+        const dates = new Set<string>();
+        sportEntries.forEach(e => {
+            if (weekDays.some(d => d.date === e.date)) {
+                dates.add(e.date);
+            }
+        });
+        return dates;
+    }, [sportEntries, weekDays]);
 
-  const handleEntryPress = useCallback((entry: Entry) => {
-    setSelectedEntry(entry);
-    setDetailModalVisible(true);
-  }, []);
+    const recentWorkouts = sportEntries.slice(0, 5);
 
-  const handleDeleteEntry = useCallback((id: string) => {
-    // Supprimer l'entrée
-    deleteEntry(id);
-    // Sync gamification with updated entries
-    const remainingEntries = entries.filter(e => e.id !== id);
-    syncGamificationAfterChange(remainingEntries);
-  }, [deleteEntry, entries, syncGamificationAfterChange]);
+    const handleOpenModal = useCallback(() => {
+        bottomSheetRef.current?.present();
+    }, []);
 
-  const handleEditEntry = useCallback((entry: Entry) => {
-    setDetailModalVisible(false);
-    // Petit délai pour laisser le modal se fermer
-    setTimeout(() => {
-      bottomSheetRef.current?.edit(entry);
-    }, 100);
-  }, []);
+    const handleLongPressAdd = useCallback(() => {
+        // Long press ouvre directement le rep counter
+        router.push('/rep-counter');
+    }, [router]);
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="light" />
-      
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* TOP CARD - Weekly Goal & Best Streak */}
-        <GlassCard variant="teal" style={styles.topCard}>
-          <View style={styles.topLeft}>
-            <ProgressRing current={weekWorkoutsCount} goal={weeklyGoal} />
-            <View style={styles.topMeta}>
-              <Text style={styles.kicker}>{t('home.weeklyGoal').toUpperCase()}</Text>
-              <Text style={styles.topValue}>
-                {t('home.weeklyProgress', { current: weekWorkoutsCount, goal: weeklyGoal })}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.topRight}>
-            <Text style={styles.kicker}>{t('progress.streak.record').toUpperCase()}</Text>
-            <Text style={styles.streakValue}>
-              🔥 {streak.best} {streak.best > 1 ? t('common.days') : t('common.day')}
-            </Text>
-          </View>
-        </GlassCard>
+    const handleEntryPress = useCallback((entry: Entry) => {
+        setSelectedEntry(entry);
+        setDetailModalVisible(true);
+    }, []);
 
-        {/* THIS WEEK */}
-        <GlassCard style={styles.section}>
-          <SectionHeader 
-            title={t('home.thisWeek').toUpperCase()} 
-            muted 
-            rightText={t('home.weeklyProgressRight', { current: weekWorkoutsCount, goal: weeklyGoal })}
-          />
-          <View style={styles.weekRow}>
-            {weekDays.map((day) => (
-              <DayBadge
-                key={day.date}
-                dayOfWeek={day.dayOfWeek}
-                dayNumber={day.dayNumber}
-                isToday={day.isToday}
-                isDone={daysWithActivity.has(day.date)}
-              />
-            ))}
-          </View>
-        </GlassCard>
+    const handleDeleteEntry = useCallback((id: string) => {
+        deleteEntry(id);
+        const remainingEntries = entries.filter(e => e.id !== id);
+        syncGamificationAfterChange(remainingEntries);
+    }, [deleteEntry, entries, syncGamificationAfterChange]);
 
-        {/* CTA */}
-        <Button
-          title={t('home.quickActions.addWorkout')}
-          icon="+"
-          variant="cta"
-          onPress={handleOpenModal}
-          style={styles.cta}
-        />
+    const handleEditEntry = useCallback((entry: Entry) => {
+        setDetailModalVisible(false);
+        setTimeout(() => {
+            bottomSheetRef.current?.edit(entry);
+        }, 100);
+    }, []);
 
-        {/* RECENT WORKOUTS */}
-        <View style={styles.section}>
-          <SectionHeader 
-            title={t('home.recentActivity')} 
-            actionLabel={sportEntries.length > 5 ? t('common.seeAll') : undefined}
-            /* Navigate to progress tab */
-            onAction={() => {}}
-          />
-          {recentWorkouts.length > 0 ? (
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hscroll}
+    return (
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <StatusBar style="light" />
+
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
             >
-              {recentWorkouts.map((workout) => (
-                <WorkoutCard 
-                  key={workout.id} 
-                  entry={workout} 
-                  onPress={() => handleEntryPress(workout)}
-                />
-              ))}
+                {/* HERO HEADER - Gradient avec message motivationnel */}
+                <LinearGradient
+                    colors={['rgba(11, 12, 15, 0.98)', 'rgba(11, 12, 15, 0.7)', 'transparent']}
+                    style={styles.heroHeader}
+                >
+                    <View style={styles.heroHeaderContent}>
+                        <View style={styles.heroHeaderLeft}>
+                            <Text style={styles.heroGreeting}>{getGreeting()} 👋</Text>
+                            <Text style={styles.heroMotivation}>{getMotivationalMessage(t)}</Text>
+                        </View>
+                        <View style={styles.streakBadge}>
+                            <Text style={styles.streakEmoji}>🔥</Text>
+                            <Text style={styles.streakValue}>{streak.current}</Text>
+                        </View>
+                    </View>
+                </LinearGradient>
+
+                {/* OBJECTIF HEBDO avec progression */}
+                <GlassCard style={styles.weeklyProgressCard}>
+                    <View style={styles.weeklyProgressContent}>
+                        <View style={styles.weeklyProgressLeft}>
+                            {goalAchieved ? (
+                                <View style={styles.trophyContainer}>
+                                    <Text style={styles.trophyEmoji}>🏆</Text>
+                                </View>
+                            ) : (
+                                <ProgressRing
+                                    current={weekWorkoutsCount}
+                                    goal={weeklyGoal}
+                                    size={56}
+                                    strokeWidth={5}
+                                />
+                            )}
+                            <View style={styles.weeklyProgressMeta}>
+                                <Text style={styles.weeklyProgressLabel}>
+                                    {goalAchieved ? t('home.goalAchieved', 'OBJECTIF ATTEINT !') : t('home.weeklyGoal').toUpperCase()}
+                                </Text>
+                                <Text style={styles.weeklyProgressValue}>
+                                    {t('home.weeklyProgressRight', { current: weekWorkoutsCount, goal: weeklyGoal })}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </GlassCard>
+
+                {/* CETTE SEMAINE */}
+                <GlassCard style={styles.weekSection}>
+                    <SectionHeader
+                        title={t('home.thisWeek').toUpperCase()}
+                        muted
+                        rightText={`${weekWorkoutsCount}/${weeklyGoal}`}
+                    />
+                    <View style={styles.weekRow}>
+                        {weekDays.map((day) => (
+                            <DayBadge
+                                key={day.date}
+                                dayOfWeek={day.dayOfWeek}
+                                dayNumber={day.dayNumber}
+                                isToday={day.isToday}
+                                isDone={daysWithActivity.has(day.date)}
+                            />
+                        ))}
+                    </View>
+                </GlassCard>
+
+                {/* CTA - Ajouter une séance */}
+                <Pressable
+                    onPress={handleOpenModal}
+                    onLongPress={handleLongPressAdd}
+                    delayLongPress={400}
+                >
+                    {({ pressed }) => (
+                        <LinearGradient
+                            colors={Gradients.cta as any}
+                            style={[styles.ctaButton, pressed && styles.ctaPressed]}
+                        >
+                            <Text style={styles.ctaIcon}>+</Text>
+                            <Text style={styles.ctaText}>{t('home.quickActions.addWorkout')}</Text>
+                        </LinearGradient>
+                    )}
+                </Pressable>
+
+
+                {/* ACTIVITÉ RÉCENTE */}
+                <View style={styles.section}>
+                    <SectionHeader
+                        title={t('home.recentActivity')}
+                        actionLabel={sportEntries.length > 5 ? t('common.seeAll') : undefined}
+                        onAction={() => router.push('/progress')}
+                    />
+                    {recentWorkouts.length > 0 ? (
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.hscroll}
+                        >
+                            {recentWorkouts.map((workout) => (
+                                <WorkoutCard
+                                    key={workout.id}
+                                    entry={workout}
+                                    onPress={() => handleEntryPress(workout)}
+                                />
+                            ))}
+                        </ScrollView>
+                    ) : (
+                        <EmptyState
+                            icon="💪"
+                            title={t('home.noActivity')}
+                            subtitle={t('home.noActivityHint')}
+                        />
+                    )}
+                </View>
+
+                {/* Espace pour le bottom nav */}
+                <View style={{ height: 20 }} />
             </ScrollView>
-          ) : (
-            <EmptyState 
-              icon="💪" 
-              title={t('home.noActivity')} 
-              subtitle={t('home.noActivityHint')}
+
+            {/* MODAL DÉTAILS */}
+            <EntryDetailModal
+                entry={selectedEntry}
+                visible={detailModalVisible}
+                onClose={() => setDetailModalVisible(false)}
+                onEdit={handleEditEntry}
+                onDelete={handleDeleteEntry}
             />
-          )}
-        </View>
 
-        {/* MONTHLY PROGRESS */}
-        <View style={styles.section}>
-          <SectionHeader 
-            title={t('progress.monthlyProgress')} 
-            actionLabel={t('common.seeAll')}
-            onAction={() => {/* Navigate to progress tab */}}
-          />
-          <View style={styles.monthGrid}>
-            {monthlyStats.slice(-6).map((stat) => (
-              <MonthCard
-                key={stat.month}
-                month={stat.month}
-                workoutsCount={stat.count}
-                goalProgress={stat.count / (weeklyGoal * 4)}
-              />
-            ))}
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* MODAL DÉTAILS */}
-      <EntryDetailModal
-        entry={selectedEntry}
-        visible={detailModalVisible}
-        onClose={() => setDetailModalVisible(false)}
-        onEdit={handleEditEntry}
-        onDelete={handleDeleteEntry}
-      />
-
-      {/* BOTTOM SHEET D'AJOUT */}
-      <AddEntryBottomSheet ref={bottomSheetRef} />
-    </SafeAreaView>
-  );
+            {/* BOTTOM SHEET D'AJOUT */}
+            <AddEntryBottomSheet ref={bottomSheetRef} />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: Spacing.lg,
-    paddingBottom: 100,
-  },
-  topCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  topLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  topMeta: {
-    gap: 4,
-  },
-  kicker: {
-    fontSize: FontSize.sm,
-    letterSpacing: 1.5,
-    color: 'rgba(255, 255, 255, 0.72)',
-  },
-  topValue: {
-    fontSize: FontSize.md,
-    color: Colors.text,
-    fontWeight: FontWeight.medium,
-  },
-  topRight: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  streakValue: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text,
-  },
-  section: {
-    marginTop: Spacing.lg,
-  },
-  weekRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  cta: {
-    marginTop: Spacing.lg,
-  },
-  hscroll: {
-    gap: 12,
-    paddingRight: Spacing.lg,
-  },
-  monthGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: Colors.bg,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    content: {
+        paddingHorizontal: Spacing.lg,
+        paddingBottom: 100,
+    },
+
+    // Hero Header - Gradient avec message motivationnel
+    heroHeader: {
+        marginHorizontal: -Spacing.lg,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.xxl,
+        marginBottom: Spacing.lg,
+    },
+    heroHeaderContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    heroHeaderLeft: {
+        flex: 1,
+        gap: 4,
+    },
+    heroGreeting: {
+        fontSize: FontSize.display,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        letterSpacing: -0.5,
+    },
+    heroMotivation: {
+        fontSize: FontSize.lg,
+        color: Colors.muted,
+        fontWeight: FontWeight.medium,
+        lineHeight: 22,
+    },
+    streakBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255, 107, 90, 0.15)',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 107, 90, 0.25)',
+    },
+    streakEmoji: {
+        fontSize: 18,
+    },
+    streakValue: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
+        color: Colors.accent,
+    },
+
+    // Weekly Progress Card
+    weeklyProgressCard: {
+        marginBottom: Spacing.lg,
+    },
+    weeklyProgressContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    weeklyProgressLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        flex: 1,
+    },
+    weeklyProgressMeta: {
+        gap: 2,
+    },
+    weeklyProgressLabel: {
+        fontSize: FontSize.xs,
+        letterSpacing: 1,
+        color: 'rgba(255, 255, 255, 0.70)',
+        fontWeight: FontWeight.semibold,
+    },
+    weeklyProgressValue: {
+        fontSize: FontSize.lg,
+        color: Colors.text,
+        fontWeight: FontWeight.bold,
+    },
+    trophyContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'rgba(245, 200, 66, 0.25)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: Colors.gold,
+    },
+    trophyEmoji: {
+        fontSize: 28,
+    },
+
+    // Week Section
+    weekSection: {
+        marginBottom: Spacing.lg,
+    },
+    weekRow: {
+        flexDirection: 'row',
+        gap: 6,
+    },
+
+    // CTA Button
+    ctaButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        paddingVertical: 16,
+        paddingHorizontal: 14,
+        borderRadius: BorderRadius.xl,
+        marginBottom: Spacing.lg,
+        shadowColor: '#d79686',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 15,
+        elevation: 8,
+    },
+    ctaPressed: {
+        opacity: 0.9,
+        transform: [{ scale: 0.98 }],
+    },
+    ctaIcon: {
+        fontSize: 20,
+        color: '#1b0f0c',
+        fontWeight: FontWeight.bold,
+    },
+    ctaText: {
+        color: '#1b0f0c',
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.extrabold,
+    },
+
+    // Sections
+    section: {
+        marginBottom: Spacing.lg,
+    },
+    hscroll: {
+        gap: 12,
+        paddingRight: Spacing.lg,
+    },
 });

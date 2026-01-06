@@ -126,6 +126,10 @@ export interface GeneratedWorkout {
 // Health Connect sync modes
 export type HealthConnectSyncMode = 'manual' | 'notify' | 'auto';
 
+// Onboarding responses
+export type FitnessGoal = 'loseWeight' | 'buildMuscle' | 'improveCardio' | 'stayHealthy';
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
+
 export interface UserSettings {
   weeklyGoal: number; // Nombre de séances sport par semaine (défaut: 4)
   units: {
@@ -148,6 +152,10 @@ export interface UserSettings {
   fullOpacityNavbar?: boolean; // Navbar avec opacité complète (sans glassmorphism)
   // Health Connect sync settings
   healthConnectSyncMode?: HealthConnectSyncMode; // 'manual' (default), 'notify', or 'auto'
+  // Onboarding
+  onboardingCompleted?: boolean; // Si l'onboarding a été complété
+  fitnessGoal?: FitnessGoal; // Objectif fitness choisi
+  fitnessLevel?: FitnessLevel; // Niveau fitness choisi
 }
 
 // ============================================================================

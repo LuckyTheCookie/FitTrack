@@ -117,7 +117,61 @@
     "weeklyGoal": "Weekly Goal",
     "weeklyProgress": "{{current}}/{{goal}} workouts",
     "weeklyProgressRight": "{{current}} of {{goal}}",
-    "thisWeek": "This week"
+    "thisWeek": "This week",
+    "goalAchieved": "GOAL ACHIEVED!",
+    "daysActive": "Active",
+    "longPressHint": "Long press for rep counter",
+    "motivational": {
+      "morning": "Ready for a morning workout?",
+      "afternoon": "Great time to exercise!",
+      "evening": "Ready for your session?"
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to FitTrack",
+      "subtitle": "Your personal fitness companion to achieve your goals",
+      "button": "Get Started"
+    },
+    "goal": {
+      "label": "Step 1",
+      "title": "What's your main goal?",
+      "description": "This will help us personalize your experience",
+      "button": "Continue",
+      "options": {
+        "loseWeight": "Lose weight",
+        "buildMuscle": "Build muscle",
+        "improveCardio": "Improve cardio",
+        "stayHealthy": "Stay fit / Health"
+      }
+    },
+    "level": {
+      "label": "Step 2",
+      "title": "What's your current level?",
+      "description": "No pressure, we all start somewhere!",
+      "button": "Continue",
+      "options": {
+        "beginner": "Beginner",
+        "beginnerDesc": "Just getting started",
+        "intermediate": "Intermediate",
+        "intermediateDesc": "I train occasionally",
+        "advanced": "Advanced",
+        "advancedDesc": "Sports is my life"
+      }
+    },
+    "frequency": {
+      "label": "Step 3",
+      "title": "How many times per week do you want to train?",
+      "description": "This will set your weekly goal",
+      "button": "Finish",
+      "times": "times per week"
+    },
+    "ready": {
+      "title": "Let's go! 🚀",
+      "subtitle": "You're ready to start your fitness journey. Every workout counts!",
+      "button": "Start the adventure"
+    },
+    "skip": "Skip"
   },
   "progress": {
     "title": "Progress",
@@ -302,6 +356,8 @@
     "appearance": "Appearance",
     "fullOpacityNavbar": "Opaque navigation bar",
     "fullOpacityNavbarDesc": "Disable glassmorphism effect",
+    "onboarding": "View intro again",
+    "onboardingDesc": "Show the welcome tutorial again",
     "notifications": "Notifications",
     "comingSoon": "Coming soon",
     "privacyPolicyDesc": "GDPR & data protection",

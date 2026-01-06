@@ -1,4 +1,4 @@
-import { Tabs, usePathname } from 'expo-router';
+import { Tabs, usePathname, useRouter, useRootNavigationState, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { useSettings } from '../src/stores';
 import { View, StyleSheet, Pressable } from 'react-native';
@@ -108,6 +108,11 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
         return null;
     }
 
+    // Cacher la tab bar sur l'écran onboarding
+    if (pathname === '/onboarding') {
+        return null;
+    }
+
     // Ne montrer que les onglets visibles
     const visibleRoutes = state.routes.filter((route: any) => 
         visibleTabs.some((tab: any) => tab.name === route.name)
@@ -147,6 +152,34 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
 
 export default function Layout() {
     const settings = useSettings();
+    const router = useRouter();
+    const segments = useSegments();
+    const rootNavigationState = useRootNavigationState();
+
+    // Redirect to onboarding if not completed
+    useEffect(() => {
+        // Wait for navigation to be ready and segments to be populated
+        if (!rootNavigationState?.key) return;
+        if (!segments) return;
+        
+        const isOnboardingRoute = segments[0] === 'onboarding';
+        const onboardingCompleted = settings.onboardingCompleted ?? false;
+
+        if (!onboardingCompleted && !isOnboardingRoute) {
+            // Delay navigation one tick so the root navigator has mounted
+            const timer = setTimeout(() => {
+                try {
+                    router.replace('/onboarding');
+                } catch (err) {
+                    // swallowing navigation errors that can happen during mount
+                    // they are benign and we'll try again on next effect run
+                    // eslint-disable-next-line no-console
+                    console.warn('Onboarding redirect failed:', err);
+                }
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [settings.onboardingCompleted, segments, rootNavigationState?.key]);
 
     // Filtrer les onglets visibles pour le CustomTabBar
     const visibleTabs = TAB_CONFIG.filter(tab => {

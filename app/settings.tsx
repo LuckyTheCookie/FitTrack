@@ -579,6 +579,17 @@ export default function SettingsScreen() {
             }
             delay={265}
           />
+          <SettingItem
+            icon={<Sparkles size={20} color="#fbbf24" />}
+            iconColor="#fbbf24"
+            title={t('settings.onboarding')}
+            subtitle={t('settings.onboardingDesc')}
+            onPress={() => {
+              updateSettings({ onboardingCompleted: false });
+              router.push('/onboarding');
+            }}
+            delay={268}
+          />
         </GlassCard>
 
         {/* LABS */}
