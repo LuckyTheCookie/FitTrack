@@ -38,7 +38,8 @@
     "kcal": "kcal",
     "kg": "kg",
     "skip": "Skip",
-    "minShort": "min"
+    "minShort": "min",
+    "continue": "Continue"
   },
   "tabs": {
     "home": "Home",
@@ -263,55 +264,178 @@
     "trackedSession": "Track {{exercise}}",
     "motivations": {
       "pushups": [
-        { "text": "Keep going!", "emoji": "💪" },
-        { "text": "Pecs on fire!", "emoji": "🔥" },
-        { "text": "Excellent!", "emoji": "⭐" },
-        { "text": "Power!", "emoji": "💥" },
-        { "text": "Champion!", "emoji": "🏆" },
-        { "text": "Nice work!", "emoji": "👏" },
-        { "text": "Great form!", "emoji": "⚡" },
-        { "text": "Solid!", "emoji": "🦾" },
-        { "text": "Strong!", "emoji": "💪" }
+        {
+          "text": "Keep going!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Pecs on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Power!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Champion!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Nice work!",
+          "emoji": "👏"
+        },
+        {
+          "text": "Great form!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Solid!",
+          "emoji": "🦾"
+        },
+        {
+          "text": "Strong!",
+          "emoji": "💪"
+        }
       ],
       "squats": [
-        { "text": "Legs of steel!", "emoji": "🦵" },
-        { "text": "You're doing great!", "emoji": "🔥" },
-        { "text": "Excellent squat!", "emoji": "⭐" },
-        { "text": "Power!", "emoji": "💥" },
-        { "text": "Unbelievable!", "emoji": "🚀" },
-        { "text": "Keep going!", "emoji": "💪" },
-        { "text": "Strong thighs!", "emoji": "⚡" },
-        { "text": "Top!", "emoji": "🏆" }
+        {
+          "text": "Legs of steel!",
+          "emoji": "🦵"
+        },
+        {
+          "text": "You're doing great!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Excellent squat!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Power!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Unbelievable!",
+          "emoji": "🚀"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Strong thighs!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Top!",
+          "emoji": "🏆"
+        }
       ],
       "situps": [
-        { "text": "Abs on fire!", "emoji": "🔥" },
-        { "text": "Six-pack incoming!", "emoji": "💪" },
-        { "text": "Keep going!", "emoji": "⚡" },
-        { "text": "Excellent!", "emoji": "⭐" },
-        { "text": "Strong core!", "emoji": "💥" },
-        { "text": "Nice work!", "emoji": "👏" },
-        { "text": "Power!", "emoji": "🚀" },
-        { "text": "You got this!", "emoji": "🏆" }
+        {
+          "text": "Abs on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Six-pack incoming!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Strong core!",
+          "emoji": "💥"
+        },
+        {
+          "text": "Nice work!",
+          "emoji": "👏"
+        },
+        {
+          "text": "Power!",
+          "emoji": "🚀"
+        },
+        {
+          "text": "You got this!",
+          "emoji": "🏆"
+        }
       ],
       "jumpingJacks": [
-        { "text": "Cardio on!", "emoji": "❤️" },
-        { "text": "Keep going!", "emoji": "⚡" },
-        { "text": "Excellent!", "emoji": "⭐" },
-        { "text": "Energy!", "emoji": "🔋" },
-        { "text": "You're on fire!", "emoji": "🔥" },
-        { "text": "Dynamic!", "emoji": "💫" },
-        { "text": "Super!", "emoji": "🎉" },
-        { "text": "Explosive!", "emoji": "💥" }
+        {
+          "text": "Cardio on!",
+          "emoji": "❤️"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        },
+        {
+          "text": "Energy!",
+          "emoji": "🔋"
+        },
+        {
+          "text": "You're on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Dynamic!",
+          "emoji": "💫"
+        },
+        {
+          "text": "Super!",
+          "emoji": "🎉"
+        },
+        {
+          "text": "Explosive!",
+          "emoji": "💥"
+        }
       ],
       "plank": [
-        { "text": "Hold on!", "emoji": "💪" },
-        { "text": "Keep it up!", "emoji": "🔥" },
-        { "text": "You're a machine!", "emoji": "🤖" },
-        { "text": "Breathe deep!", "emoji": "🌬️" },
-        { "text": "Core of steel!", "emoji": "⚡" },
-        { "text": "You got this!", "emoji": "🏆" },
-        { "text": "Champion mindset!", "emoji": "🧠" },
-        { "text": "Almost there!", "emoji": "💥" }
+        {
+          "text": "Hold on!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Keep it up!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "You're a machine!",
+          "emoji": "🤖"
+        },
+        {
+          "text": "Breathe deep!",
+          "emoji": "🌬️"
+        },
+        {
+          "text": "Core of steel!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "You got this!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Champion mindset!",
+          "emoji": "🧠"
+        },
+        {
+          "text": "Almost there!",
+          "emoji": "💥"
+        }
       ],
       "started": "Let's go! 💪",
       "plankSec": "{{seconds}}s - Well done!"

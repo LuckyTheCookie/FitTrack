@@ -38,7 +38,8 @@
     "kcal": "kcal",
     "kg": "kg",
     "skip": "Ignorer",
-    "minShort": "min"
+    "minShort": "min",
+    "continue": "Continuer"
   },
   "tabs": {
     "home": "Accueil",
@@ -625,36 +626,28 @@
     "you": "Toi",
     "sendEncouragement": "Envoyer un encouragement",
     "encouragementSent": "Encouragement envoyé !",
-
     "authTitle": "Connecte-toi pour accéder aux fonctions sociales",
     "authSubtitle": "Compare tes performances avec tes amis, envoie des encouragements et grimpe le classement !",
     "notConfiguredTitle": "Fonctions sociales non configurées",
     "notConfiguredSubtitle": "Ce projet est open-source. Pour activer les fonctions sociales, configurez Supabase dans le fichier .env",
     "disabledTitle": "Fonctions sociales désactivées",
     "disabledSubtitle": "Tu peux réactiver les fonctions sociales dans les paramètres.",
-
     "syncSuccess": "Tes données locales ont été envoyées au classement.",
     "syncError": "Impossible de synchroniser",
-
     "requestSent": "Demande envoyée !",
     "requestText": "Veut être ton ami",
     "searchPlaceholder": "Rechercher un utilisateur...",
-
     "pendingRequests": "{{count}} demande en attente",
     "pendingRequests_plural": "{{count}} demandes en attente",
-
     "emptyLeaderboardGlobal": "Aucun classement cette semaine",
     "emptyLeaderboardFriends": "Ajoute des amis pour voir le classement",
-
     "syncModalTitle": "Synchroniser tes données",
     "syncModalDescription": "Tes données locales seront envoyées au classement pour que tes amis puissent voir ta progression.",
     "syncModalConfirm": "Synchroniser",
     "syncModalStatLabel": "Séances cette semaine",
-
     "removeFriendConfirmTitle": "Supprimer cet ami ?",
     "removeFriendConfirmMessage": "Tu ne pourras plus voir ses statistiques et il ne pourra plus t'envoyer d'encouragements.",
     "friendRemoved": "Ami supprimé",
-
     "global": "Global",
     "results": "Résultats",
     "pendingRequestsTitle": "Demandes en attente ({{count}})",
@@ -664,7 +657,6 @@
     "noEncouragements": "Aucun encouragement",
     "noEncouragementsSubtitle": "Tes amis peuvent t'envoyer des encouragements !",
     "sync": "Synchroniser",
-
     "workouts": "Séances",
     "streak": "Streak",
     "notificationsEnableError": "Impossible d'activer les notifications",
