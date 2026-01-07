@@ -662,6 +662,147 @@
     "notificationsEnableError": "Impossible d'activer les notifications",
     "notificationsNetworkHint": "Un VPN ou bloqueur de pub peut empêcher la réception"
   },
+  "auth": {
+    "title": {
+      "login": "Bon retour !",
+      "signup": "Rejoins-nous !"
+    },
+    "subtitle": {
+      "login": "Connecte-toi pour accéder à tes stats sociales",
+      "signup": "Crée un compte pour comparer tes performances"
+    },
+    "fossNotice": {
+      "title": "Fonctionnalités limitées",
+      "text": "Cette version FOSS a été conçue pour F-Droid et ne contient pas Firebase/FCM. Les notifications push d'encouragements ne sont pas disponibles.",
+      "button": "Télécharger la version complète"
+    },
+    "form": {
+      "usernamePlaceholder": "Nom d'utilisateur",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Mot de passe",
+      "confirmPasswordPlaceholder": "Confirmer le mot de passe"
+    },
+    "buttons": {
+      "login": "Se connecter",
+      "signup": "Créer mon compte"
+    },
+    "switch": {
+      "noAccount": "Pas encore de compte ?",
+      "haveAccount": "Déjà un compte ?",
+      "linkSignup": "S'inscrire",
+      "linkLogin": "Se connecter"
+    },
+    "privacyNote": "En créant un compte, tu acceptes que tes stats de la semaine (XP, séances, streak) soient partagées avec tes amis.",
+    "errors": {
+      "emptyFields": "Veuillez remplir tous les champs",
+      "invalidEmail": "Adresse email invalide",
+      "shortPassword": "Le mot de passe doit contenir au moins 6 caractères",
+      "passwordsNotMatch": "Les mots de passe ne correspondent pas",
+      "usernameRequired": "Veuillez choisir un nom d'utilisateur",
+      "invalidUsername": "Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres, underscore)",
+      "signupSuccessTitle": "🚀 Tu es paré à l'action !",
+      "signupSuccessMessage": "Bienvenue {{username}} ! Ton compte a été créé avec succès. Prêt à défier tes amis ?"
+    }
+  },
+  "privacyPolicy": {
+    "title": "Politique de Confidentialité",
+    "intro": "FitTrack respecte ta vie privée. Cette politique explique comment nous traitons tes données selon le RGPD (Règlement Général sur la Protection des Données).",
+    "lastUpdate": "Dernière mise à jour : 1er janvier 2026",
+    "localMode": {
+      "title": "Mode Local (par défaut)",
+      "description": "Par défaut, FitTrack fonctionne en mode 100% local. Tes données restent uniquement sur ton appareil.",
+      "storedData": {
+        "sessions": "Séances d'entraînement (exercices, durées, répétitions)",
+        "runs": "Courses (distance, temps, vitesse)",
+        "meals": "Repas et notes nutritionnelles",
+        "measures": "Mensurations (poids, tour de taille, etc.)",
+        "settings": "Objectifs et paramètres personnalisés",
+        "badges": "Badges et progression gamification"
+      },
+      "highlight": "✅ Aucune donnée n'est envoyée à un serveur en mode local."
+    },
+    "foss": {
+      "title": "Version FOSS (F-Droid)",
+      "description": "Tu utilises la version FOSS de FitTrack, spécialement conçue pour respecter les directives de F-Droid.",
+      "removed": {
+        "fcm": "Firebase Cloud Messaging (FCM)",
+        "google": "Google Services / Google Play Services",
+        "expoPush": "Expo Push Notifications distantes"
+      },
+      "stillWorking": {
+        "localFeatures": "Toutes les fonctionnalités locales",
+        "social": "Fonctionnalités sociales (classement, amis)",
+        "localNotifications": "Notifications locales (rappels de streak)",
+        "supabaseSync": "Synchronisation des stats avec Supabase"
+      },
+      "note": "🌿 Cette version est 100% libre de traceurs propriétaires Google."
+    },
+    "social": {
+      "title": "Mode Social (opt-in)",
+      "description": "Si tu actives les fonctionnalités sociales, certaines données sont partagées avec notre serveur Supabase pour permettre le classement et les interactions.",
+      "syncedData": {
+        "nickname": "Pseudo public (que tu choisis)",
+        "xp": "XP total et niveau",
+        "streak": "Streak actuel et meilleur streak",
+        "weeklyCount": "Nombre de séances hebdomadaires",
+        "weeklyTotals": "Distance et durée totales hebdomadaires"
+      },
+      "accountData": {
+        "email": "Email (uniquement pour la connexion)",
+        "password": "Mot de passe (chiffré, jamais accessible)"
+      },
+      "warning": "⚠️ Le contenu détaillé de tes séances (exercices, notes, repas) n'est JAMAIS synchronisé."
+    },
+    "notifications": {
+      "title": "Notifications Push",
+      "fossNote": "🌿 Cette version FOSS ne contient pas Firebase Cloud Messaging (FCM).",
+      "fossText": "Les notifications locales (rappels de streak) fonctionnent normalement. Cependant, les notifications push à distance (encouragements d'amis, demandes d'ami) ne sont pas disponibles dans cette version.",
+      "fossInstall": "Pour bénéficier des notifications push complètes, télécharge la version standard depuis GitHub Releases.",
+      "standardText": "Les notifications push sont utilisées pour :",
+      "items": {
+        "streakReminders": "Rappels de streak (configurables)",
+        "encouragements": "Encouragements de tes amis (mode social)",
+        "friendRequests": "Demandes d'ami (mode social)"
+      },
+      "technologiesTitle": "Technologies utilisées :",
+      "technologies": {
+        "expo": "Expo Push Notifications",
+        "fcm": "Firebase Cloud Messaging (FCM)"
+      },
+      "disable": "Tu peux désactiver les notifications à tout moment dans les paramètres de ton appareil."
+    },
+    "healthConnect": {
+      "title": "Health Connect (Android)",
+      "description": "FitTrack peut importer des séances d'entraînement depuis Google Health Connect sur Android. Cette fonctionnalité est optionnelle.",
+      "data": {
+        "sessions": "Séances d'exercice (type, durée, date)",
+        "distance": "Distance parcourue",
+        "calories": "Calories brûlées",
+        "hr": "Fréquence cardiaque (si disponible)"
+      },
+      "usage": {
+        "localImport": "Import local uniquement - aucun envoi serveur",
+        "convert": "Conversion en entrées FitTrack locales",
+        "choose": "Tu choisis quelles séances importer"
+      },
+      "highlight": "✅ Les données Health Connect sont lues une seule fois et stockées localement. FitTrack n'écrit jamais dans Health Connect.",
+      "revoke": "Tu peux révoquer l'accès à tout moment dans les paramètres Health Connect de ton appareil."
+    },
+    "rights": {
+      "title": "Tes Droits (RGPD)",
+      "description": "Conformément au RGPD, tu as le droit de :",
+      "access": "Accès : Consulter toutes tes données (export JSON dans Paramètres)",
+      "rectification": "Rectification : Modifier tes informations de profil",
+      "deletion": "Suppression : Supprimer toutes tes données en un clic",
+      "portability": "Portabilité : Exporter tes données au format JSON",
+      "opposition": "Opposition : Désactiver les fonctionnalités sociales",
+      "highlight": "💡 Pour supprimer tes données en ligne, désactive les fonctionnalités sociales dans Paramètres → Social."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "Pour toute question concernant tes données personnelles, contacte-nous via les paramètres de l'application."
+    }
+  },
   "profile": {
     "title": "Profil",
     "level": "Niveau {{level}}",

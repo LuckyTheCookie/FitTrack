@@ -662,6 +662,147 @@
     "notificationsEnableError": "Unable to enable notifications",
     "notificationsNetworkHint": "A VPN or ad blocker may prevent delivery"
   },
+  "auth": {
+    "title": {
+      "login": "Welcome back!",
+      "signup": "Join us!"
+    },
+    "subtitle": {
+      "login": "Sign in to access your social stats",
+      "signup": "Create an account to compare your performance"
+    },
+    "fossNotice": {
+      "title": "Limited features",
+      "text": "This FOSS build is intended for F-Droid and does not include Firebase/FCM. Push notifications for encouragements are not available.",
+      "button": "Download the full version"
+    },
+    "form": {
+      "usernamePlaceholder": "Username",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "confirmPasswordPlaceholder": "Confirm password"
+    },
+    "buttons": {
+      "login": "Sign in",
+      "signup": "Create my account"
+    },
+    "switch": {
+      "noAccount": "No account yet?",
+      "haveAccount": "Already have an account?",
+      "linkSignup": "Sign up",
+      "linkLogin": "Sign in"
+    },
+    "privacyNote": "By creating an account you agree that your weekly stats (XP, workouts, streak) may be shared with your friends.",
+    "errors": {
+      "emptyFields": "Please fill all fields",
+      "invalidEmail": "Invalid email address",
+      "shortPassword": "Password must be at least 6 characters",
+      "passwordsNotMatch": "Passwords do not match",
+      "usernameRequired": "Please choose a username",
+      "invalidUsername": "Username must be between 3 and 20 characters (letters, numbers, underscore)",
+      "signupSuccessTitle": "🚀 You're ready to go!",
+      "signupSuccessMessage": "Welcome {{username}}! Your account was created successfully. Ready to challenge your friends?"
+    }
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "intro": "FitTrack respects your privacy. This policy explains how we handle your data in accordance with GDPR (General Data Protection Regulation).",
+    "lastUpdate": "Last updated: January 1, 2026",
+    "localMode": {
+      "title": "Local Mode (default)",
+      "description": "By default FitTrack runs 100% locally. Your data remains only on your device.",
+      "storedData": {
+        "sessions": "Workout sessions (exercises, durations, reps)",
+        "runs": "Runs (distance, time, speed)",
+        "meals": "Meals and nutrition notes",
+        "measures": "Measurements (weight, waist, etc.)",
+        "settings": "Goals and custom settings",
+        "badges": "Badges and gamification progress"
+      },
+      "highlight": "✅ No data is sent to a server in local mode."
+    },
+    "foss": {
+      "title": "FOSS Edition (F-Droid)",
+      "description": "You are using the FOSS edition of FitTrack, built to comply with F-Droid guidelines.",
+      "removed": {
+        "fcm": "Firebase Cloud Messaging (FCM)",
+        "google": "Google Services / Google Play Services",
+        "expoPush": "Expo remote push notifications"
+      },
+      "stillWorking": {
+        "localFeatures": "All local features",
+        "social": "Social features (leaderboard, friends)",
+        "localNotifications": "Local notifications (streak reminders)",
+        "supabaseSync": "Stats sync with Supabase"
+      },
+      "note": "🌿 This edition is 100% free of Google proprietary trackers."
+    },
+    "social": {
+      "title": "Social Mode (opt-in)",
+      "description": "If you enable social features, some data is shared with our Supabase server to enable leaderboards and interactions.",
+      "syncedData": {
+        "nickname": "Public nickname (you choose)",
+        "xp": "Total XP and level",
+        "streak": "Current streak and best streak",
+        "weeklyCount": "Weekly workouts count",
+        "weeklyTotals": "Weekly distance and duration totals"
+      },
+      "accountData": {
+        "email": "Email (for sign-in only)",
+        "password": "Password (encrypted, never accessible)"
+      },
+      "warning": "⚠️ The detailed content of your sessions (exercises, notes, meals) is NEVER synced."
+    },
+    "notifications": {
+      "title": "Push Notifications",
+      "fossNote": "🌿 This FOSS version does not include Firebase Cloud Messaging (FCM).",
+      "fossText": "Local reminders work normally. However, remote push notifications (friend encouragements, friend requests) are not available in this build.",
+      "fossInstall": "To get full push notifications, download the standard build from GitHub Releases.",
+      "standardText": "Push notifications are used for:",
+      "items": {
+        "streakReminders": "Streak reminders (configurable)",
+        "encouragements": "Friend encouragements (social mode)",
+        "friendRequests": "Friend requests (social mode)"
+      },
+      "technologiesTitle": "Technologies used:",
+      "technologies": {
+        "expo": "Expo Push Notifications",
+        "fcm": "Firebase Cloud Messaging (FCM)"
+      },
+      "disable": "You can disable notifications at any time in your device settings."
+    },
+    "healthConnect": {
+      "title": "Health Connect (Android)",
+      "description": "FitTrack can import workouts from Google Health Connect on Android. This feature is optional.",
+      "data": {
+        "sessions": "Workout sessions (type, duration, date)",
+        "distance": "Distance covered",
+        "calories": "Calories burned",
+        "hr": "Heart rate (if available)"
+      },
+      "usage": {
+        "localImport": "Local import only - no server upload",
+        "convert": "Converted into local FitTrack entries",
+        "choose": "You choose which sessions to import"
+      },
+      "highlight": "✅ Health Connect data is read once and stored locally. FitTrack never writes to Health Connect.",
+      "revoke": "You can revoke access at any time in your device's Health Connect settings."
+    },
+    "rights": {
+      "title": "Your Rights (GDPR)",
+      "description": "Under GDPR you have the right to:",
+      "access": "Access: View all your data (JSON export in Settings)",
+      "rectification": "Rectification: Edit your profile information",
+      "deletion": "Deletion: Delete all your data with one click",
+      "portability": "Portability: Export your data as JSON",
+      "opposition": "Objection: Disable social features",
+      "highlight": "💡 To delete your online data, disable social features in Settings → Social."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "For questions regarding your personal data, contact us via the app settings."
+    }
+  },
   "profile": {
     "title": "Profile",
     "level": "Level {{level}}",
