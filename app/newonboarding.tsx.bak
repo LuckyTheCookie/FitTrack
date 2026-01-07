@@ -477,3 +477,494 @@ const styles = StyleSheet.create({
   // Ready
   checkCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(34, 197, 94, 0.1)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: THEME.success },
 });
+
+
+
+
+
+///////
+
+// ============================================================================
+
+// ============================================================================
+// ONBOARDING SCREEN - Hybrid Master Version
+// ============================================================================
+
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  Image,
+  TouchableOpacity,
+  Pressable,
+  ScrollView,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  FadeInDown,
+  FadeInRight,
+  ZoomIn,
+  Layout,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+
+// Imports de ton projet
+import { useAppStore } from '../src/stores';
+import type { FitnessGoal, FitnessLevel } from '../src/types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// --- THEME ---
+const THEME = {
+  primary: '#CEFF00', // Vert Acide (Touch 2026)
+  cta: '#CEFF00', // Pour matcher l'ancien code si besoin
+  bg: '#050505',
+  text: '#FFFFFF',
+  muted: '#9ca3af',
+  cardBgV1: 'rgba(255,255,255,0.05)',
+  success: '#22c55e',
+};
+
+// --- DATA ---
+
+const GOAL_OPTIONS = [
+  { key: 'loseWeight', emoji: '🔥', title: 'Perdre du poids', desc: 'Brûler du gras & s\'affiner' },
+  { key: 'buildMuscle', emoji: '💪', title: 'Prendre du muscle', desc: 'Gagner en force & volume' },
+  { key: 'improveCardio', emoji: '🏃', title: 'Améliorer le cardio', desc: 'Endurance & souffle' },
+  { key: 'stayHealthy', emoji: '🧘', title: 'Rester en forme', desc: 'Santé & bien-être quotidien' },
+];
+
+const LEVEL_OPTIONS = [
+  { key: 'beginner', emoji: '🌱', title: 'Débutant', desc: 'Je commence tout juste', color: '#A3FF4B' },
+  { key: 'intermediate', emoji: '⚡', title: 'Intermédiaire', desc: 'Je m\'entraîne parfois', color: '#4BA3FF' },
+  { key: 'advanced', emoji: '🦁', title: 'Avancé', desc: 'Je suis une machine', color: '#FF4B8B' },
+];
+
+// --- COMPONENTS ---
+
+// 1. Bouton "Glass" (On garde celui-ci car il est plus quali que le V1 tout en restant simple)
+const GlassButton = ({ onPress, title, disabled, icon, fullWidth = false, variant = 'primary' }: any) => {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+    if (onPress) onPress();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+      style={[{ opacity: disabled ? 0.5 : 1 }, fullWidth && { width: '100%' }]}
+    >
+      <Animated.View style={[styles.glassButtonContainer, animatedStyle]}>
+        <LinearGradient
+          colors={variant === 'primary' ? [THEME.primary, '#b8e600'] : ['#333', '#222']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={styles.glassButtonGradient}
+        >
+          <Text style={[styles.glassButtonText, { color: variant === 'primary' ? '#000' : '#FFF' }]}>{title}</Text>
+          {icon && <Text style={[styles.glassButtonIcon, { color: variant === 'primary' ? '#000' : '#FFF' }]}>{icon}</Text>}
+        </LinearGradient>
+      </Animated.View>
+    </Pressable>
+  );
+};
+
+// 2. Barre de progression Segmentée (La nouvelle version que tu as aimée)
+const SegmentedProgress = ({ current, total }: { current: number; total: number }) => {
+  return (
+    <View style={styles.progressContainer}>
+      {Array.from({ length: total }).map((_, i) => {
+        const isActive = i <= current;
+        return (
+          <View key={i} style={styles.progressSegmentBg}>
+             <Animated.View 
+               style={[
+                 styles.progressSegmentFill, 
+                 { width: isActive ? '100%' : '0%', backgroundColor: i === current ? THEME.primary : '#FFF' }
+               ]} 
+               layout={Layout.springify()}
+             />
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+// --- MAIN SCREEN ---
+
+export default function OnboardingScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { updateSettings, updateWeeklyGoal } = useAppStore();
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedGoal, setSelectedGoal] = useState<FitnessGoal | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<FitnessLevel | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState(3);
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setCurrentStep(p => p + 1);
+  };
+  
+  const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCurrentStep(p => Math.max(0, p - 1));
+  };
+
+  const handleComplete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    updateSettings({
+      onboardingCompleted: true,
+      fitnessGoal: selectedGoal || undefined,
+      fitnessLevel: selectedLevel || undefined,
+    });
+    updateWeeklyGoal(weeklyGoal);
+    router.replace('/');
+  };
+
+  const handleSkip = () => {
+    updateSettings({ onboardingCompleted: true });
+    router.replace('/');
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      
+      {/* Background Global */}
+      <View style={StyleSheet.absoluteFill}>
+        <LinearGradient
+            colors={[THEME.bg, '#1a1f25', '#000000']}
+            style={StyleSheet.absoluteFill}
+        />
+        {/* On peut remettre la photo en fond flou très léger si on veut, mais le gradient est plus propre pour les étapes */}
+      </View>
+
+      {/* Header Navigation (Sauf Welcome & Ready) */}
+      {currentStep > 0 && currentStep < 4 && (
+        <SafeAreaView edges={['top']} style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.navBtn}>
+            <Text style={styles.navIcon}>←</Text>
+          </TouchableOpacity>
+          <SegmentedProgress current={currentStep - 1} total={3} />
+          <TouchableOpacity onPress={handleSkip} style={styles.navBtn}>
+             <Text style={styles.skipText}>{t('common.skip') || 'Passer'}</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      )}
+
+      {/* Contenu */}
+      <View style={styles.contentContainer}>
+        {currentStep === 0 && <WelcomeStepOldStyle onNext={handleNext} />}
+        {currentStep === 1 && <GoalStepOldCards selected={selectedGoal} onSelect={setSelectedGoal} />}
+        {currentStep === 2 && <LevelStepNewStyle selected={selectedLevel} onSelect={setSelectedLevel} />}
+        {currentStep === 3 && <FrequencyStepNewStyle value={weeklyGoal} onChange={setWeeklyGoal} />}
+        {currentStep === 4 && <ReadyStep onComplete={handleComplete} />}
+      </View>
+
+      {/* Footer Flottant (Sauf Welcome & Ready) */}
+      {currentStep > 0 && currentStep < 4 && (
+        <Animated.View entering={FadeInDown} style={styles.footerContainer}>
+          <BlurView intensity={30} tint="dark" style={styles.footerBlur}>
+            <GlassButton 
+              title={t('common.continue') || "Continuer"}
+              icon="➜"
+              onPress={handleNext}
+              fullWidth
+              disabled={(currentStep === 1 && !selectedGoal) || (currentStep === 2 && !selectedLevel)}
+            />
+          </BlurView>
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
+// ============================================================================
+// STEP COMPONENTS
+// ============================================================================
+
+// --- STEP 0: WELCOME (RETOUR AU STYLE V1) ---
+// Photo plein écran, Badge encadré, Textes originaux
+const WelcomeStepOldStyle = ({ onNext }: { onNext: () => void }) => (
+  <View style={styles.fullScreen}>
+    <Image 
+      source={require('../assets/onboarding.jpg')} // Retour de ton image locale
+      style={StyleSheet.absoluteFillObject}
+      resizeMode="cover"
+    />
+    <LinearGradient
+      colors={['transparent', 'rgba(0,0,0,0.6)', '#000000']}
+      locations={[0, 0.4, 1]}
+      style={StyleSheet.absoluteFillObject}
+    />
+    
+    <SafeAreaView edges={['bottom']} style={styles.welcomeContent}>
+      <Animated.View entering={FadeInDown.delay(300).springify()}>
+        <View style={styles.welcomeTagV1}>
+          <Text style={styles.welcomeTagTextV1}>FITNESS APP 2026</Text>
+        </View>
+        <Text style={styles.welcomeTitleV1}>Transforme{"\n"}ton corps &{"\n"}ton esprit.</Text>
+        <Text style={styles.welcomeSubtitleV1}>
+          L'outil ultime pour suivre tes progrès, rester motivé et atteindre tes objectifs.
+        </Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.welcomeAction}>
+        <GlassButton title="Commencer l'aventure" onPress={onNext} icon="➜" fullWidth />
+      </Animated.View>
+    </SafeAreaView>
+  </View>
+);
+
+// --- STEP 1: GOALS (RETOUR AU STYLE CARTES V1) ---
+// Cartes carrées, Checkmark cercle, Layout original
+const GoalStepOldCards = ({ selected, onSelect }: any) => (
+  <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPad}>
+    <Animated.View entering={FadeInDown.delay(100)}>
+      <Text style={styles.stepTitle}>Quel est ton{'\n'}objectif principal ?</Text>
+      <Text style={styles.stepSubtitle}>Nous adapterons ton expérience en fonction.</Text>
+    </Animated.View>
+
+    <View style={styles.gridContainer}>
+      {GOAL_OPTIONS.map((option, idx) => {
+        const isSelected = selected === option.key;
+        return (
+          <Animated.View key={option.key} entering={FadeInDown.delay(200 + idx * 50).springify()} style={styles.gridItemWrapper}>
+            <Pressable
+              onPress={() => { Haptics.selectionAsync(); onSelect(option.key); }}
+              style={[styles.cardV1, isSelected && styles.cardSelectedV1]}
+            >
+              <Text style={styles.cardEmojiV1}>{option.emoji}</Text>
+              <Text style={[styles.cardTitleV1, isSelected && styles.textSelectedV1]}>{option.title}</Text>
+              
+              {/* Le retour du Checkmark Circle V1 */}
+              {isSelected && (
+                <Animated.View entering={ZoomIn} style={styles.checkCircleV1}>
+                  <Text style={styles.checkIconV1}>✓</Text>
+                </Animated.View>
+              )}
+            </Pressable>
+          </Animated.View>
+        );
+      })}
+    </View>
+  </ScrollView>
+);
+
+// --- STEP 2: LEVELS (NOUVEAU STYLE LISTE V2) ---
+// Tu aimais bien la liste "mieux" faite, donc on garde la V2 ici
+const LevelStepNewStyle = ({ selected, onSelect }: any) => (
+  <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPad}>
+    <Animated.View entering={FadeInDown.delay(100)}>
+      <Text style={styles.stepTitle}>Ton niveau{'\n'}actuel ?</Text>
+      <Text style={styles.stepSubtitle}>Sois honnête, on ne juge pas ici !</Text>
+    </Animated.View>
+
+    <View style={styles.listContainer}>
+      {LEVEL_OPTIONS.map((option, idx) => {
+        const isSelected = selected === option.key;
+        // Animation de bordure subtile
+        const animatedStyle = useAnimatedStyle(() => ({
+          borderColor: withTiming(isSelected ? option.color : 'rgba(255,255,255,0.05)'),
+          backgroundColor: withTiming(isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)'),
+        }));
+
+        return (
+          <Animated.View key={option.key} entering={FadeInRight.delay(200 + idx * 100).springify()}>
+            <Pressable onPress={() => { Haptics.selectionAsync(); onSelect(option.key); }}>
+              <Animated.View style={[styles.listCardV2, animatedStyle]}>
+                <View style={[styles.listIconBgV2, { backgroundColor: isSelected ? option.color : 'rgba(255,255,255,0.05)' }]}>
+                  <Text style={{ fontSize: 24 }}>{option.emoji}</Text>
+                </View>
+                <View style={styles.listContent}>
+                  <Text style={[styles.listTitleV2, isSelected && { color: option.color }]}>{option.title}</Text>
+                  <Text style={styles.listDescV2}>{option.desc}</Text>
+                </View>
+                <View style={[styles.radioCircleV2, isSelected && { backgroundColor: option.color, borderColor: option.color }]} />
+              </Animated.View>
+            </Pressable>
+          </Animated.View>
+        );
+      })}
+    </View>
+  </ScrollView>
+);
+
+// --- STEP 3: FREQUENCY (NOUVEAU STYLE JAUGE V2) ---
+// Tu aimais l'interactivité V2
+const FrequencyStepNewStyle = ({ value, onChange }: any) => (
+  <View style={[styles.centerContent, { paddingHorizontal: 20 }]}>
+    <Animated.View entering={FadeInDown.delay(100)} style={{ alignItems: 'center' }}>
+      <Text style={[styles.stepTitle, { textAlign: 'center' }]}>Objectif{'\n'}Hebdomadaire</Text>
+      <Text style={[styles.stepSubtitle, { textAlign: 'center' }]}>La régularité bat l'intensité.</Text>
+    </Animated.View>
+
+    <View style={{ height: 250, justifyContent: 'center', alignItems: 'center', width: '100%', flexDirection: 'row', gap: 10 }}>
+       {[1, 2, 3, 4, 5, 6, 7].map((num) => {
+          const isActive = num <= value;
+          const isSelected = num === value;
+          return (
+            <Pressable 
+              key={num} 
+              onPress={() => { Haptics.selectionAsync(); onChange(num); }}
+              style={{ alignItems: 'center', gap: 10 }}
+            >
+              <Animated.View 
+                style={{ 
+                  width: 30,
+                  height: 40 + (num * 15), 
+                  borderRadius: 15,
+                  backgroundColor: isActive ? (isSelected ? THEME.primary : '#FFF') : '#333',
+                }} 
+                layout={Layout.springify()}
+              />
+              <Text style={{ color: isActive ? '#FFF' : '#555', fontWeight: 'bold' }}>{num}</Text>
+            </Pressable>
+          )
+       })}
+    </View>
+    
+    <Animated.View entering={ZoomIn.springify()} key={value} style={styles.freqLabelBox}>
+      <Text style={styles.freqLabelText}>
+        {value <= 2 ? "DÉPART DOUX 🌱" : value <= 4 ? "MODE SÉRIEUX 🔥" : "WARRIOR 🦁"}
+      </Text>
+    </Animated.View>
+  </View>
+);
+
+// --- STEP 4: READY ---
+const ReadyStep = ({ onComplete }: any) => (
+  <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 30 }]}>
+    <Animated.View entering={ZoomIn.delay(200)} style={styles.successIconV2}>
+      <Text style={{ fontSize: 60 }}>🚀</Text>
+    </Animated.View>
+    <Text style={[styles.stepTitle, { textAlign: 'center', marginTop: 30 }]}>Prêt à décoller ?</Text>
+    <Text style={[styles.stepSubtitle, { textAlign: 'center' }]}>
+      Ton programme est prêt. C'est l'heure de briller.
+    </Text>
+    <View style={{ marginTop: 50, width: '100%' }}>
+      <GlassButton title="Let's Go !" onPress={onComplete} fullWidth icon="👊" />
+    </View>
+  </SafeAreaView>
+);
+
+// ============================================================================
+// STYLES MIXED (V1 + V2)
+// ============================================================================
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: THEME.bg },
+  fullScreen: { flex: 1 },
+  contentContainer: { flex: 1 },
+  scrollPad: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 120 },
+  centerContent: { flex: 1, justifyContent: 'center' },
+
+  // Typography Generals
+  stepTitle: { fontSize: 32, fontWeight: 'bold', color: '#FFF', marginBottom: 8, lineHeight: 40 },
+  stepSubtitle: { fontSize: 16, color: THEME.muted, marginBottom: 32 },
+
+  // Header & Nav
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 10, height: 60 },
+  navBtn: { width: 50, alignItems: 'center' },
+  navIcon: { fontSize: 24, color: '#FFF' },
+  skipText: { color: THEME.muted, fontSize: 14, fontWeight: '600' },
+
+  // Progress Bar V2
+  progressContainer: { flex: 1, flexDirection: 'row', gap: 6, marginHorizontal: 10 },
+  progressSegmentBg: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' },
+  progressSegmentFill: { height: '100%', borderRadius: 2 },
+
+  // --- STYLES V1 (WELCOME) ---
+  welcomeContent: { flex: 1, padding: 24, justifyContent: 'flex-end', paddingBottom: 40 },
+  welcomeTagV1: { 
+    backgroundColor: 'rgba(255,255,255,0.15)', 
+    paddingHorizontal: 12, paddingVertical: 6, 
+    borderRadius: 8, alignSelf: 'flex-start', marginBottom: 16,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)'
+  },
+  welcomeTagTextV1: { color: '#fff', fontWeight: 'bold', fontSize: 10, letterSpacing: 1 },
+  welcomeTitleV1: { fontSize: 48, fontWeight: '900', color: '#fff', lineHeight: 52, marginBottom: 16 },
+  welcomeSubtitleV1: { fontSize: 16, color: 'rgba(255,255,255,0.8)', lineHeight: 24, marginBottom: 40 },
+  welcomeAction: { marginBottom: 20 },
+
+  // --- STYLES V1 (GOAL CARDS) ---
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  gridItemWrapper: { width: (SCREEN_WIDTH - 48 - 12) / 2 },
+  cardV1: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 24, // un peu plus arrondi que V1 pure pour matcher 2026
+    padding: 20,
+    height: 160,
+    justifyContent: 'space-between',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  cardSelectedV1: {
+    borderColor: THEME.cta,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  cardEmojiV1: { fontSize: 32 },
+  cardTitleV1: { fontSize: 16, fontWeight: 'bold', color: '#FFF' },
+  textSelectedV1: { color: THEME.cta },
+  checkCircleV1: { 
+    position: 'absolute', top: 12, right: 12, 
+    width: 22, height: 22, borderRadius: 11, 
+    backgroundColor: THEME.cta, justifyContent: 'center', alignItems: 'center' 
+  },
+  checkIconV1: { color: '#000', fontSize: 12, fontWeight: 'bold' },
+
+  // --- STYLES V2 (LEVEL LIST) ---
+  listContainer: { gap: 12 },
+  listCardV2: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 24, borderWidth: 1, gap: 16 },
+  listIconBgV2: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+  listContent: { flex: 1 },
+  listTitleV2: { fontSize: 18, fontWeight: 'bold', color: '#FFF', marginBottom: 2 },
+  listDescV2: { fontSize: 14, color: THEME.muted },
+  radioCircleV2: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: THEME.muted },
+
+  // --- STYLES V2 (FREQUENCY) ---
+  freqLabelBox: { padding: 12, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginTop: 20 },
+  freqLabelText: { color: THEME.cta, fontWeight: 'bold', letterSpacing: 1 },
+
+  // Footer & Common
+  footerContainer: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  footerBlur: { padding: 24, paddingBottom: 40 },
+  
+  // Button Styles (Glass)
+  glassButtonContainer: { borderRadius: 18, overflow: 'hidden' },
+  glassButtonGradient: { paddingVertical: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  glassButtonText: { fontSize: 18, fontWeight: 'bold' },
+  glassButtonIcon: { fontSize: 18, fontWeight: 'bold' },
+
+  // Ready Styles
+  successIconV2: { 
+    width: 120, height: 120, borderRadius: 60, 
+    backgroundColor: 'rgba(255,255,255,0.05)', 
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+  },
+});
