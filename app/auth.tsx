@@ -33,6 +33,7 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../src/components/ui';
 import { useSocialStore } from '../src/stores';
+import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { BuildConfig } from '../src/config';
 
@@ -49,6 +50,8 @@ export default function AuthScreen() {
 
     const { signIn, signUp } = useSocialStore();
 
+    const { t } = useTranslation();
+
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
@@ -62,35 +65,35 @@ export default function AuthScreen() {
     const handleSubmit = async () => {
         // Validation
         if (!email || !password) {
-            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+            Alert.alert(t('common.error'), t('auth.errors.emptyFields'));
             return;
         }
 
         if (!validateEmail(email)) {
-            Alert.alert('Erreur', 'Adresse email invalide');
+            Alert.alert(t('common.error'), t('auth.errors.invalidEmail'));
             return;
         }
 
         if (password.length < 6) {
-            Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
+            Alert.alert(t('common.error'), t('auth.errors.shortPassword'));
             return;
         }
 
         if (mode === 'signup') {
             if (password !== confirmPassword) {
-                Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+                Alert.alert(t('common.error'), t('auth.errors.passwordsNotMatch'));
                 return;
             }
 
             if (!username) {
-                Alert.alert('Erreur', 'Veuillez choisir un nom d\'utilisateur');
+                Alert.alert(t('common.error'), t('auth.errors.usernameRequired'));
                 return;
             }
 
             if (!validateUsername(username)) {
                 Alert.alert(
-                    'Erreur', 
-                    'Le nom d\'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres, underscore)'
+                    t('common.error'), 
+                    t('auth.errors.invalidUsername')
                 );
                 return;
             }
@@ -105,9 +108,9 @@ export default function AuthScreen() {
             } else {
                 await signUp(email, password, username);
                 Alert.alert(
-                    '🚀 Tu es paré à l\'action !',
-                    `Bienvenue ${username} ! Ton compte a été créé avec succès. Prêt à défier tes amis ?`,
-                    [{ text: 'C\'est parti !', onPress: () => router.back() }]
+                    t('auth.signupSuccessTitle'),
+                    t('auth.signupSuccessMessage', { username }),
+                    [{ text: t('common.ok'), onPress: () => router.back() }]
                 );
             }
         } catch (error: any) {
@@ -148,14 +151,11 @@ export default function AuthScreen() {
                         >
                             <Dumbbell size={40} color="#fff" />
                         </LinearGradient>
-                        <Text style={styles.title}>
-                            {mode === 'login' ? 'Bon retour !' : 'Rejoins-nous !'}
+                            <Text style={styles.title}>
+                            {mode === 'login' ? t('auth.title.login') : t('auth.title.signup')}
                         </Text>
                         <Text style={styles.subtitle}>
-                            {mode === 'login' 
-                                ? 'Connecte-toi pour accéder à tes stats sociales'
-                                : 'Crée un compte pour comparer tes performances'
-                            }
+                            {mode === 'login' ? t('auth.subtitle.login') : t('auth.subtitle.signup')}
                         </Text>
                     </Animated.View>
 
@@ -166,19 +166,18 @@ export default function AuthScreen() {
                                 <View style={styles.fossNoticeHeader}>
                                     <AlertTriangle size={20} color="#fbbf24" />
                                     <Text style={styles.fossNoticeTitle}>
-                                        Fonctionnalités limitées
+                                        {t('auth.fossNotice.title')}
                                     </Text>
                                 </View>
                                 <Text style={styles.fossNoticeText}>
-                                    Cette version FOSS a été conçue pour F-Droid et ne contient pas 
-                                    Firebase/FCM. Les notifications push d'encouragements ne sont pas disponibles.
+                                    {t('auth.fossNotice.text')}
                                 </Text>
                                 <TouchableOpacity 
                                     style={styles.fossNoticeButton}
                                     onPress={() => Linking.openURL(BuildConfig.githubReleasesUrl)}
                                 >
                                     <Text style={styles.fossNoticeButtonText}>
-                                        Télécharger la version complète
+                                        {t('auth.fossNotice.button')}
                                     </Text>
                                     <ExternalLink size={14} color={Colors.cta} />
                                 </TouchableOpacity>
@@ -197,7 +196,7 @@ export default function AuthScreen() {
                                 <User size={20} color={Colors.muted} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Nom d'utilisateur"
+                                    placeholder={t('auth.form.usernamePlaceholder')}
                                     placeholderTextColor={Colors.muted}
                                     value={username}
                                     onChangeText={setUsername}
@@ -212,7 +211,7 @@ export default function AuthScreen() {
                             <Mail size={20} color={Colors.muted} style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="Email"
+                                placeholder={t('auth.form.emailPlaceholder')}
                                 placeholderTextColor={Colors.muted}
                                 value={email}
                                 onChangeText={setEmail}
@@ -227,7 +226,7 @@ export default function AuthScreen() {
                             <Lock size={20} color={Colors.muted} style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="Mot de passe"
+                                placeholder={t('auth.form.passwordPlaceholder')}
                                 placeholderTextColor={Colors.muted}
                                 value={password}
                                 onChangeText={setPassword}
@@ -250,7 +249,7 @@ export default function AuthScreen() {
                                 <Lock size={20} color={Colors.muted} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Confirmer le mot de passe"
+                                    placeholder={t('auth.form.confirmPasswordPlaceholder')}
                                     placeholderTextColor={Colors.muted}
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
@@ -269,7 +268,7 @@ export default function AuthScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.submitButtonText}>
-                                    {mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+                                    {mode === 'login' ? t('auth.buttons.login') : t('auth.buttons.signup')}
                                 </Text>
                             )}
                         </TouchableOpacity>
@@ -277,14 +276,11 @@ export default function AuthScreen() {
                         {/* Switch mode */}
                         <View style={styles.switchContainer}>
                             <Text style={styles.switchText}>
-                                {mode === 'login' 
-                                    ? 'Pas encore de compte ?' 
-                                    : 'Déjà un compte ?'
-                                }
+                                {mode === 'login' ? t('auth.switch.noAccount') : t('auth.switch.haveAccount')}
                             </Text>
                             <TouchableOpacity onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
                                 <Text style={styles.switchLink}>
-                                    {mode === 'login' ? 'S\'inscrire' : 'Se connecter'}
+                                    {mode === 'login' ? t('auth.switch.linkSignup') : t('auth.switch.linkLogin')}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -293,7 +289,7 @@ export default function AuthScreen() {
                     {/* Privacy note */}
                     <Animated.View entering={FadeIn.delay(400)}>
                         <Text style={styles.privacyNote}>
-                            En créant un compte, tu acceptes que tes stats de la semaine (XP, séances, streak) soient partagées avec tes amis.
+                            {t('auth.privacyNote')}
                         </Text>
                     </Animated.View>
                 </ScrollView>

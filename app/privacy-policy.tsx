@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { ArrowLeft, Shield, Lock, Server, Bell, Trash2, Heart, Leaf } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { GlassCard } from '../src/components/ui';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { BuildConfig } from '../src/config';
@@ -59,6 +60,8 @@ function BulletPoint({ children }: { children: React.ReactNode }) {
 }
 
 export default function PrivacyPolicyScreen() {
+    const { t } = useTranslation();
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header */}
@@ -70,7 +73,7 @@ export default function PrivacyPolicyScreen() {
                 >
                     <ArrowLeft size={24} color={Colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.title}>Politique de Confidentialité</Text>
+                <Text style={styles.title}>{t('privacyPolicy.title')}</Text>
                 <View style={styles.headerIcon}>
                     <Shield size={24} color={Colors.cta} />
                 </View>
@@ -83,100 +86,85 @@ export default function PrivacyPolicyScreen() {
             >
                 {/* Introduction */}
                 <Animated.View entering={FadeInDown.delay(100).springify()}>
-                    <Text style={styles.intro}>
-                        FitTrack respecte ta vie privée. Cette politique explique comment nous 
-                        traitons tes données selon le RGPD (Règlement Général sur la Protection des Données).
-                    </Text>
-                    <Text style={styles.lastUpdate}>
-                        Dernière mise à jour : 1er janvier 2026
-                    </Text>
-                </Animated.View>
+                    <Text style={styles.intro}>{t('privacyPolicy.intro')}</Text>
+                    <Text style={styles.lastUpdate}>{t('privacyPolicy.lastUpdate')}</Text>
+                </Animated.View> 
 
                 {/* Mode Local */}
                 <PolicySection 
-                    title="Mode Local (par défaut)" 
+                    title={t('privacyPolicy.localMode.title')} 
                     icon={<Lock size={20} color="#4ade80" />}
                     iconColor="#4ade80"
                     delay={200}
                 >
-                    <Text style={styles.paragraph}>
-                        Par défaut, FitTrack fonctionne en mode 100% local. Tes données restent 
-                        uniquement sur ton appareil.
-                    </Text>
-                    <Text style={styles.subheading}>Données stockées localement :</Text>
-                    <BulletPoint>Séances d'entraînement (exercices, durées, répétitions)</BulletPoint>
-                    <BulletPoint>Courses (distance, temps, vitesse)</BulletPoint>
-                    <BulletPoint>Repas et notes nutritionnelles</BulletPoint>
-                    <BulletPoint>Mensurations (poids, tour de taille, etc.)</BulletPoint>
-                    <BulletPoint>Objectifs et paramètres personnalisés</BulletPoint>
-                    <BulletPoint>Badges et progression gamification</BulletPoint>
+                    <Text style={styles.paragraph}>{t('privacyPolicy.localMode.description')}</Text>
+                    <Text style={styles.subheading}>{t('privacyPolicy.localMode.storedDataTitle' , { defaultValue: 'Données stockées localement :' })}</Text>
+                    <BulletPoint>{t('privacyPolicy.localMode.storedData.sessions')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.localMode.storedData.runs')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.localMode.storedData.meals')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.localMode.storedData.measures')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.localMode.storedData.settings')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.localMode.storedData.badges')}</BulletPoint>
                     
                     <Text style={[styles.paragraph, styles.highlight]}>
-                        ✅ Aucune donnée n'est envoyée à un serveur en mode local.
+                        {t('privacyPolicy.localMode.highlight')}
                     </Text>
                 </PolicySection>
 
                 {/* FOSS Edition Notice */}
                 {BuildConfig.isFoss && (
                     <PolicySection 
-                        title="Version FOSS (F-Droid)" 
+                        title={t('privacyPolicy.foss.title')} 
                         icon={<Leaf size={20} color="#4ade80" />}
                         iconColor="#4ade80"
                         delay={250}
                     >
-                        <Text style={styles.paragraph}>
-                            Tu utilises la version FOSS de FitTrack, spécialement conçue pour 
-                            respecter les directives de F-Droid.
-                        </Text>
-                        <Text style={styles.subheading}>Ce qui a été retiré :</Text>
-                        <BulletPoint>Firebase Cloud Messaging (FCM)</BulletPoint>
-                        <BulletPoint>Google Services / Google Play Services</BulletPoint>
-                        <BulletPoint>Expo Push Notifications distantes</BulletPoint>
+                        <Text style={styles.paragraph}>{t('privacyPolicy.foss.description')}</Text>
+                        <Text style={styles.subheading}>{t('privacyPolicy.foss.removedTitle', { defaultValue: 'Ce qui a été retiré :' })}</Text>
+                        <BulletPoint>{t('privacyPolicy.foss.removed.fcm')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.removed.google')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.removed.expoPush')}</BulletPoint>
                         
-                        <Text style={styles.subheading}>Ce qui fonctionne toujours :</Text>
-                        <BulletPoint>Toutes les fonctionnalités locales</BulletPoint>
-                        <BulletPoint>Fonctionnalités sociales (classement, amis)</BulletPoint>
-                        <BulletPoint>Notifications locales (rappels de streak)</BulletPoint>
-                        <BulletPoint>Synchronisation des stats avec Supabase</BulletPoint>
+                        <Text style={styles.subheading}>{t('privacyPolicy.foss.stillWorkingTitle', { defaultValue: 'Ce qui fonctionne toujours :' })}</Text>
+                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.localFeatures')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.social')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.localNotifications')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.supabaseSync')}</BulletPoint>
                         
                         <Text style={[styles.paragraph, styles.highlight]}>
-                            🌿 Cette version est 100% libre de traceurs propriétaires Google.
+                            {t('privacyPolicy.foss.note')}
                         </Text>
                     </PolicySection>
-                )}
+                )} 
 
                 {/* Mode Social */}
                 <PolicySection 
-                    title="Mode Social (opt-in)" 
+                    title={t('privacyPolicy.social.title')} 
                     icon={<Server size={20} color="#22d3ee" />}
                     iconColor="#22d3ee"
                     delay={300}
                 >
-                    <Text style={styles.paragraph}>
-                        Si tu actives les fonctionnalités sociales, certaines données sont 
-                        partagées avec notre serveur Supabase pour permettre le classement et les interactions.
-                    </Text>
+                    <Text style={styles.paragraph}>{t('privacyPolicy.social.description')}</Text>
                     
-                    <Text style={styles.subheading}>Données synchronisées :</Text>
-                    <BulletPoint>Pseudo public (que tu choisis)</BulletPoint>
-                    <BulletPoint>XP total et niveau</BulletPoint>
-                    <BulletPoint>Streak actuel et meilleur streak</BulletPoint>
-                    <BulletPoint>Nombre de séances hebdomadaires</BulletPoint>
-                    <BulletPoint>Distance et durée totales hebdomadaires</BulletPoint>
+                    <Text style={styles.subheading}>{t('privacyPolicy.social.syncedDataTitle', { defaultValue: 'Données synchronisées :' })}</Text>
+                    <BulletPoint>{t('privacyPolicy.social.syncedData.nickname')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.social.syncedData.xp')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.social.syncedData.streak')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.social.syncedData.weeklyCount')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.social.syncedData.weeklyTotals')}</BulletPoint>
                     
-                    <Text style={styles.subheading}>Données de compte :</Text>
-                    <BulletPoint>Email (uniquement pour la connexion)</BulletPoint>
-                    <BulletPoint>Mot de passe (chiffré, jamais accessible)</BulletPoint>
+                    <Text style={styles.subheading}>{t('privacyPolicy.social.accountDataTitle', { defaultValue: 'Données de compte :' })}</Text>
+                    <BulletPoint>{t('privacyPolicy.social.accountData.email')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.social.accountData.password')}</BulletPoint>
                     
                     <Text style={[styles.paragraph, styles.warning]}>
-                        ⚠️ Le contenu détaillé de tes séances (exercices, notes, repas) 
-                        n'est JAMAIS synchronisé.
+                        {t('privacyPolicy.social.warning')}
                     </Text>
-                </PolicySection>
+                </PolicySection> 
 
                 {/* Notifications */}
                 <PolicySection 
-                    title="Notifications Push" 
+                    title={t('privacyPolicy.notifications.title')} 
                     icon={<Bell size={20} color="#fbbf24" />}
                     iconColor="#fbbf24"
                     delay={400}
@@ -184,113 +172,88 @@ export default function PrivacyPolicyScreen() {
                     {BuildConfig.isFoss ? (
                         <>
                             <Text style={[styles.paragraph, styles.highlight]}>
-                                🌿 Cette version FOSS ne contient pas Firebase Cloud Messaging (FCM).
+                                {t('privacyPolicy.notifications.fossNote')}
                             </Text>
                             <Text style={styles.paragraph}>
-                                Les notifications locales (rappels de streak) fonctionnent normalement. 
-                                Cependant, les notifications push à distance (encouragements d'amis, 
-                                demandes d'ami) ne sont pas disponibles dans cette version.
+                                {t('privacyPolicy.notifications.fossText')}
                             </Text>
                             <Text style={styles.paragraph}>
-                                Pour bénéficier des notifications push complètes, télécharge la version 
-                                standard depuis GitHub Releases.
+                                {t('privacyPolicy.notifications.fossInstall')}
                             </Text>
                         </>
                     ) : (
                         <>
                             <Text style={styles.paragraph}>
-                                Les notifications push sont utilisées pour :
+                                {t('privacyPolicy.notifications.standardText')}
                             </Text>
-                            <BulletPoint>Rappels de streak (configurables)</BulletPoint>
-                            <BulletPoint>Encouragements de tes amis (mode social)</BulletPoint>
-                            <BulletPoint>Demandes d'ami (mode social)</BulletPoint>
+                            <BulletPoint>{t('privacyPolicy.notifications.items.streakReminders')}</BulletPoint>
+                            <BulletPoint>{t('privacyPolicy.notifications.items.encouragements')}</BulletPoint>
+                            <BulletPoint>{t('privacyPolicy.notifications.items.friendRequests')}</BulletPoint>
                             
-                            <Text style={styles.subheading}>Technologies utilisées :</Text>
-                            <BulletPoint>Expo Push Notifications</BulletPoint>
-                            <BulletPoint>Firebase Cloud Messaging (FCM)</BulletPoint>
+                            <Text style={styles.subheading}>{t('privacyPolicy.notifications.technologiesTitle', { defaultValue: 'Technologies utilisées :' })}</Text>
+                            <BulletPoint>{t('privacyPolicy.notifications.technologies.expo')}</BulletPoint>
+                            <BulletPoint>{t('privacyPolicy.notifications.technologies.fcm')}</BulletPoint>
                             
                             <Text style={styles.paragraph}>
-                                Tu peux désactiver les notifications à tout moment dans les paramètres 
-                                de ton appareil.
+                                {t('privacyPolicy.notifications.disable')}
                             </Text>
                         </>
                     )}
-                </PolicySection>
+                </PolicySection> 
 
                 {/* Health Connect */}
                 <PolicySection 
-                    title="Health Connect (Android)" 
+                    title={t('privacyPolicy.healthConnect.title')} 
                     icon={<Heart size={20} color="#f43f5e" />}
                     iconColor="#f43f5e"
                     delay={450}
                 >
-                    <Text style={styles.paragraph}>
-                        FitTrack peut importer des séances d'entraînement depuis Google Health Connect 
-                        sur Android. Cette fonctionnalité est optionnelle.
-                    </Text>
+                    <Text style={styles.paragraph}>{t('privacyPolicy.healthConnect.description')}</Text>
                     
-                    <Text style={styles.subheading}>Données accessibles :</Text>
-                    <BulletPoint>Séances d'exercice (type, durée, date)</BulletPoint>
-                    <BulletPoint>Distance parcourue</BulletPoint>
-                    <BulletPoint>Calories brûlées</BulletPoint>
-                    <BulletPoint>Fréquence cardiaque (si disponible)</BulletPoint>
+                    <Text style={styles.subheading}>{t('privacyPolicy.healthConnect.dataTitle', { defaultValue: 'Données accessibles :' })}</Text>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.data.sessions')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.data.distance')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.data.calories')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.data.hr')}</BulletPoint>
                     
-                    <Text style={styles.subheading}>Utilisation des données :</Text>
-                    <BulletPoint>Import local uniquement - aucun envoi serveur</BulletPoint>
-                    <BulletPoint>Conversion en entrées FitTrack locales</BulletPoint>
-                    <BulletPoint>Tu choisis quelles séances importer</BulletPoint>
+                    <Text style={styles.subheading}>{t('privacyPolicy.healthConnect.usageTitle', { defaultValue: 'Utilisation des données :' })}</Text>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.usage.localImport')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.usage.convert')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.usage.choose')}</BulletPoint>
                     
                     <Text style={[styles.paragraph, styles.highlight]}>
-                        ✅ Les données Health Connect sont lues une seule fois et stockées 
-                        localement. FitTrack n'écrit jamais dans Health Connect.
+                        {t('privacyPolicy.healthConnect.highlight')}
                     </Text>
                     
                     <Text style={styles.paragraph}>
-                        Tu peux révoquer l'accès à tout moment dans les paramètres 
-                        Health Connect de ton appareil.
+                        {t('privacyPolicy.healthConnect.revoke')}
                     </Text>
-                </PolicySection>
+                </PolicySection> 
 
                 {/* Tes droits RGPD */}
                 <PolicySection 
-                    title="Tes Droits (RGPD)" 
+                    title={t('privacyPolicy.rights.title')} 
                     icon={<Trash2 size={20} color="#f87171" />}
                     iconColor="#f87171"
                     delay={550}
                 >
-                    <Text style={styles.paragraph}>
-                        Conformément au RGPD, tu as le droit de :
-                    </Text>
-                    <BulletPoint>
-                        <Text style={styles.bold}>Accès</Text> : Consulter toutes tes données (export JSON dans Paramètres)
-                    </BulletPoint>
-                    <BulletPoint>
-                        <Text style={styles.bold}>Rectification</Text> : Modifier tes informations de profil
-                    </BulletPoint>
-                    <BulletPoint>
-                        <Text style={styles.bold}>Suppression</Text> : Supprimer toutes tes données en un clic
-                    </BulletPoint>
-                    <BulletPoint>
-                        <Text style={styles.bold}>Portabilité</Text> : Exporter tes données au format JSON
-                    </BulletPoint>
-                    <BulletPoint>
-                        <Text style={styles.bold}>Opposition</Text> : Désactiver les fonctionnalités sociales
-                    </BulletPoint>
+                    <Text style={styles.paragraph}>{t('privacyPolicy.rights.description')}</Text>
+                    <BulletPoint>{t('privacyPolicy.rights.access')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.rights.rectification')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.rights.deletion')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.rights.portability')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.rights.opposition')}</BulletPoint>
                     
                     <Text style={[styles.paragraph, styles.highlight]}>
-                        💡 Pour supprimer tes données en ligne, désactive les fonctionnalités 
-                        sociales dans Paramètres → Social.
+                        {t('privacyPolicy.rights.highlight')}
                     </Text>
-                </PolicySection>
+                </PolicySection> 
 
                 {/* Contact */}
                 <Animated.View entering={FadeInDown.delay(650).springify()}>
                     <GlassCard style={styles.contactCard}>
-                        <Text style={styles.contactTitle}>Contact</Text>
-                        <Text style={styles.contactText}>
-                            Pour toute question concernant tes données personnelles, 
-                            contacte-nous via les paramètres de l'application.
-                        </Text>
+                        <Text style={styles.contactTitle}>{t('privacyPolicy.contact.title')}</Text>
+                        <Text style={styles.contactText}>{t('privacyPolicy.contact.text')}</Text>
                     </GlassCard>
                 </Animated.View>
 
