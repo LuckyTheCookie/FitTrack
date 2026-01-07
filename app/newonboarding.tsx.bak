@@ -1,0 +1,479 @@
+// ============================================================================
+// ONBOARDING SCREEN - Redesign Premium 2026
+// ============================================================================
+
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  Image,
+  TouchableOpacity,
+  Pressable,
+  ScrollView,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur'; // Ajoute un effet de verre dépoli
+import * as Haptics from 'expo-haptics'; // Feedback tactile essentiel
+import Animated, {
+  FadeInDown,
+  FadeInRight,
+  ZoomIn,
+  Layout,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolateColor,
+} from 'react-native-reanimated';
+
+// Imports de ton projet (Assure-toi qu'ils existent ou remplace-les)
+import { useAppStore } from '../src/stores';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Gradients } from '../src/constants';
+import type { FitnessGoal, FitnessLevel } from '../src/types';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// --- THEME & CONSTANTS (Pour s'assurer que le design claque même sans tes constantes) ---
+const THEME = {
+  primary: '#CEFF00', // Vert Acide/Néon très tendance 2026
+  secondary: '#00F0FF',
+  bg: '#050505',
+  cardBg: 'rgba(255,255,255,0.08)',
+  cardBorder: 'rgba(255,255,255,0.15)',
+  text: '#FFFFFF',
+  muted: '#9ca3af',
+  success: '#22c55e',
+};
+
+const SPRING_CONFIG = { damping: 15, stiffness: 120 };
+
+// --- DATA ---
+
+const GOAL_OPTIONS = [
+  { key: 'loseWeight', emoji: '🔥', title: 'Perte de Poids', desc: 'Brûler un max de calories', color: '#FF4B4B' },
+  { key: 'buildMuscle', emoji: '💪', title: 'Masse Musculaire', desc: 'Volume & Force pure', color: '#4B7BFF' },
+  { key: 'improveCardio', emoji: '⚡', title: 'Endurance', desc: 'Explosivité & Cardio', color: '#FFD94B' },
+  { key: 'stayHealthy', emoji: '🧘', title: 'Santé & Bien-être', desc: 'Équilibre corps/esprit', color: '#4BFFB3' },
+];
+
+const LEVEL_OPTIONS = [
+  { key: 'beginner', emoji: '🌱', title: 'Novice', desc: 'Je découvre le fitness', color: '#A3FF4B' },
+  { key: 'intermediate', emoji: '🚀', title: 'Initié', desc: 'Je m\'entraîne régulièrement', color: '#4BA3FF' },
+  { key: 'advanced', emoji: '🏆', title: 'Athlète', desc: 'Le sport est ma vie', color: '#FF4B8B' },
+];
+
+// --- COMPONENTS ---
+
+// 1. Bouton "Glass" Premium
+const GlassButton = ({ onPress, title, disabled, icon, fullWidth = false, variant = 'primary' }: any) => {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+    if (onPress) onPress();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+      style={[{ opacity: disabled ? 0.5 : 1 }, fullWidth && { width: '100%' }]}
+    >
+      <Animated.View style={[styles.glassButtonContainer, animatedStyle]}>
+        <LinearGradient
+          colors={variant === 'primary' ? [THEME.primary, '#b8e600'] : ['#333', '#222']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={styles.glassButtonGradient}
+        >
+          <Text style={[styles.glassButtonText, { color: variant === 'primary' ? '#000' : '#FFF' }]}>{title}</Text>
+          {icon && <Text style={[styles.glassButtonIcon, { color: variant === 'primary' ? '#000' : '#FFF' }]}>{icon}</Text>}
+        </LinearGradient>
+      </Animated.View>
+    </Pressable>
+  );
+};
+
+// 2. Carte de Sélection avec effet "Glow"
+const SelectionCard = ({ item, isSelected, onPress, index, type = 'grid' }: any) => {
+  // Animation de la bordure et du fond
+  const borderOpacity = useSharedValue(0);
+  
+  useEffect(() => {
+    borderOpacity.value = withTiming(isSelected ? 1 : 0, { duration: 300 });
+  }, [isSelected]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    borderColor: isSelected ? item.color || THEME.primary : 'transparent',
+    borderWidth: 1.5,
+    backgroundColor: isSelected ? 'rgba(255,255,255,0.12)' : THEME.cardBg,
+    transform: [{ scale: isSelected ? 1.02 : 1 }],
+  }));
+
+  const handlePress = () => {
+    Haptics.selectionAsync();
+    onPress(item.key);
+  };
+
+  if (type === 'list') {
+    return (
+      <Animated.View entering={FadeInRight.delay(index * 100).springify()} layout={Layout.springify()}>
+        <Pressable onPress={handlePress}>
+          <Animated.View style={[styles.listCard, animatedStyle]}>
+            <View style={[styles.iconBox, { backgroundColor: isSelected ? item.color : 'rgba(255,255,255,0.05)' }]}>
+              <Text style={{ fontSize: 24 }}>{item.emoji}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.cardTitle, isSelected && { color: item.color }]}>{item.title}</Text>
+              <Text style={styles.cardDesc}>{item.desc}</Text>
+            </View>
+            {isSelected && <View style={[styles.radioDot, { backgroundColor: item.color }]} />}
+          </Animated.View>
+        </Pressable>
+      </Animated.View>
+    );
+  }
+
+  // Grid style (pour les objectifs)
+  return (
+    <Animated.View entering={FadeInDown.delay(index * 50).springify()} layout={Layout.springify()} style={styles.gridItemWrapper}>
+      <Pressable onPress={handlePress} style={{ flex: 1 }}>
+        <Animated.View style={[styles.gridCard, animatedStyle]}>
+          <View style={[styles.gridIconCircle, { backgroundColor: isSelected ? item.color : 'transparent' }]}>
+            <Text style={{ fontSize: 32 }}>{item.emoji}</Text>
+          </View>
+          <View>
+            <Text style={[styles.gridTitle, isSelected && { color: item.color }]}>{item.title}</Text>
+            <Text style={styles.gridDesc} numberOfLines={2}>{item.desc}</Text>
+          </View>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+};
+
+// 3. Barre de progression Segmentée
+const SegmentedProgress = ({ current, total }: { current: number; total: number }) => {
+  return (
+    <View style={styles.progressContainer}>
+      {Array.from({ length: total }).map((_, i) => {
+        const isActive = i <= current;
+        return (
+          <View key={i} style={styles.progressSegmentBg}>
+             <Animated.View 
+               style={[
+                 styles.progressSegmentFill, 
+                 { width: isActive ? '100%' : '0%', backgroundColor: i === current ? THEME.primary : '#FFF' }
+               ]} 
+               layout={Layout.springify()}
+             />
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+// --- MAIN SCREEN ---
+
+export default function OnboardingScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { updateSettings, updateWeeklyGoal } = useAppStore();
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedGoal, setSelectedGoal] = useState<FitnessGoal | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<FitnessLevel | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState(3);
+
+  // Background dynamique basé sur l'étape
+  const bgColors = useMemo(() => {
+    switch(currentStep) {
+      case 0: return [THEME.bg, '#1a1a1a', '#000'];
+      case 1: return ['#0f172a', '#000000', '#000000']; // Plus bleu pour Goal
+      case 2: return ['#1e1b4b', '#000000', '#000000']; // Plus violet pour Level
+      case 3: return ['#14532d', '#000000', '#000000']; // Plus vert pour Freq
+      default: return [THEME.bg, '#000', '#000'];
+    }
+  }, [currentStep]);
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setCurrentStep(p => p + 1);
+  };
+  
+  const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCurrentStep(p => Math.max(0, p - 1));
+  };
+
+  const handleComplete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    updateSettings({
+      onboardingCompleted: true,
+      fitnessGoal: selectedGoal || undefined,
+      fitnessLevel: selectedLevel || undefined,
+    });
+    updateWeeklyGoal(weeklyGoal);
+    router.replace('/');
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      
+      {/* Background Animé (Simulé via gradient qui change) */}
+      <Animated.View style={StyleSheet.absoluteFill}>
+        <LinearGradient
+          colors={bgColors}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+        {/* Ajout d'une texture bruitée (image) si tu en as une, sinon opacité subtile */}
+        <View style={styles.noiseOverlay} /> 
+      </Animated.View>
+
+      {/* Header Navigation */}
+      {currentStep > 0 && currentStep < 4 && (
+        <SafeAreaView edges={['top']} style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.navBtn}>
+            <Text style={styles.navIcon}>←</Text>
+          </TouchableOpacity>
+          <SegmentedProgress current={currentStep - 1} total={3} />
+          <TouchableOpacity onPress={handleComplete} style={styles.navBtn}>
+             {/* Skip caché ou visible selon UX */}
+          </TouchableOpacity>
+        </SafeAreaView>
+      )}
+
+      <View style={styles.contentContainer}>
+        {currentStep === 0 && <WelcomeStep onNext={handleNext} />}
+        {currentStep === 1 && <GoalStep selected={selectedGoal} onSelect={setSelectedGoal} />}
+        {currentStep === 2 && <LevelStep selected={selectedLevel} onSelect={setSelectedLevel} />}
+        {currentStep === 3 && <FrequencyStep value={weeklyGoal} onChange={setWeeklyGoal} />}
+        {currentStep === 4 && <ReadyStep onComplete={handleComplete} />}
+      </View>
+
+      {/* Footer Flottant (sauf Welcome & Ready) */}
+      {currentStep > 0 && currentStep < 4 && (
+        <Animated.View entering={FadeInDown} style={styles.footerContainer}>
+          <BlurView intensity={20} tint="dark" style={styles.footerBlur}>
+            <GlassButton 
+              title="Continuer" 
+              icon="➜"
+              onPress={handleNext}
+              fullWidth
+              disabled={(currentStep === 1 && !selectedGoal) || (currentStep === 2 && !selectedLevel)}
+            />
+          </BlurView>
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
+// --- SUB-SCREENS ---
+
+const WelcomeStep = ({ onNext }: { onNext: () => void }) => (
+  <View style={styles.fullScreen}>
+    {/* Image de fond immersive */}
+    <Image 
+      source={{ uri: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop' }} 
+      style={StyleSheet.absoluteFillObject}
+      resizeMode="cover"
+    />
+    <LinearGradient
+      colors={['transparent', '#050505']}
+      locations={[0.3, 0.9]}
+      style={StyleSheet.absoluteFillObject}
+    />
+    
+    <SafeAreaView style={styles.welcomeContainer}>
+      <Animated.View entering={FadeInDown.delay(200).springify()}>
+        <View style={styles.pillTag}>
+          <Text style={styles.pillText}>VERSION 2026</Text>
+        </View>
+        <Text style={styles.bigTitle}>Sculpte{'\n'}<Text style={{ color: THEME.primary }}>ta légende.</Text></Text>
+        <Text style={styles.subtitle}>La seule app de fitness qui s'adapte à ton métabolisme en temps réel.</Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(400).springify()} style={{ width: '100%' }}>
+        <GlassButton title="Commencer l'expérience" onPress={onNext} fullWidth icon="⚡" />
+      </Animated.View>
+    </SafeAreaView>
+  </View>
+);
+
+const GoalStep = ({ selected, onSelect }: any) => (
+  <ScrollView contentContainerStyle={styles.scrollPad}>
+    <Animated.View entering={FadeInDown.delay(100)}>
+      <Text style={styles.h1}>Ton Objectif</Text>
+      <Text style={styles.subH1}>On se concentre sur quoi cette année ?</Text>
+    </Animated.View>
+    <View style={styles.gridContainer}>
+      {GOAL_OPTIONS.map((opt, i) => (
+        <SelectionCard key={opt.key} item={opt} index={i} isSelected={selected === opt.key} onPress={onSelect} type="grid" />
+      ))}
+    </View>
+  </ScrollView>
+);
+
+const LevelStep = ({ selected, onSelect }: any) => (
+  <ScrollView contentContainerStyle={styles.scrollPad}>
+    <Animated.View entering={FadeInDown.delay(100)}>
+      <Text style={styles.h1}>Ton Niveau</Text>
+      <Text style={styles.subH1}>Pour calibrer l'IA de ton coach.</Text>
+    </Animated.View>
+    <View style={styles.listContainer}>
+      {LEVEL_OPTIONS.map((opt, i) => (
+        <SelectionCard key={opt.key} item={opt} index={i} isSelected={selected === opt.key} onPress={onSelect} type="list" />
+      ))}
+    </View>
+  </ScrollView>
+);
+
+const FrequencyStep = ({ value, onChange }: any) => {
+  return (
+    <View style={[styles.centerContent, { paddingHorizontal: 20 }]}>
+      <Animated.View entering={FadeInDown.delay(100)} style={{ alignItems: 'center' }}>
+        <Text style={[styles.h1, { textAlign: 'center' }]}>Rythme Hebdo</Text>
+        <Text style={[styles.subH1, { textAlign: 'center' }]}>La régularité bat l'intensité.</Text>
+      </Animated.View>
+
+      {/* Jauge Visuelle */}
+      <View style={{ height: 300, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+        <View style={styles.freqBarContainer}>
+          {[1, 2, 3, 4, 5, 6, 7].map((num) => {
+            const isActive = num <= value;
+            const isSelected = num === value;
+            return (
+              <Pressable 
+                key={num} 
+                onPress={() => { Haptics.selectionAsync(); onChange(num); }}
+                style={styles.freqBarWrapper}
+              >
+                <Animated.View 
+                  style={[
+                    styles.freqBar, 
+                    { 
+                      height: 40 + (num * 15), 
+                      backgroundColor: isActive ? (isSelected ? THEME.primary : '#FFF') : '#333',
+                      shadowColor: isSelected ? THEME.primary : '#000',
+                      shadowOpacity: isSelected ? 0.8 : 0,
+                      shadowRadius: 10,
+                    }
+                  ]} 
+                />
+                <Text style={[styles.freqText, { color: isActive ? '#FFF' : '#555', fontWeight: isSelected ? 'bold' : 'normal' }]}>
+                  {num}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+      
+      <Animated.View entering={ZoomIn.springify()} key={value} style={styles.freqLabelContainer}>
+        <Text style={styles.freqBigLabel}>
+          {value <= 2 ? "DÉPART DOUX 🌱" : value <= 4 ? "MODE SÉRIEUX 🔥" : "MACHINE DE GUERRE 🦾"}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+};
+
+const ReadyStep = ({ onComplete }: any) => (
+  <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 30 }]}>
+    <Animated.View entering={ZoomIn.delay(200)} style={styles.checkCircle}>
+      <Text style={{ fontSize: 60 }}>🚀</Text>
+    </Animated.View>
+    <Text style={[styles.h1, { textAlign: 'center', marginTop: 30 }]}>Prêt à décoller ?</Text>
+    <Text style={[styles.subH1, { textAlign: 'center' }]}>
+      Ton programme personnalisé a été généré avec succès.
+    </Text>
+    <View style={{ marginTop: 50, width: '100%' }}>
+      <GlassButton title="Lancer ma première séance" onPress={onComplete} fullWidth icon="👊" />
+    </View>
+  </SafeAreaView>
+);
+
+// --- STYLES ---
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: THEME.bg },
+  fullScreen: { flex: 1 },
+  noiseOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.02)', zIndex: -1 },
+  
+  contentContainer: { flex: 1 },
+  scrollPad: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 120 },
+  centerContent: { flex: 1, justifyContent: 'center' },
+
+  // Typography
+  h1: { fontSize: 36, fontWeight: '800', color: '#FFF', marginBottom: 8, letterSpacing: -1 },
+  subH1: { fontSize: 16, color: THEME.muted, marginBottom: 32, lineHeight: 24 },
+  
+  // Header
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 10, height: 60 },
+  navBtn: { width: 40, alignItems: 'center' },
+  navIcon: { fontSize: 24, color: '#FFF' },
+  
+  // Progress
+  progressContainer: { flex: 1, flexDirection: 'row', gap: 6, marginHorizontal: 20 },
+  progressSegmentBg: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' },
+  progressSegmentFill: { height: '100%', borderRadius: 2 },
+
+  // Welcome
+  welcomeContainer: { flex: 1, justifyContent: 'flex-end', padding: 24, paddingBottom: 50 },
+  pillTag: { backgroundColor: 'rgba(206, 255, 0, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100, alignSelf: 'flex-start', marginBottom: 16, borderWidth: 1, borderColor: 'rgba(206, 255, 0, 0.4)' },
+  pillText: { color: THEME.primary, fontWeight: 'bold', fontSize: 11, letterSpacing: 1 },
+  bigTitle: { fontSize: 56, fontWeight: '900', color: '#FFF', lineHeight: 56, marginBottom: 16 },
+  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.7)', marginBottom: 40, lineHeight: 24 },
+
+  // Grid Cards
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  gridItemWrapper: { width: (SCREEN_WIDTH - 48 - 12) / 2, height: 180 },
+  gridCard: { flex: 1, borderRadius: 24, padding: 16, justifyContent: 'space-between', borderWidth: 1 },
+  gridIconCircle: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  gridTitle: { fontSize: 16, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
+  gridDesc: { fontSize: 12, color: THEME.muted },
+
+  // List Cards
+  listContainer: { gap: 12 },
+  listCard: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 24, borderWidth: 1, gap: 16 },
+  iconBox: { width: 56, height: 56, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
+  cardDesc: { fontSize: 14, color: THEME.muted },
+  radioDot: { width: 10, height: 10, borderRadius: 5 },
+
+  // Frequency
+  freqBarContainer: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, height: 200 },
+  freqBarWrapper: { alignItems: 'center', gap: 12 },
+  freqBar: { width: 24, borderRadius: 12 },
+  freqText: { fontSize: 16 },
+  freqLabelContainer: { padding: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, alignSelf: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  freqBigLabel: { color: THEME.primary, fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
+
+  // Footer & Button
+  footerContainer: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  footerBlur: { padding: 24, paddingBottom: 40 },
+  glassButtonContainer: { borderRadius: 18, overflow: 'hidden' },
+  glassButtonGradient: { paddingVertical: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  glassButtonText: { fontSize: 18, fontWeight: 'bold' },
+  glassButtonIcon: { fontSize: 18, fontWeight: 'bold' },
+
+  // Ready
+  checkCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(34, 197, 94, 0.1)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: THEME.success },
+});
