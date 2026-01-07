@@ -45,3 +45,5 @@ supabase/
 google-services.json
 pushgithub.js
 scripts/release.js
+.vscode/settings.json
+TODO.md
