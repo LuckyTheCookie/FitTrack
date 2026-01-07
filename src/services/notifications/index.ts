@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import i18n from '../../i18n';
+import { BuildConfig } from '../../config';
 
 // Configuration handler - affichage même en foreground
 Notifications.setNotificationHandler({
@@ -19,7 +20,7 @@ Notifications.setNotificationHandler({
 
 export type PushTokenResult = 
     | { success: true; token: string }
-    | { success: false; reason: 'not_device' | 'permission_denied' | 'network_error' | 'unknown' };
+    | { success: false; reason: 'not_device' | 'permission_denied' | 'network_error' | 'unknown' | 'foss_build' };
 
 /**
  * Enregistre le device pour les notifications push
@@ -27,6 +28,12 @@ export type PushTokenResult =
  * @returns Résultat avec le token ou la raison de l'échec
  */
 export async function registerForPushNotifications(): Promise<PushTokenResult> {
+    // En mode FOSS, les push notifications ne sont pas disponibles
+    if (!BuildConfig.pushNotificationsEnabled) {
+        console.log('Push notifications disabled in FOSS build');
+        return { success: false, reason: 'foss_build' };
+    }
+
     // Vérifier si c'est un appareil physique
     if (!Device.isDevice) {
         console.log('Push notifications require a physical device');

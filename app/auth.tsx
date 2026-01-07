@@ -14,6 +14,7 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -25,12 +26,15 @@ import {
     EyeOff,
     ArrowLeft,
     Dumbbell,
+    AlertTriangle,
+    ExternalLink,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../src/components/ui';
 import { useSocialStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
+import { BuildConfig } from '../src/config';
 
 type AuthMode = 'login' | 'signup';
 
@@ -154,6 +158,33 @@ export default function AuthScreen() {
                             }
                         </Text>
                     </Animated.View>
+
+                    {/* FOSS Build Notice */}
+                    {BuildConfig.isFoss && (
+                        <Animated.View entering={FadeInDown.delay(150).springify()}>
+                            <GlassCard style={styles.fossNotice}>
+                                <View style={styles.fossNoticeHeader}>
+                                    <AlertTriangle size={20} color="#fbbf24" />
+                                    <Text style={styles.fossNoticeTitle}>
+                                        Fonctionnalités limitées
+                                    </Text>
+                                </View>
+                                <Text style={styles.fossNoticeText}>
+                                    Cette version FOSS a été conçue pour F-Droid et ne contient pas 
+                                    Firebase/FCM. Les notifications push d'encouragements ne sont pas disponibles.
+                                </Text>
+                                <TouchableOpacity 
+                                    style={styles.fossNoticeButton}
+                                    onPress={() => Linking.openURL(BuildConfig.githubReleasesUrl)}
+                                >
+                                    <Text style={styles.fossNoticeButtonText}>
+                                        Télécharger la version complète
+                                    </Text>
+                                    <ExternalLink size={14} color={Colors.cta} />
+                                </TouchableOpacity>
+                            </GlassCard>
+                        </Animated.View>
+                    )}
 
                     {/* Form */}
                     <Animated.View 
@@ -378,5 +409,44 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 18,
         paddingHorizontal: Spacing.lg,
+    },
+    // FOSS Notice styles
+    fossNotice: {
+        backgroundColor: 'rgba(251, 191, 36, 0.1)',
+        borderColor: 'rgba(251, 191, 36, 0.3)',
+        padding: Spacing.md,
+        marginBottom: Spacing.lg,
+    },
+    fossNoticeHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    fossNoticeTitle: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
+        color: '#fbbf24',
+    },
+    fossNoticeText: {
+        fontSize: FontSize.sm,
+        color: Colors.muted,
+        lineHeight: 20,
+        marginBottom: Spacing.md,
+    },
+    fossNoticeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.xs,
+        backgroundColor: 'rgba(215, 150, 134, 0.15)',
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.md,
+    },
+    fossNoticeButtonText: {
+        fontSize: FontSize.sm,
+        color: Colors.cta,
+        fontWeight: FontWeight.medium,
     },
 });

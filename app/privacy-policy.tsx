@@ -13,9 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Shield, Lock, Server, Bell, Trash2, Heart } from 'lucide-react-native';
+import { ArrowLeft, Shield, Lock, Server, Bell, Trash2, Heart, Leaf } from 'lucide-react-native';
 import { GlassCard } from '../src/components/ui';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
+import { BuildConfig } from '../src/config';
 
 // Section component for organizing content
 function PolicySection({ 
@@ -115,6 +116,35 @@ export default function PrivacyPolicyScreen() {
                     </Text>
                 </PolicySection>
 
+                {/* FOSS Edition Notice */}
+                {BuildConfig.isFoss && (
+                    <PolicySection 
+                        title="Version FOSS (F-Droid)" 
+                        icon={<Leaf size={20} color="#4ade80" />}
+                        iconColor="#4ade80"
+                        delay={250}
+                    >
+                        <Text style={styles.paragraph}>
+                            Tu utilises la version FOSS de FitTrack, spécialement conçue pour 
+                            respecter les directives de F-Droid.
+                        </Text>
+                        <Text style={styles.subheading}>Ce qui a été retiré :</Text>
+                        <BulletPoint>Firebase Cloud Messaging (FCM)</BulletPoint>
+                        <BulletPoint>Google Services / Google Play Services</BulletPoint>
+                        <BulletPoint>Expo Push Notifications distantes</BulletPoint>
+                        
+                        <Text style={styles.subheading}>Ce qui fonctionne toujours :</Text>
+                        <BulletPoint>Toutes les fonctionnalités locales</BulletPoint>
+                        <BulletPoint>Fonctionnalités sociales (classement, amis)</BulletPoint>
+                        <BulletPoint>Notifications locales (rappels de streak)</BulletPoint>
+                        <BulletPoint>Synchronisation des stats avec Supabase</BulletPoint>
+                        
+                        <Text style={[styles.paragraph, styles.highlight]}>
+                            🌿 Cette version est 100% libre de traceurs propriétaires Google.
+                        </Text>
+                    </PolicySection>
+                )}
+
                 {/* Mode Social */}
                 <PolicySection 
                     title="Mode Social (opt-in)" 
@@ -151,21 +181,40 @@ export default function PrivacyPolicyScreen() {
                     iconColor="#fbbf24"
                     delay={400}
                 >
-                    <Text style={styles.paragraph}>
-                        Les notifications push sont utilisées pour :
-                    </Text>
-                    <BulletPoint>Rappels de streak (configurables)</BulletPoint>
-                    <BulletPoint>Encouragements de tes amis (mode social)</BulletPoint>
-                    <BulletPoint>Demandes d'ami (mode social)</BulletPoint>
-                    
-                    <Text style={styles.subheading}>Technologies utilisées :</Text>
-                    <BulletPoint>Expo Push Notifications</BulletPoint>
-                    <BulletPoint>Firebase Cloud Messaging (FCM)</BulletPoint>
-                    
-                    <Text style={styles.paragraph}>
-                        Tu peux désactiver les notifications à tout moment dans les paramètres 
-                        de ton appareil.
-                    </Text>
+                    {BuildConfig.isFoss ? (
+                        <>
+                            <Text style={[styles.paragraph, styles.highlight]}>
+                                🌿 Cette version FOSS ne contient pas Firebase Cloud Messaging (FCM).
+                            </Text>
+                            <Text style={styles.paragraph}>
+                                Les notifications locales (rappels de streak) fonctionnent normalement. 
+                                Cependant, les notifications push à distance (encouragements d'amis, 
+                                demandes d'ami) ne sont pas disponibles dans cette version.
+                            </Text>
+                            <Text style={styles.paragraph}>
+                                Pour bénéficier des notifications push complètes, télécharge la version 
+                                standard depuis GitHub Releases.
+                            </Text>
+                        </>
+                    ) : (
+                        <>
+                            <Text style={styles.paragraph}>
+                                Les notifications push sont utilisées pour :
+                            </Text>
+                            <BulletPoint>Rappels de streak (configurables)</BulletPoint>
+                            <BulletPoint>Encouragements de tes amis (mode social)</BulletPoint>
+                            <BulletPoint>Demandes d'ami (mode social)</BulletPoint>
+                            
+                            <Text style={styles.subheading}>Technologies utilisées :</Text>
+                            <BulletPoint>Expo Push Notifications</BulletPoint>
+                            <BulletPoint>Firebase Cloud Messaging (FCM)</BulletPoint>
+                            
+                            <Text style={styles.paragraph}>
+                                Tu peux désactiver les notifications à tout moment dans les paramètres 
+                                de ton appareil.
+                            </Text>
+                        </>
+                    )}
                 </PolicySection>
 
                 {/* Health Connect */}

@@ -44,6 +44,7 @@ import { useAppStore, useGamificationStore, useSocialStore } from '../src/stores
 import { isSocialAvailable } from '../src/services/supabase';
 import * as NotificationService from '../src/services/notifications';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
+import { BuildConfig } from '../src/config';
 import type { Profile, LeaderboardEntry } from '../src/services/supabase';
 
 // ============================================================================
@@ -647,7 +648,14 @@ export default function SocialScreen() {
             >
                 {/* Header */}
                 <Animated.View entering={FadeIn.delay(50)} style={styles.header}>
-                    <Text style={styles.screenTitle}>{t('social.title')}</Text>
+                    <View style={styles.titleRow}>
+                        <Text style={styles.screenTitle}>{t('social.title')}</Text>
+                        {BuildConfig.isFoss && (
+                            <View style={styles.fossBadge}>
+                                <Text style={styles.fossBadgeText}>FOSS</Text>
+                            </View>
+                        )}
+                    </View>
                     <TouchableOpacity 
                         style={styles.profileButton}
                         onPress={() => router.push('/profile' as any)}
@@ -1154,11 +1162,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.lg,
     },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
     screenTitle: {
         fontSize: 32,
         fontWeight: FontWeight.extrabold,
         color: Colors.text,
         letterSpacing: -0.5,
+    },
+    fossBadge: {
+        backgroundColor: 'rgba(74, 222, 128, 0.2)',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.sm,
+        borderWidth: 1,
+        borderColor: 'rgba(74, 222, 128, 0.4)',
+    },
+    fossBadgeText: {
+        fontSize: FontSize.xs,
+        fontWeight: FontWeight.bold,
+        color: '#4ade80',
+        letterSpacing: 1,
     },
     profileButton: {
         padding: 4,
