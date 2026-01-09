@@ -2,7 +2,7 @@
 // SETTINGS SCREEN - Paramètres, Export, Reset (Redesign complet)
 // ============================================================================
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -61,6 +61,7 @@ import { generateFullBackup, exportFullBackup, parseBackup } from '../src/utils/
 import { storageHelpers } from '../src/storage';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import * as NotificationService from '../src/services/notifications';
+import { BuildConfig } from '../src/config';
 import { LANGUAGES, changeLanguage, getCurrentLanguage, type LanguageCode } from '../src/i18n';
 
 // Setting Item composant
@@ -190,7 +191,34 @@ export default function SettingsScreen() {
   const [timePickerMinute, setTimePickerMinute] = useState('00');
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>(getCurrentLanguage());
+  const [pushTokenDebug, setPushTokenDebug] = useState<string>('...');
   const streak = getStreak();
+
+  // Fetch push token for debug display
+  useEffect(() => {
+    const fetchPushToken = async () => {
+      if (BuildConfig.isFoss) {
+        setPushTokenDebug('FOSS APP');
+        return;
+      }
+      try {
+        const result = await NotificationService.registerForPushNotifications();
+        if (result.success) {
+          // Show truncated token for debug
+          const token = result.token;
+          const truncated = token.length > 30 
+            ? `${token.substring(0, 15)}...${token.substring(token.length - 10)}`
+            : token;
+          setPushTokenDebug(truncated);
+        } else {
+          setPushTokenDebug(`FCM Error (${result.reason})`);
+        }
+      } catch (e: any) {
+        setPushTokenDebug(`Error: ${e.message?.substring(0, 20) || 'unknown'}`);
+      }
+    };
+    fetchPushToken();
+  }, []);
 
   // Handle language change
   const handleLanguageChange = useCallback(async (lang: LanguageCode) => {
@@ -805,6 +833,12 @@ export default function SettingsScreen() {
               <Database size={14} color={Colors.muted} />
               <Text style={styles.storageText}>
                 {t('settings.storageLabel')} {storageHelpers.getStorageType()}
+              </Text>
+            </View>
+            <View style={styles.storageInfo}>
+              <Bell size={14} color={Colors.muted} />
+              <Text style={styles.storageText} numberOfLines={1}>
+                Push: {pushTokenDebug}
               </Text>
             </View>
           </View>
