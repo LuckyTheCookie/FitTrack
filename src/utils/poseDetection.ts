@@ -5,7 +5,7 @@
 import { KnownPoseLandmarks } from 'react-native-mediapipe-posedetection';
 
 // Types for pose detection
-export type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank';
+export type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank' | 'elliptical';
 
 // MediaPipe landmark structure (from the package)
 export interface Landmark {
@@ -32,6 +32,40 @@ export interface PlankState {
     confidence: number;
     debugInfo?: PlankDebugInfo;
 }
+
+// Elliptical bike calibration and detection state
+export interface EllipticalCalibration {
+    isCalibrated: boolean;
+    movingVariance: number;    // Variance when moving
+    stoppedVariance: number;   // Variance when stopped
+    movementThreshold: number; // Threshold to determine moving vs stopped
+    samples: number[];         // Recent head Y position samples
+    lastUpdateTime: number;
+}
+
+export interface EllipticalState {
+    isMoving: boolean;
+    confidence: number;
+    currentVariance: number;
+    lastUpdate: number;
+}
+
+// Current elliptical state
+let currentEllipticalCalibration: EllipticalCalibration = {
+    isCalibrated: false,
+    movingVariance: 0,
+    stoppedVariance: 0,
+    movementThreshold: 0,
+    samples: [],
+    lastUpdateTime: 0,
+};
+
+let currentEllipticalState: EllipticalState = {
+    isMoving: false,
+    confidence: 0,
+    currentVariance: 0,
+    lastUpdate: 0,
+};
 
 // Debug info for plank detection
 export interface PlankDebugInfo {
@@ -308,6 +342,232 @@ export const resetPlankState = (): void => {
     currentPlankState = { isInPlankPosition: false, lastUpdate: 0, confidence: 0 };
 };
 
+// ============================================================================
+// ELLIPTICAL BIKE DETECTION - Head Movement Based
+// ============================================================================
+
+const ELLIPTICAL_SAMPLE_SIZE = 30; // ~1 second of samples at 30fps
+const ELLIPTICAL_VARIANCE_WINDOW = 15; // Calculate variance over 0.5s window
+
+/**
+ * Calculate variance of an array of numbers
+ */
+const calculateVariance = (values: number[]): number => {
+    if (values.length < 2) return 0;
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
+    return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+};
+
+/**
+ * Add a head position sample for elliptical calibration/detection
+ * Returns true if sample was added successfully
+ */
+export const addEllipticalHeadSample = (landmarks: PoseLandmarks): boolean => {
+    // Get nose position (most stable head landmark)
+    // Use direct access for elliptical - visibility threshold is less critical for calibration
+    const nose = landmarks[KnownPoseLandmarks.nose];
+    if (!nose || nose.y === undefined) {
+        console.log('[Elliptical] No nose landmark found');
+        return false;
+    }
+    
+    // For calibration, accept any visibility > 0.5 (relaxed threshold)
+    if ((nose.visibility ?? 1) < 0.5) {
+        console.log(`[Elliptical] Nose visibility too low: ${nose.visibility?.toFixed(2)}`);
+        return false;
+    }
+    
+    currentEllipticalCalibration.samples.push(nose.y);
+    currentEllipticalCalibration.lastUpdateTime = Date.now();
+    
+    // Log every 10th sample for debugging
+    if (currentEllipticalCalibration.samples.length % 10 === 0) {
+        console.log(`[Elliptical] Samples collected: ${currentEllipticalCalibration.samples.length}`);
+    }
+    
+    // Keep only recent samples
+    if (currentEllipticalCalibration.samples.length > ELLIPTICAL_SAMPLE_SIZE * 2) {
+        currentEllipticalCalibration.samples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_SAMPLE_SIZE);
+    }
+    
+    return true;
+};
+
+/**
+ * Start elliptical calibration - Phase 1: User is moving
+ * Call this when user starts pedaling for calibration
+ */
+export const startEllipticalMovingCalibration = (): void => {
+    currentEllipticalCalibration = {
+        isCalibrated: false,
+        movingVariance: 0,
+        stoppedVariance: 0,
+        movementThreshold: 0,
+        samples: [],
+        lastUpdateTime: Date.now(),
+    };
+    console.log('[Elliptical] Started moving calibration phase');
+};
+
+/**
+ * Complete the moving phase of calibration and record the variance
+ * Call after user has been pedaling for a few seconds
+ */
+export const completeEllipticalMovingCalibration = (): number => {
+    console.log(`[Elliptical] Completing moving phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_VARIANCE_WINDOW})`);
+    
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_VARIANCE_WINDOW) {
+        console.warn(`[Elliptical] Not enough samples for moving calibration: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_VARIANCE_WINDOW}`);
+        return 0;
+    }
+    
+    // Calculate variance from recent samples
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_VARIANCE_WINDOW);
+    currentEllipticalCalibration.movingVariance = calculateVariance(recentSamples);
+    currentEllipticalCalibration.samples = []; // Reset for stopped phase
+    
+    console.log(`[Elliptical] Moving variance: ${currentEllipticalCalibration.movingVariance.toFixed(6)}`);
+    return currentEllipticalCalibration.movingVariance;
+};
+
+/**
+ * Complete the stopped phase of calibration and finalize calibration
+ * Call after user has stopped pedaling for a few seconds
+ */
+export const completeEllipticalStoppedCalibration = (): boolean => {
+    console.log(`[Elliptical] Completing stopped phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_VARIANCE_WINDOW})`);
+    
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_VARIANCE_WINDOW) {
+        console.warn(`[Elliptical] Not enough samples for stopped calibration: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_VARIANCE_WINDOW}`);
+        return false;
+    }
+    
+    // Calculate variance from recent samples
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_VARIANCE_WINDOW);
+    currentEllipticalCalibration.stoppedVariance = calculateVariance(recentSamples);
+    
+    // Set threshold as midpoint between moving and stopped variance
+    // with a bias towards detecting stopped (to avoid false positives when tired)
+    const varianceDiff = currentEllipticalCalibration.movingVariance - currentEllipticalCalibration.stoppedVariance;
+    
+    if (varianceDiff <= 0) {
+        console.warn('[Elliptical] Calibration failed: moving variance should be higher than stopped');
+        return false;
+    }
+    
+    // Threshold is 40% of the way from stopped to moving
+    currentEllipticalCalibration.movementThreshold = 
+        currentEllipticalCalibration.stoppedVariance + (varianceDiff * 0.4);
+    
+    currentEllipticalCalibration.isCalibrated = true;
+    currentEllipticalCalibration.samples = [];
+    
+    console.log(`[Elliptical] Calibration complete!`);
+    console.log(`  - Moving variance: ${currentEllipticalCalibration.movingVariance.toFixed(6)}`);
+    console.log(`  - Stopped variance: ${currentEllipticalCalibration.stoppedVariance.toFixed(6)}`);
+    console.log(`  - Threshold: ${currentEllipticalCalibration.movementThreshold.toFixed(6)}`);
+    
+    return true;
+};
+
+/**
+ * Detect if user is currently pedaling on elliptical
+ * Requires prior calibration
+ */
+export const detectEllipticalMovement = (landmarks: PoseLandmarks): EllipticalState => {
+    const now = Date.now();
+    
+    // Add head sample
+    addEllipticalHeadSample(landmarks);
+    
+    // Not calibrated - can't detect
+    if (!currentEllipticalCalibration.isCalibrated) {
+        currentEllipticalState = {
+            isMoving: false,
+            confidence: 0,
+            currentVariance: 0,
+            lastUpdate: now,
+        };
+        return currentEllipticalState;
+    }
+    
+    // Need enough samples
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_VARIANCE_WINDOW) {
+        return currentEllipticalState;
+    }
+    
+    // Calculate current variance
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_VARIANCE_WINDOW);
+    const currentVariance = calculateVariance(recentSamples);
+    
+    // Determine if moving with hysteresis
+    const wasMoving = currentEllipticalState.isMoving;
+    const threshold = currentEllipticalCalibration.movementThreshold;
+    const enterThreshold = threshold * 1.2; // Need to be clearly moving to start
+    const exitThreshold = threshold * 0.8;   // Can stay moving with less variance
+    
+    let isMoving = false;
+    if (wasMoving) {
+        isMoving = currentVariance > exitThreshold;
+    } else {
+        isMoving = currentVariance > enterThreshold;
+    }
+    
+    // Calculate confidence (0-1) based on how far from threshold
+    const { movingVariance, stoppedVariance } = currentEllipticalCalibration;
+    let confidence = 0;
+    if (isMoving) {
+        confidence = Math.min(1, (currentVariance - threshold) / (movingVariance - threshold));
+    } else {
+        confidence = Math.min(1, (threshold - currentVariance) / (threshold - stoppedVariance));
+    }
+    
+    currentEllipticalState = {
+        isMoving,
+        confidence: Math.max(0, confidence),
+        currentVariance,
+        lastUpdate: now,
+    };
+    
+    return currentEllipticalState;
+};
+
+/**
+ * Get current elliptical state
+ */
+export const getEllipticalState = (): EllipticalState => currentEllipticalState;
+
+/**
+ * Get elliptical calibration data
+ */
+export const getEllipticalCalibration = (): EllipticalCalibration => currentEllipticalCalibration;
+
+/**
+ * Check if elliptical is calibrated
+ */
+export const isEllipticalCalibrated = (): boolean => currentEllipticalCalibration.isCalibrated;
+
+/**
+ * Reset elliptical calibration and state
+ */
+export const resetEllipticalState = (): void => {
+    currentEllipticalCalibration = {
+        isCalibrated: false,
+        movingVariance: 0,
+        stoppedVariance: 0,
+        movementThreshold: 0,
+        samples: [],
+        lastUpdateTime: 0,
+    };
+    currentEllipticalState = {
+        isMoving: false,
+        confidence: 0,
+        currentVariance: 0,
+        lastUpdate: 0,
+    };
+};
+
 /**
  * Reset the exercise state (call when switching exercises)
  */
@@ -317,9 +577,13 @@ export const resetExerciseState = (exerciseType?: ExerciseType): void => {
         if (exerciseType === 'plank') {
             resetPlankState();
         }
+        if (exerciseType === 'elliptical') {
+            resetEllipticalState();
+        }
     } else {
         Object.keys(exerciseStates).forEach((key) => delete exerciseStates[key]);
         resetPlankState();
+        resetEllipticalState();
     }
 };
 

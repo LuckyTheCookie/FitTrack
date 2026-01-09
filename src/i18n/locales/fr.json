@@ -258,6 +258,11 @@
       "plank": {
         "default": "Posez le téléphone de côté pour vous voir de profil",
         "camera": "Posez le téléphone de côté pour vous voir de profil.\n\n💡 Conseil : Augmente le volume pour entendre les sons !"
+      },
+      "elliptical": {
+        "default": "Posez le téléphone en haut du vélo face à vous",
+        "camera": "Posez le téléphone en haut du vélo pour que la caméra voie votre tête bouger",
+        "manual": "Utilisez le bouton Play/Pause pour démarrer et arrêter le chrono"
       }
     },
     "active": "ACTIF",
@@ -437,15 +442,76 @@
           "emoji": "💥"
         }
       ],
+      "elliptical": [
+        {
+          "text": "Continue comme ça!",
+          "emoji": "🚴"
+        },
+        {
+          "text": "Cardio au top!",
+          "emoji": "❤️"
+        },
+        {
+          "text": "Tu es en feu!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Endurance!",
+          "emoji": "💪"
+        },
+        {
+          "text": "Belle cadence!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Tu gères!",
+          "emoji": "🏆"
+        },
+        {
+          "text": "Machine!",
+          "emoji": "🤖"
+        },
+        {
+          "text": "Excellent!",
+          "emoji": "⭐"
+        }
+      ],
       "started": "C'est parti ! 💪",
-      "plankSec": "{{seconds}}s - Bien joué !"
+      "plankSec": "{{seconds}}s - Bien joué !",
+      "ellipticalPause": "Petite pause ? C'est OK !"
     },
     "exercises": {
       "pushups": "Pompes",
       "situps": "Abdos",
       "squats": "Squats",
       "jumpingJacks": "Jumping Jacks",
-      "plank": "Planche"
+      "plank": "Planche",
+      "elliptical": "Vélo elliptique"
+    },
+    "manual": "Manuel",
+    "auto": "Auto",
+    "manualMode": "Mode manuel",
+    "autoDetection": "Détection auto",
+    "activeTime": "Temps actif",
+    "cycling": "EN COURS",
+    "paused": "EN PAUSE",
+    "ellipticalManualNote": "Appuie sur Play/Pause pour contrôler le chrono",
+    "ellipticalAutoNote": "Calibration requise pour détecter automatiquement le pédalage",
+    "elliptical": {
+      "calibrationStart": "Calibration requise",
+      "calibrationIntro": "Pour détecter automatiquement quand tu pédales, nous devons d'abord analyser tes mouvements.",
+      "calibrationMoving": "Commence à pédaler !",
+      "calibrationMovingHint": "Prépare-toi à pédaler à ton rythme normal...",
+      "calibrationKeepMoving": "Continue de pédaler pendant quelques secondes pendant que j'analyse ton rythme...",
+      "doneMoving": "J'ai fini de pédaler",
+      "calibrationStopping": "Arrête-toi doucement",
+      "calibrationStoppingHint": "Ralentis et arrête-toi progressivement...",
+      "calibrationKeepStill": "Reste immobile quelques secondes pour que je puisse détecter la différence...",
+      "doneStopping": "Je suis arrêté(e)",
+      "calibrationDone": "Calibration terminée ! 🎉",
+      "calibrationReady": "Je suis prêt à détecter automatiquement quand tu pédales. C'est parti !",
+      "retryCalibration": "Réessayer la calibration",
+      "calibrationFailed": "Calibration insuffisante — réessaye en pédalant un peu plus vite"
     }
   },
   "settings": {

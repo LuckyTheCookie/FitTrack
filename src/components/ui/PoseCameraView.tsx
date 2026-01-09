@@ -36,7 +36,9 @@ import {
     resetExerciseState,
     isPoseValid,
     detectPlankPosition,
+    detectEllipticalMovement,
     type PlankDebugInfo,
+    type EllipticalState,
 } from '../../utils/poseDetection';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -69,6 +71,7 @@ interface PoseCameraViewProps {
     onRepDetected?: (newCount: number, feedback?: string) => void;
     onPoseDetected?: (landmarks: PoseLandmarks | null) => void;
     onPlankStateChange?: (isInPlank: boolean, confidence: number, debugInfo?: PlankDebugInfo) => void;
+    onEllipticalStateChange?: (state: EllipticalState) => void;
     onCameraReady?: () => void;
     currentCount?: number;
     style?: any;
@@ -83,6 +86,7 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     onRepDetected,
     onPoseDetected,
     onPlankStateChange,
+    onEllipticalStateChange,
     onCameraReady,
     currentCount = 0,
     style,
@@ -105,9 +109,16 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
         countRef.current = currentCount;
     }, [currentCount]);
 
+    // Track previous exercise type to only reset on actual change
+    const prevExerciseTypeRef = useRef<ExerciseType | undefined>(undefined);
+    
     useEffect(() => {
+        // Only reset state when actually changing exercise type (not on initial mount for same type)
+        if (prevExerciseTypeRef.current !== undefined && prevExerciseTypeRef.current !== exerciseType) {
+            resetExerciseState(exerciseType);
+        }
         exerciseTypeRef.current = exerciseType;
-        resetExerciseState(exerciseType);
+        prevExerciseTypeRef.current = exerciseType;
     }, [exerciseType]);
 
     // Track previous plank state to detect changes
@@ -122,7 +133,12 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                 const poseResult = result.results?.[0];
                 const landmarks = poseResult?.landmarks?.[0] as PoseLandmarks | undefined;
                 
-                if (landmarks && isPoseValid(landmarks)) {
+                // For elliptical, we only need the nose landmark, not full body validation
+                const isElliptical = exerciseTypeRef.current === 'elliptical';
+                const hasValidLandmarks = landmarks && landmarks.length >= 33;
+                const poseIsValid = hasValidLandmarks && (isElliptical || isPoseValid(landmarks));
+                
+                if (poseIsValid && landmarks) {
                     setCurrentPose(landmarks);
                     setPoseStatus('pose');
                     onPoseDetected?.(landmarks);
@@ -140,6 +156,10 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                             }
                             onPlankStateChange?.(plankState.isInPlankPosition, plankState.confidence, plankState.debugInfo);
                         }
+                    } else if (exerciseTypeRef.current === 'elliptical') {
+                        // Handle elliptical exercise - detect head movement
+                        const ellipticalState = detectEllipticalMovement(landmarks);
+                        onEllipticalStateChange?.(ellipticalState);
                     } else if (exerciseTypeRef.current) {
                         // Count reps for other exercises
                         const repResult = countRepsFromPose(
@@ -165,7 +185,7 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
                         onPlankStateChange?.(false, 0);
                     }
                 }
-            }, [onPoseDetected, onRepDetected, onPlankStateChange, debugPlank]),
+            }, [onPoseDetected, onRepDetected, onPlankStateChange, onEllipticalStateChange, debugPlank]),
             onError: useCallback((error: any) => {
                 console.error('[PoseCamera] Detection error:', error.message);
                 setPoseStatus('no-pose');

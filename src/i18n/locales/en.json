@@ -207,6 +207,7 @@
     "selectHint": "Select the exercise you want to track",
     "positioning": "Positioning",
     "detectionMode": "Detection Mode",
+    "manual": "Manual",
     "sensor": "Sensor",
     "camera": "Camera",
     "cameraNote": "The camera uses AI to detect your movements",
@@ -229,6 +230,14 @@
     "congrats": "Great job! 🎉",
     "restart": "Restart",
     "whenReady": "When ready, press Start",
+    "calibration": {
+      "title": "Calibration",
+      "startPedaling": "Start pedaling at your normal pace...",
+      "keepPedaling": "Keep pedaling...",
+      "nowStop": "Good! Now gradually stop...",
+      "stopping": "Stop completely...",
+      "ready": "Calibration complete!"
+    },
     "exitConfirm": {
       "title": "Quit tracking?",
       "message": "Your progress will not be saved."
@@ -258,6 +267,11 @@
       "plank": {
         "default": "Place the phone to the side for a profile view",
         "camera": "Place the phone to the side for a profile view.\n\n💡 Tip: Turn up the volume to hear sounds!"
+      },
+      "elliptical": {
+        "default": "Position your phone so your head is visible in the camera",
+        "camera": "The app will detect your movement by analyzing your head motion.\n\n💡 A short calibration is needed before starting.",
+        "manual": "Press play to start the timer.\n\nA sound will play every 5 min to motivate you!"
       }
     },
     "active": "Active",
@@ -437,15 +451,72 @@
           "emoji": "💥"
         }
       ],
+      "elliptical": [
+        {
+          "text": "Keep pedaling!",
+          "emoji": "🚴"
+        },
+        {
+          "text": "Great pace!",
+          "emoji": "⚡"
+        },
+        {
+          "text": "Legs of steel!",
+          "emoji": "💪"
+        },
+        {
+          "text": "You're on fire!",
+          "emoji": "🔥"
+        },
+        {
+          "text": "Stay in rhythm!",
+          "emoji": "🎵"
+        },
+        {
+          "text": "Cardio beast!",
+          "emoji": "❤️‍🔥"
+        },
+        {
+          "text": "Keep going!",
+          "emoji": "🏃"
+        },
+        {
+          "text": "Endurance mode!",
+          "emoji": "💫"
+        }
+      ],
       "started": "Let's go! 💪",
-      "plankSec": "{{seconds}}s - Well done!"
+      "plankSec": "{{seconds}}s - Well done!",
+      "ellipticalPause": "Paused"
     },
     "exercises": {
       "pushups": "Push-ups",
       "situps": "Sit-ups",
       "squats": "Squats",
       "jumpingJacks": "Jumping Jacks",
-      "plank": "Plank"
+      "plank": "Plank",
+      "elliptical": "Elliptical Bike"
+    },
+    "activeTime": "Active Time",
+    "cycling": "CYCLING",
+    "paused": "PAUSED",
+    "ellipticalManualNote": "Press Play/Pause to control the timer",
+    "ellipticalAutoNote": "Calibration required to automatically detect pedaling",
+    "elliptical": {
+      "calibrationStart": "Calibration Required",
+      "calibrationIntro": "To automatically detect when you're pedaling, we need to analyze your movements first.",
+      "calibrationMoving": "Start pedaling!",
+      "calibrationMovingHint": "Get ready to pedal at your normal pace...",
+      "calibrationKeepMoving": "Keep pedaling for a few seconds while I analyze your rhythm...",
+      "doneMoving": "Done pedaling",
+      "calibrationStopping": "Slow down now",
+      "calibrationStoppingHint": "Slow down and stop gradually...",
+      "calibrationKeepStill": "Stay still for a few seconds so I can detect the difference...",
+      "doneStopping": "I'm stopped",
+      "calibrationDone": "Calibration complete! 🎉",
+      "calibrationReady": "I'm ready to automatically detect when you're pedaling. Let's go!",
+      "retryCalibration": "Retry calibration",
+      "calibrationFailed": "Not enough movement detected — please pedal a bit faster and try again"
     }
   },
   "settings": {

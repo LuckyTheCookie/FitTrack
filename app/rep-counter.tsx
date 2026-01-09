@@ -14,6 +14,7 @@ import {
     Alert,
     Modal,
     BackHandler,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -58,7 +59,16 @@ import {
 } from 'lucide-react-native';
 import { GlassCard, PoseCameraView } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
-import type { PlankDebugInfo } from '../src/utils/poseDetection';
+import type { PlankDebugInfo, EllipticalState } from '../src/utils/poseDetection';
+import {
+    startEllipticalMovingCalibration,
+    completeEllipticalMovingCalibration,
+    completeEllipticalStoppedCalibration,
+    detectEllipticalMovement,
+    isEllipticalCalibrated,
+    resetEllipticalState,
+    addEllipticalHeadSample,
+} from '../src/utils/poseDetection';
 import { useTranslation } from 'react-i18next';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
@@ -72,9 +82,10 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Note: messages are looked up dynamically inside the component using `t(..., { returnObjects: true })`
 
 // Types d'exercices supportés
-type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank';
-type DetectionMode = 'sensor' | 'camera';
+type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank' | 'elliptical';
+type DetectionMode = 'sensor' | 'camera' | 'manual';
 type CameraView = 'front' | 'side';
+type EllipticalCalibrationPhase = 'none' | 'start_moving' | 'moving' | 'start_stopping' | 'stopping' | 'done';
 
 interface ExerciseConfig {
     id: ExerciseType;
@@ -85,12 +96,16 @@ interface ExerciseConfig {
     cameraInstruction?: string;
     instructionKey?: string;
     cameraInstructionKey?: string;
+    manualInstructionKey?: string;
     threshold: number; // Sensibilité de détection
     axis: 'x' | 'y' | 'z'; // Axe principal de mouvement
     cooldown: number; // Temps minimum entre 2 reps (ms)
     supportsCameraMode: boolean;
+    supportsManualMode?: boolean;
+    requiresCalibration?: boolean;
     preferredCameraView: CameraView;
     isTimeBased?: boolean; // Pour la planche: compte les secondes au lieu des reps
+    keepGoingIntervalSeconds?: number; // Override for keep going sound interval
 }
 
 const EXERCISES: ExerciseConfig[] = [
@@ -159,6 +174,24 @@ const EXERCISES: ExerciseConfig[] = [
         supportsCameraMode: true,
         preferredCameraView: 'side',
         isTimeBased: true,
+    },
+    {
+        id: 'elliptical',
+        name: 'Vélo elliptique',
+        icon: '🚴',
+        color: '#10b981',
+        instructionKey: 'repCounter.instructions.elliptical.default',
+        cameraInstructionKey: 'repCounter.instructions.elliptical.camera',
+        manualInstructionKey: 'repCounter.instructions.elliptical.manual',
+        threshold: 0.3,
+        axis: 'y',
+        cooldown: 500,
+        supportsCameraMode: true,
+        supportsManualMode: true,
+        requiresCalibration: true,
+        preferredCameraView: 'front',
+        isTimeBased: true,
+        keepGoingIntervalSeconds: 300, // 5 minutes
     },
 ];
 
@@ -359,6 +392,15 @@ export default function RepCounterScreen() {
     const [showNewRecord, setShowNewRecord] = useState(false); // Affichage du message de nouveau record
     const [personalBest, setPersonalBest] = useState(0); // Record personnel pour cet exercice
 
+    // Elliptical specific states
+    const [ellipticalCalibrationPhase, setEllipticalCalibrationPhase] = useState<EllipticalCalibrationPhase>('none');
+    const [ellipticalSeconds, setEllipticalSeconds] = useState(0); // Seconds spent cycling
+    const [isEllipticalActive, setIsEllipticalActive] = useState(false); // Is user currently pedaling
+    const [ellipticalState, setEllipticalState] = useState<EllipticalState | null>(null);
+    const ellipticalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const calibrationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const lastKeepGoingTime = useRef(0); // For 5-minute keep going interval
+
     const { t } = useTranslation();
 
     // Sound effects avec expo-audio
@@ -536,7 +578,9 @@ export default function RepCounterScreen() {
     useEffect(() => {
         if (!selectedExercise || hasBeatenRecord.current) return;
         
-        const currentValue = selectedExercise.isTimeBased ? plankSeconds : repCount;
+        const currentValue = selectedExercise.isTimeBased 
+            ? (selectedExercise.id === 'elliptical' ? ellipticalSeconds : plankSeconds) 
+            : repCount;
         if (currentValue > personalBest && currentValue > 0) {
             hasBeatenRecord.current = true;
             setShowNewRecord(true);
@@ -546,7 +590,7 @@ export default function RepCounterScreen() {
             // Cacher le message après 3 secondes
             setTimeout(() => setShowNewRecord(false), 3000);
         }
-    }, [repCount, plankSeconds, personalBest, selectedExercise, playNewRecordSound]);
+    }, [repCount, plankSeconds, ellipticalSeconds, personalBest, selectedExercise, playNewRecordSound]);
 
     // Show motivational message
     const showMotivationalMessage = useCallback((feedback?: string) => {
@@ -713,25 +757,172 @@ export default function RepCounterScreen() {
         }
     }, [selectedExercise?.isTimeBased, isPlankActive, plankSeconds]);
 
+    // ========================================================================
+    // ELLIPTICAL BIKE SPECIFIC FUNCTIONS
+    // ========================================================================
+
+    // Handle elliptical movement state change (from pose detection)
+    const handleEllipticalStateChange = useCallback((state: EllipticalState) => {
+        setEllipticalState(state);
+        
+        if (!isTracking || selectedExercise?.id !== 'elliptical') return;
+        if (detectionMode !== 'camera' || !isEllipticalCalibrated()) return;
+        
+        if (state.isMoving && !isEllipticalActive) {
+            // User started pedaling
+            setIsEllipticalActive(true);
+            console.log('[Elliptical] User started pedaling');
+        } else if (!state.isMoving && isEllipticalActive) {
+            // User stopped pedaling
+            setIsEllipticalActive(false);
+            if (ellipticalSeconds > 0) {
+                showMotivationalMessage(t('repCounter.motivations.ellipticalPause'));
+            }
+            console.log(`[Elliptical] User stopped after ${ellipticalSeconds}s`);
+        }
+    }, [isTracking, selectedExercise?.id, detectionMode, isEllipticalActive, ellipticalSeconds, showMotivationalMessage, t]);
+
+    // Timer for elliptical seconds (counts while isEllipticalActive)
+    useEffect(() => {
+        if (isTracking && selectedExercise?.id === 'elliptical' && isEllipticalActive) {
+            ellipticalTimerRef.current = setInterval(() => {
+                setEllipticalSeconds(prev => {
+                    const newSeconds = prev + 1;
+                    const now = Date.now();
+                    
+                    // Play keep going every 5 minutes (300 seconds)
+                    const keepGoingInterval = selectedExercise.keepGoingIntervalSeconds || 300;
+                    if (newSeconds > 0 && newSeconds % keepGoingInterval === 0) {
+                        if (now - lastKeepGoingTime.current > 60000) { // At least 1 minute apart
+                            playKeepGoingSound();
+                            showMotivationalMessage();
+                            lastKeepGoingTime.current = now;
+                        }
+                    }
+                    return newSeconds;
+                });
+            }, 1000);
+        } else if (ellipticalTimerRef.current) {
+            clearInterval(ellipticalTimerRef.current);
+        }
+
+        return () => {
+            if (ellipticalTimerRef.current) {
+                clearInterval(ellipticalTimerRef.current);
+            }
+        };
+    }, [isTracking, selectedExercise?.id, selectedExercise?.keepGoingIntervalSeconds, isEllipticalActive, playKeepGoingSound, showMotivationalMessage]);
+
+    // Start elliptical calibration process
+    const [ellipticalCalibrationFailed, setEllipticalCalibrationFailed] = useState(false);
+
+    const startEllipticalCalibration = useCallback(() => {
+        // Reset failure flag and state
+        setEllipticalCalibrationFailed(false);
+        resetEllipticalState();
+        setEllipticalCalibrationPhase('start_moving');
+        startEllipticalMovingCalibration();
+        
+        // After 1 second, transition to 'moving' phase where user should pedal
+        setTimeout(() => {
+            setEllipticalCalibrationPhase('moving');
+        }, 1500);
+    }, []);
+
+    // Complete the moving phase of calibration
+    const completeMovingPhase = useCallback(() => {
+        const variance = completeEllipticalMovingCalibration();
+        if (variance > 0) {
+            setEllipticalCalibrationPhase('start_stopping');
+            
+            // After 1.5 seconds, transition to 'stopping' phase
+            setTimeout(() => {
+                setEllipticalCalibrationPhase('stopping');
+            }, 1500);
+        } else {
+            // Not enough data, show failure and allow retry
+            setEllipticalCalibrationPhase('none');
+            setEllipticalCalibrationFailed(true);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            console.warn('[Elliptical Calibration] Not enough movement detected — ask user to retry');
+        }
+    }, []);
+
+    // Complete the stopped phase and finalize calibration
+    const completeStoppedPhase = useCallback(() => {
+        const success = completeEllipticalStoppedCalibration();
+        if (success) {
+            setEllipticalCalibrationPhase('done');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            
+            // Start tracking after brief celebration
+            setTimeout(() => {
+                setStep('counting');
+                setIsTracking(true);
+                setEllipticalSeconds(0);
+                setIsEllipticalActive(false);
+                lastKeepGoingTime.current = 0;
+            }, 1000);
+        } else {
+            // Calibration failed, show retry option
+            setEllipticalCalibrationPhase('none');
+            setEllipticalCalibrationFailed(true);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            console.warn('[Elliptical Calibration] Stopped-phase calibration failed — allow retry');
+        }
+    }, []);
+
+    // Manual mode toggle for elliptical
+    const toggleEllipticalManual = useCallback(() => {
+        if (detectionMode !== 'manual') return;
+        
+        setIsEllipticalActive(prev => {
+            if (!prev) {
+                // Starting
+                console.log('[Elliptical Manual] Started');
+            } else {
+                // Stopping
+                console.log(`[Elliptical Manual] Stopped after ${ellipticalSeconds}s`);
+            }
+            return !prev;
+        });
+    }, [detectionMode, ellipticalSeconds]);
+
     // Démarrer le tracking
     const startTracking = useCallback(async () => {
         if (!selectedExercise) return;
 
-        const isResuming = repCount > 0 || plankSeconds > 0 || elapsedTime > 0;
+        const isResuming = repCount > 0 || plankSeconds > 0 || ellipticalSeconds > 0 || elapsedTime > 0;
         setIsTracking(true);
         // If we're starting fresh (not resuming a paused session), reset counters and state
         if (!isResuming) {
             setRepCount(0);
             setElapsedTime(0);
             setPlankSeconds(0);
+            setEllipticalSeconds(0);
             setIsPlankActive(false);
+            setIsEllipticalActive(false);
             hasBeatenRecord.current = false;
             calibrationSamples.current = [];
             recentValues.current = [];
             isInRep.current = false;
             lastRepTime.current = 0;
+            lastKeepGoingTime.current = 0;
             peakValue.current = 0;
             wasAboveThreshold.current = false;
+        }
+
+        // Pour l'elliptique en mode caméra, la détection se fait via la caméra
+        if (selectedExercise.id === 'elliptical' && detectionMode === 'camera') {
+            console.log('[RepCounter] Mode vélo elliptique caméra: Détection de mouvement activée');
+            return;
+        }
+
+        // Pour l'elliptique en mode manuel, on utilise juste le toggle
+        if (selectedExercise.id === 'elliptical' && detectionMode === 'manual') {
+            console.log('[RepCounter] Mode vélo elliptique manuel: Toggle activé');
+            setIsEllipticalActive(true); // Start counting immediately in manual mode
+            return;
         }
 
         // Pour la planche en mode caméra, la détection de position se fait via la caméra
@@ -810,6 +1001,7 @@ export default function RepCounterScreen() {
     const stopTracking = useCallback(() => {
         setIsTracking(false);
         setIsPlankActive(false);
+        setIsEllipticalActive(false);
         if (subscriptionRef.current) {
             subscriptionRef.current.remove();
             subscriptionRef.current = null;
@@ -818,14 +1010,24 @@ export default function RepCounterScreen() {
             clearInterval(plankTimerRef.current);
             plankTimerRef.current = null;
         }
+        if (ellipticalTimerRef.current) {
+            clearInterval(ellipticalTimerRef.current);
+            ellipticalTimerRef.current = null;
+        }
+        if (calibrationTimerRef.current) {
+            clearInterval(calibrationTimerRef.current);
+            calibrationTimerRef.current = null;
+        }
     }, []);
 
     // Terminer et sauvegarder
     // Save workout to store
     const saveWorkout = useCallback(async () => {
-        // Pour la planche, on vérifie plankSeconds au lieu de repCount
+        // Pour la planche et l'elliptique, on vérifie les secondes au lieu de repCount
         const isTimeBased = selectedExercise?.isTimeBased;
-        const valueToCheck = isTimeBased ? plankSeconds : repCount;
+        const isElliptical = selectedExercise?.id === 'elliptical';
+        const seconds = isElliptical ? ellipticalSeconds : plankSeconds;
+        const valueToCheck = isTimeBased ? seconds : repCount;
         
         if (!selectedExercise || valueToCheck === 0) return;
 
@@ -835,10 +1037,10 @@ export default function RepCounterScreen() {
         const exerciseId = selectedExercise.id;
         const displayName = t(`repCounter.exercises.${exerciseId}`);
         const exerciseText = isTimeBased 
-            ? `${displayName}: ${plankSeconds}s`
+            ? `${displayName}: ${seconds}s`
             : `${displayName}: ${repCount} reps`;
         const durationMinutes = isTimeBased 
-            ? Math.ceil(plankSeconds / 60) 
+            ? Math.ceil(seconds / 60) 
             : Math.floor(elapsedTime / 60);
 
         addHomeWorkout({
@@ -851,7 +1053,7 @@ export default function RepCounterScreen() {
         // Attribuer les XP pour la séance
         const { addXp, updateQuestProgress } = useGamificationStore.getState();
         const xpGained = isTimeBased 
-            ? 50 + Math.floor(plankSeconds / 10) * 3 // 50 base + 3 XP par 10 secondes
+            ? 50 + Math.floor(seconds / 10) * 3 // 50 base + 3 XP par 10 secondes
             : 50 + Math.floor(repCount / 10) * 5; // 50 base + 5 XP par 10 reps
         console.log('[rep-counter] Before addXp, xp =', useGamificationStore.getState().xp);
 
@@ -859,12 +1061,12 @@ export default function RepCounterScreen() {
             setTimeout(() => {
                 try {
                     const description = isTimeBased 
-                        ? `Tracking ${exerciseId} (${plankSeconds}s)` 
+                        ? `Tracking ${exerciseId} (${seconds}s)` 
                         : `Tracking ${exerciseId} (${repCount} reps)`;
                     addXp(xpGained, description);
                     updateQuestProgress('workouts', 1);
                     if (!isTimeBased && repCount > 0) updateQuestProgress('exercises', repCount);
-                    if (isTimeBased) updateQuestProgress('duration', Math.ceil(plankSeconds / 60));
+                    if (isTimeBased) updateQuestProgress('duration', Math.ceil(seconds / 60));
                     console.log('[rep-counter] After addXp, xp =', useGamificationStore.getState().xp);
 
                     // Marquer comme sauvegardé pour reset au retour
@@ -877,7 +1079,7 @@ export default function RepCounterScreen() {
                 }
             }, 60);
         });
-    }, [selectedExercise, repCount, plankSeconds, elapsedTime, addHomeWorkout, playFinishedSound]);
+    }, [selectedExercise, repCount, plankSeconds, ellipticalSeconds, elapsedTime, addHomeWorkout, playFinishedSound, t]);
 
     // Recalculer les quêtes après sauvegarde (quand workoutSaved devient true)
     useEffect(() => {
@@ -892,7 +1094,11 @@ export default function RepCounterScreen() {
                     setRepCount(0);
                     setElapsedTime(0);
                     setPlankSeconds(0);
+                    setEllipticalSeconds(0);
                     setIsPlankActive(false);
+                    setIsEllipticalActive(false);
+                    setEllipticalCalibrationPhase('none');
+                    resetEllipticalState();
                     hasBeatenRecord.current = false;
                     setWorkoutSaved(false);
                     setStep('select');
@@ -913,7 +1119,11 @@ export default function RepCounterScreen() {
         setRepCount(0);
         setElapsedTime(0);
         setPlankSeconds(0);
+        setEllipticalSeconds(0);
         setIsPlankActive(false);
+        setIsEllipticalActive(false);
+        setEllipticalCalibrationPhase('none');
+        resetEllipticalState();
         hasBeatenRecord.current = false;
         setStep('select');
         setSelectedExercise(null);
@@ -931,27 +1141,45 @@ export default function RepCounterScreen() {
             if (plankTimerRef.current) {
                 clearInterval(plankTimerRef.current);
             }
+            if (ellipticalTimerRef.current) {
+                clearInterval(ellipticalTimerRef.current);
+            }
+            if (calibrationTimerRef.current) {
+                clearInterval(calibrationTimerRef.current);
+            }
         };
     }, []);
 
     // Sélection d'exercice
     const handleExerciseSelect = useCallback((exercise: ExerciseConfig) => {
         setSelectedExercise(exercise);
-        // Force camera mode for time-based exercises (plank)
-        if (exercise.isTimeBased) {
+        // Force camera mode for time-based exercises (plank), but allow manual for elliptical
+        if (exercise.isTimeBased && exercise.id !== 'elliptical') {
             setDetectionMode('camera');
+        } else if (exercise.id === 'elliptical') {
+            // Default to manual for elliptical (user can switch to camera+calibration)
+            setDetectionMode('manual');
         }
+        // Reset elliptical state when switching exercises
+        resetEllipticalState();
+        setEllipticalCalibrationPhase('none');
     }, []);
 
     // Passer à l'étape suivante
     const handleNext = useCallback(() => {
         if (step === 'select' && selectedExercise) {
-            setStep('position');
+            // For elliptical in camera mode, go to calibration
+            if (selectedExercise.id === 'elliptical' && detectionMode === 'camera') {
+                setStep('position'); // This will show calibration UI
+                startEllipticalCalibration();
+            } else {
+                setStep('position');
+            }
         } else if (step === 'position') {
             setStep('counting');
             startTracking();
         }
-    }, [step, selectedExercise, startTracking]);
+    }, [step, selectedExercise, detectionMode, startTracking, startEllipticalCalibration]);
 
     // Format du temps
     const formatTime = (seconds: number) => {
@@ -1060,8 +1288,56 @@ export default function RepCounterScreen() {
                                         </View>
                                     )}
 
+                                    {/* Mode de détection pour le vélo elliptique : manuel ou automatique */}
+                                    {selectedExercise.id === 'elliptical' && (
+                                        <View style={styles.modeSelector}>
+                                            <Text style={styles.modeSelectorLabel}>{t('repCounter.detectionMode')}</Text>
+                                            <View style={styles.modeButtons}>
+                                                <TouchableOpacity
+                                                    onPress={() => setDetectionMode('manual')}
+                                                    style={[
+                                                        styles.modeButton,
+                                                        detectionMode === 'manual' && styles.modeButtonActive,
+                                                        detectionMode === 'manual' && { backgroundColor: selectedExercise.color },
+                                                    ]}
+                                                >
+                                                    <Activity size={18} color={detectionMode === 'manual' ? '#fff' : Colors.muted} />
+                                                    <Text style={[
+                                                        styles.modeButtonText,
+                                                        detectionMode === 'manual' && styles.modeButtonTextActive,
+                                                    ]}>
+                                                        {t('repCounter.manual')}
+                                                    </Text>
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    onPress={() => setDetectionMode('camera')}
+                                                    style={[
+                                                        styles.modeButton,
+                                                        detectionMode === 'camera' && styles.modeButtonActive,
+                                                        detectionMode === 'camera' && { backgroundColor: selectedExercise.color },
+                                                    ]}
+                                                >
+                                                    <Camera size={18} color={detectionMode === 'camera' ? '#fff' : Colors.muted} />
+                                                    <Text style={[
+                                                        styles.modeButtonText,
+                                                        detectionMode === 'camera' && styles.modeButtonTextActive,
+                                                    ]}>
+                                                        {t('repCounter.auto')}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <Text style={styles.cameraModeNote}>
+                                                {detectionMode === 'camera' 
+                                                    ? `📷 ${t('repCounter.ellipticalAutoNote')}`
+                                                    : `👆 ${t('repCounter.ellipticalManualNote')}`
+                                                }
+                                            </Text>
+                                        </View>
+                                    )}
+
                                     {/* Message pour la planche : caméra requise */}
-                                    {selectedExercise.isTimeBased && (
+                                    {selectedExercise.isTimeBased && selectedExercise.id !== 'elliptical' && (
                                         <View style={styles.modeSelector}>
                                             <View style={[styles.cameraRequiredBadge, { backgroundColor: `${selectedExercise.color}20` }]}>
                                                 <Camera size={18} color={selectedExercise.color} />
@@ -1095,13 +1371,132 @@ export default function RepCounterScreen() {
                         </Animated.View>
                     )}
 
-                    {/* Étape 2: Positionnement */}
+                    {/* Étape 2: Positionnement (ou Calibration pour vélo elliptique en mode auto) */}
                     {step === 'position' && selectedExercise && (
-                        <PositionScreen
-                            exercise={selectedExercise}
-                            onReady={handleNext}
-                            detectionMode={detectionMode}
-                        />
+                        <>
+                            {/* Calibration screen for elliptical in camera mode */}
+                            {selectedExercise.id === 'elliptical' && detectionMode === 'camera' ? (
+                                <Animated.View entering={FadeIn} style={styles.calibrationContainer}>
+                                    <View style={[styles.calibrationIconWrapper, { backgroundColor: `${selectedExercise.color}20` }]}>
+                                        <Text style={styles.calibrationIcon}>🚴</Text>
+                                    </View>
+                                    
+                                    <Text style={styles.calibrationTitle}>
+                                        {ellipticalCalibrationPhase === 'start_moving' || ellipticalCalibrationPhase === 'moving'
+                                            ? t('repCounter.elliptical.calibrationMoving')
+                                            : ellipticalCalibrationPhase === 'start_stopping' || ellipticalCalibrationPhase === 'stopping'
+                                                ? t('repCounter.elliptical.calibrationStopping')
+                                                : ellipticalCalibrationPhase === 'done'
+                                                    ? t('repCounter.elliptical.calibrationDone')
+                                                    : t('repCounter.elliptical.calibrationStart')
+                                        }
+                                    </Text>
+                                    
+                                    <Text style={styles.calibrationSubtitle}>
+                                        {ellipticalCalibrationPhase === 'start_moving'
+                                            ? t('repCounter.elliptical.calibrationMovingHint')
+                                            : ellipticalCalibrationPhase === 'moving'
+                                                ? t('repCounter.elliptical.calibrationKeepMoving')
+                                                : ellipticalCalibrationPhase === 'start_stopping'
+                                                    ? t('repCounter.elliptical.calibrationStoppingHint')
+                                                    : ellipticalCalibrationPhase === 'stopping'
+                                                        ? t('repCounter.elliptical.calibrationKeepStill')
+                                                        : ellipticalCalibrationPhase === 'done'
+                                                            ? t('repCounter.elliptical.calibrationReady')
+                                                            : t('repCounter.elliptical.calibrationIntro')
+                                        }
+                                    </Text>
+
+                                    {/* Hidden camera for calibration */}
+                                    <View style={styles.hiddenCameraContainer}>
+                                        <PoseCameraView
+                                            facing="front"
+                                            showDebugOverlay={false}
+                                            exerciseType="elliptical"
+                                            currentCount={0}
+                                            onRepDetected={() => {}}
+                                            isActive={ellipticalCalibrationPhase !== 'none' && ellipticalCalibrationPhase !== 'done'}
+                                            style={styles.hiddenCamera}
+                                        />
+                                    </View>
+
+                                    {/* Calibration buttons */}
+                                    {ellipticalCalibrationPhase === 'moving' && (
+                                        <TouchableOpacity
+                                            onPress={completeMovingPhase}
+                                            activeOpacity={0.9}
+                                            style={styles.calibrationButton}
+                                        >
+                                            <LinearGradient
+                                                colors={[selectedExercise.color, `${selectedExercise.color}dd`]}
+                                                style={styles.calibrationButtonGradient}
+                                            >
+                                                <Check size={24} color="#fff" />
+                                                <Text style={styles.calibrationButtonText}>
+                                                    {t('repCounter.elliptical.doneMoving')}
+                                                </Text>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    )}
+
+                                    {ellipticalCalibrationPhase === 'stopping' && (
+                                        <TouchableOpacity
+                                            onPress={completeStoppedPhase}
+                                            activeOpacity={0.9}
+                                            style={styles.calibrationButton}
+                                        >
+                                            <LinearGradient
+                                                colors={[selectedExercise.color, `${selectedExercise.color}dd`]}
+                                                style={styles.calibrationButtonGradient}
+                                            >
+                                                <Check size={24} color="#fff" />
+                                                <Text style={styles.calibrationButtonText}>
+                                                    {t('repCounter.elliptical.doneStopping')}
+                                                </Text>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    )}
+
+                                    {(ellipticalCalibrationPhase === 'start_moving' || ellipticalCalibrationPhase === 'start_stopping') && (
+                                        <View style={styles.calibrationLoading}>
+                                            <ActivityIndicator size="large" color={selectedExercise.color} />
+                                        </View>
+                                    )}
+
+                                    {/* Retry UI when calibration was not successful or user needs to restart */}
+                                    {(ellipticalCalibrationFailed || ellipticalCalibrationPhase === 'none') && (
+                                        <View style={styles.calibrationRetryContainer}>
+                                            {ellipticalCalibrationFailed && (
+                                                <Text style={styles.calibrationErrorText}>
+                                                    {t('repCounter.elliptical.calibrationFailed')}
+                                                </Text>
+                                            )}
+                                            <TouchableOpacity
+                                                onPress={startEllipticalCalibration}
+                                                activeOpacity={0.9}
+                                                style={styles.calibrationRetryButton}
+                                            >
+                                                <LinearGradient
+                                                    colors={[selectedExercise.color, `${selectedExercise.color}dd`]}
+                                                    style={styles.calibrationButtonGradient}
+                                                >
+                                                    <RotateCcw size={20} color="#fff" />
+                                                    <Text style={styles.calibrationButtonText}>
+                                                        {t('repCounter.elliptical.retryCalibration')}
+                                                    </Text>
+                                                </LinearGradient>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </Animated.View>
+                            ) : (
+                                <PositionScreen
+                                    exercise={selectedExercise}
+                                    onReady={handleNext}
+                                    detectionMode={detectionMode}
+                                />
+                            )}
+                        </>
                     )}
 
                     {/* Étape 3: Comptage */}
@@ -1112,9 +1507,33 @@ export default function RepCounterScreen() {
                                 {/* UI Overlay (Always visible) */}
                                 <View style={styles.counterWrapper}>
                                     <Animated.View style={[styles.pulseRing, pulseStyle, { borderColor: selectedExercise.color }]} />
-                                    <ProgressRing progress={selectedExercise.isTimeBased ? Math.min(plankSeconds / 60, 1) : progress} size={240}>
+                                    <ProgressRing 
+                                        progress={
+                                            selectedExercise.id === 'elliptical' 
+                                                ? Math.min(ellipticalSeconds / 300, 1) // 5 minutes goal for elliptical
+                                                : selectedExercise.isTimeBased 
+                                                    ? Math.min(plankSeconds / 60, 1) 
+                                                    : progress
+                                        } 
+                                        size={240}
+                                    >
                                         <Animated.View style={[styles.counterInner, countStyle]}>
-                                            {selectedExercise.isTimeBased ? (
+                                            {selectedExercise.id === 'elliptical' ? (
+                                                <>
+                                                    <Text style={styles.repCount}>{formatTime(ellipticalSeconds)}</Text>
+                                                    <Text style={styles.repLabel}>{t('repCounter.activeTime')}</Text>
+                                                    {isEllipticalActive && (
+                                                        <View style={[styles.plankStatusBadge, { backgroundColor: Colors.success }]}>
+                                                            <Text style={styles.plankStatusText}>{t('repCounter.cycling')}</Text>
+                                                        </View>
+                                                    )}
+                                                    {!isEllipticalActive && ellipticalSeconds > 0 && (
+                                                        <View style={[styles.plankStatusBadge, { backgroundColor: Colors.warning }]}>
+                                                            <Text style={styles.plankStatusText}>{t('repCounter.paused')}</Text>
+                                                        </View>
+                                                    )}
+                                                </>
+                                            ) : selectedExercise.isTimeBased ? (
                                                 <>
                                                     <Text style={styles.repCount}>{plankSeconds}</Text>
                                                     <Text style={styles.repLabel}>{t('common.seconds')}</Text>
@@ -1178,11 +1597,21 @@ export default function RepCounterScreen() {
                             </View>
 
                             {/* Mode indicator */}
-                            {detectionMode === 'camera' ? (
+                            {selectedExercise.id === 'elliptical' && detectionMode === 'manual' ? (
+                                <View style={styles.modeIndicator}>
+                                    <Activity size={16} color={selectedExercise.color} />
+                                    <Text style={[styles.modeIndicatorText, { color: selectedExercise.color }]}> 
+                                        {t('repCounter.manualMode')}
+                                    </Text>
+                                </View>
+                            ) : detectionMode === 'camera' ? (
                                 <View style={styles.modeIndicator}>
                                     <Camera size={16} color={selectedExercise.color} />
                                     <Text style={[styles.modeIndicatorText, { color: selectedExercise.color }]}> 
-                                        {t('repCounter.aiActive')}
+                                        {selectedExercise.id === 'elliptical' 
+                                            ? t('repCounter.autoDetection')
+                                            : t('repCounter.aiActive')
+                                        }
                                     </Text>
                                 </View>
                             ) : selectedExercise.isTimeBased ? (
@@ -1254,6 +1683,7 @@ export default function RepCounterScreen() {
                                         currentCount={selectedExercise.isTimeBased ? plankSeconds : repCount}
                                         onRepDetected={handleCameraRepDetected}
                                         onPlankStateChange={handlePlankStateChange}
+                                        onEllipticalStateChange={handleEllipticalStateChange}
                                         isActive={isTracking}
                                         style={styles.cameraPreview}
                                         debugPlank={settings.debugPlank}
@@ -1271,6 +1701,7 @@ export default function RepCounterScreen() {
                                         currentCount={selectedExercise.isTimeBased ? plankSeconds : repCount}
                                         onRepDetected={handleCameraRepDetected}
                                         onPlankStateChange={handlePlankStateChange}
+                                        onEllipticalStateChange={handleEllipticalStateChange}
                                         isActive={isTracking}
                                         style={styles.hiddenCamera}
                                         debugPlank={settings.debugPlank}
@@ -2157,5 +2588,73 @@ const styles = StyleSheet.create({
     plankDebugLandmark: {
         fontSize: FontSize.xs,
         fontWeight: FontWeight.semibold,
+    },
+
+    // Elliptical Calibration Styles
+    calibrationContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.xl,
+    },
+    calibrationIconWrapper: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.xl,
+    },
+    calibrationIcon: {
+        fontSize: 56,
+    },
+    calibrationTitle: {
+        fontSize: FontSize.xxl,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        textAlign: 'center',
+        marginBottom: Spacing.md,
+    },
+    calibrationSubtitle: {
+        fontSize: FontSize.md,
+        color: Colors.muted,
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: Spacing.xxl,
+        paddingHorizontal: Spacing.lg,
+    },
+    calibrationButton: {
+        borderRadius: BorderRadius.full,
+        overflow: 'hidden',
+        marginTop: Spacing.lg,
+    },
+    calibrationButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+    },
+    calibrationButtonText: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.bold,
+        color: '#fff',
+    },
+    calibrationLoading: {
+        marginTop: Spacing.xl,
+    },
+    calibrationRetryContainer: {
+        marginTop: Spacing.lg,
+        alignItems: 'center',
+    },
+    calibrationErrorText: {
+        color: Colors.error,
+        fontSize: FontSize.md,
+        marginBottom: Spacing.sm,
+        textAlign: 'center',
+    },
+    calibrationRetryButton: {
+        borderRadius: BorderRadius.full,
+        overflow: 'hidden',
     },
 });
