@@ -47,3 +47,4 @@ pushgithub.js
 scripts/release.js
 .vscode/settings.json
 TODO.md
+/releases
