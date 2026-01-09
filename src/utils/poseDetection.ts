@@ -346,8 +346,9 @@ export const resetPlankState = (): void => {
 // ELLIPTICAL BIKE DETECTION - Head Movement Based
 // ============================================================================
 
-const ELLIPTICAL_SAMPLE_SIZE = 30; // ~1 second of samples at 30fps
-const ELLIPTICAL_VARIANCE_WINDOW = 15; // Calculate variance over 0.5s window
+const ELLIPTICAL_SAMPLE_SIZE = 200; // ~6-7 seconds of samples at 30fps for accurate calibration
+const ELLIPTICAL_VARIANCE_WINDOW = 60; // Calculate variance over 2s window for better accuracy during detection
+const ELLIPTICAL_CALIBRATION_WINDOW = 150; // Use more samples during calibration phase for precision
 
 /**
  * Calculate variance of an array of numbers
@@ -415,15 +416,15 @@ export const startEllipticalMovingCalibration = (): void => {
  * Call after user has been pedaling for a few seconds
  */
 export const completeEllipticalMovingCalibration = (): number => {
-    console.log(`[Elliptical] Completing moving phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_VARIANCE_WINDOW})`);
+    console.log(`[Elliptical] Completing moving phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_CALIBRATION_WINDOW})`);
     
-    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_VARIANCE_WINDOW) {
-        console.warn(`[Elliptical] Not enough samples for moving calibration: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_VARIANCE_WINDOW}`);
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_CALIBRATION_WINDOW) {
+        console.warn(`[Elliptical] Not enough samples for moving calibration: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_CALIBRATION_WINDOW}`);
         return 0;
     }
     
-    // Calculate variance from recent samples
-    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_VARIANCE_WINDOW);
+    // Calculate variance from ALL samples collected during calibration phase for better accuracy
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_CALIBRATION_WINDOW);
     currentEllipticalCalibration.movingVariance = calculateVariance(recentSamples);
     currentEllipticalCalibration.samples = []; // Reset for stopped phase
     
@@ -436,15 +437,15 @@ export const completeEllipticalMovingCalibration = (): number => {
  * Call after user has stopped pedaling for a few seconds
  */
 export const completeEllipticalStoppedCalibration = (): boolean => {
-    console.log(`[Elliptical] Completing stopped phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_VARIANCE_WINDOW})`);
+    console.log(`[Elliptical] Completing stopped phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_CALIBRATION_WINDOW})`);
     
-    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_VARIANCE_WINDOW) {
-        console.warn(`[Elliptical] Not enough samples for stopped calibration: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_VARIANCE_WINDOW}`);
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_CALIBRATION_WINDOW) {
+        console.warn(`[Elliptical] Not enough samples for stopped calibration: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_CALIBRATION_WINDOW}`);
         return false;
     }
     
-    // Calculate variance from recent samples
-    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_VARIANCE_WINDOW);
+    // Calculate variance from ALL samples collected during stopped phase
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_CALIBRATION_WINDOW);
     currentEllipticalCalibration.stoppedVariance = calculateVariance(recentSamples);
     
     // Set threshold as midpoint between moving and stopped variance
@@ -464,6 +465,96 @@ export const completeEllipticalStoppedCalibration = (): boolean => {
     currentEllipticalCalibration.samples = [];
     
     console.log(`[Elliptical] Calibration complete!`);
+    console.log(`  - Moving variance: ${currentEllipticalCalibration.movingVariance.toFixed(6)}`);
+    console.log(`  - Stopped variance: ${currentEllipticalCalibration.stoppedVariance.toFixed(6)}`);
+    console.log(`  - Threshold: ${currentEllipticalCalibration.movementThreshold.toFixed(6)}`);
+    
+    return true;
+};
+
+/**
+ * NEW CALIBRATION FLOW: Still first, then pedaling
+ * This matches the UX flow where user stays still first, then pedals
+ */
+
+/**
+ * Start elliptical calibration - initializes for "still first" flow
+ * Call this when beginning the new calibration flow
+ */
+export const startEllipticalStillFirstCalibration = (): void => {
+    currentEllipticalCalibration = {
+        isCalibrated: false,
+        movingVariance: 0,
+        stoppedVariance: 0,
+        movementThreshold: 0,
+        samples: [],
+        lastUpdateTime: Date.now(),
+    };
+    console.log('[Elliptical] Started calibration (still-first flow)');
+};
+
+/**
+ * Clear samples to prepare for next calibration phase
+ */
+export const resetEllipticalSamples = (): void => {
+    currentEllipticalCalibration.samples = [];
+    console.log('[Elliptical] Samples reset for next phase');
+};
+
+/**
+ * Complete the STILL phase (user was not moving)
+ * Records as stoppedVariance (low movement = low variance)
+ */
+export const completeEllipticalStillPhase = (): number => {
+    console.log(`[Elliptical] Completing still phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_CALIBRATION_WINDOW})`);
+    
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_CALIBRATION_WINDOW) {
+        console.warn(`[Elliptical] Not enough samples for still phase: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_CALIBRATION_WINDOW}`);
+        return 0;
+    }
+    
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_CALIBRATION_WINDOW);
+    currentEllipticalCalibration.stoppedVariance = calculateVariance(recentSamples);
+    currentEllipticalCalibration.samples = []; // Reset for pedaling phase
+    
+    console.log(`[Elliptical] Stopped variance: ${currentEllipticalCalibration.stoppedVariance.toFixed(6)}`);
+    return currentEllipticalCalibration.stoppedVariance;
+};
+
+/**
+ * Complete the PEDALING phase and finalize calibration
+ * Records as movingVariance (high movement = high variance)
+ * Then calculates threshold and marks as calibrated
+ */
+export const completeEllipticalPedalingPhase = (): boolean => {
+    console.log(`[Elliptical] Completing pedaling phase with ${currentEllipticalCalibration.samples.length} samples (need ${ELLIPTICAL_CALIBRATION_WINDOW})`);
+    
+    if (currentEllipticalCalibration.samples.length < ELLIPTICAL_CALIBRATION_WINDOW) {
+        console.warn(`[Elliptical] Not enough samples for pedaling phase: ${currentEllipticalCalibration.samples.length}/${ELLIPTICAL_CALIBRATION_WINDOW}`);
+        return false;
+    }
+    
+    const recentSamples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_CALIBRATION_WINDOW);
+    currentEllipticalCalibration.movingVariance = calculateVariance(recentSamples);
+    
+    // Set threshold as midpoint between moving and stopped variance
+    const varianceDiff = currentEllipticalCalibration.movingVariance - currentEllipticalCalibration.stoppedVariance;
+    
+    if (varianceDiff <= 0) {
+        console.warn('[Elliptical] Calibration failed: moving variance should be higher than stopped');
+        console.warn(`  - Moving: ${currentEllipticalCalibration.movingVariance.toFixed(6)}`);
+        console.warn(`  - Stopped: ${currentEllipticalCalibration.stoppedVariance.toFixed(6)}`);
+        return false;
+    }
+    
+    // Threshold is 40% of the way from stopped to moving
+    currentEllipticalCalibration.movementThreshold = 
+        currentEllipticalCalibration.stoppedVariance + (varianceDiff * 0.4);
+    
+    currentEllipticalCalibration.isCalibrated = true;
+    currentEllipticalCalibration.samples = [];
+    
+    console.log(`[Elliptical] Calibration complete (still-first flow)!`);
     console.log(`  - Moving variance: ${currentEllipticalCalibration.movingVariance.toFixed(6)}`);
     console.log(`  - Stopped variance: ${currentEllipticalCalibration.stoppedVariance.toFixed(6)}`);
     console.log(`  - Threshold: ${currentEllipticalCalibration.movementThreshold.toFixed(6)}`);

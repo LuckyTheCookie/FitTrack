@@ -156,6 +156,8 @@ export interface UserSettings {
   onboardingCompleted?: boolean; // Si l'onboarding a été complété
   fitnessGoal?: FitnessGoal; // Objectif fitness choisi
   fitnessLevel?: FitnessLevel; // Niveau fitness choisi
+  // Motivation interval for long exercises (elliptical, etc.)
+  keepGoingIntervalMinutes?: number; // Minutes between "keep going" sounds (default: 5)
 }
 
 // ============================================================================

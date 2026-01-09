@@ -184,6 +184,7 @@ export default function SettingsScreen() {
   } = useSocialStore();
 
   const [weeklyGoalInput, setWeeklyGoalInput] = useState(settings.weeklyGoal.toString());
+  const [keepGoingInput, setKeepGoingInput] = useState((settings.keepGoingIntervalMinutes ?? 5).toString());
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [isDisablingSocial, setIsDisablingSocial] = useState(false);
   const [timePickerVisible, setTimePickerVisible] = useState(false);
@@ -244,6 +245,17 @@ export default function SettingsScreen() {
     updateWeeklyGoal(goal);
     Alert.alert(t('common.success'), t('settings.goalSaved', { goal }));
   }, [weeklyGoalInput, updateWeeklyGoal]);
+
+  // Sauvegarder l'intervalle motivation
+  const handleSaveKeepGoing = useCallback(() => {
+    const interval = parseInt(keepGoingInput, 10);
+    if (isNaN(interval) || interval < 1 || interval > 60) {
+      Alert.alert(t('common.error'), t('settings.keepGoingError'));
+      return;
+    }
+    updateSettings({ keepGoingIntervalMinutes: interval });
+    Alert.alert(t('common.success'), t('settings.keepGoingSaved', { interval }));
+  }, [keepGoingInput, updateSettings]);
 
   // Export JSON - Ouvre le modal
   const handleExportJSON = useCallback(() => {
@@ -471,6 +483,35 @@ export default function SettingsScreen() {
               <TouchableOpacity 
                 style={styles.goalSaveButton}
                 onPress={handleSaveGoal}
+              >
+                <Text style={styles.goalSaveText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Motivation interval setting */}
+          <View style={[styles.goalSection, styles.goalSectionBorder]}>
+            <View style={styles.goalHeader}>
+              <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(251, 191, 36, 0.2)' }]}>
+                <Zap size={20} color="#fbbf24" />
+              </View>
+              <View style={styles.goalInfo}>
+                <Text style={styles.settingTitle}>{t('settings.keepGoingInterval')}</Text>
+                <Text style={styles.settingSubtitle}>{t('settings.keepGoingIntervalDesc', { count: settings.keepGoingIntervalMinutes ?? 5 })}</Text>
+              </View>
+            </View>
+            <View style={styles.goalInputRow}>
+              <InputField
+                value={keepGoingInput}
+                onChangeText={setKeepGoingInput}
+                keyboardType="number-pad"
+                containerStyle={styles.goalInput}
+                maxLength={2}
+              />
+              <Text style={styles.goalUnit}>min</Text>
+              <TouchableOpacity 
+                style={styles.goalSaveButton}
+                onPress={handleSaveKeepGoing}
               >
                 <Text style={styles.goalSaveText}>{t('common.save')}</Text>
               </TouchableOpacity>
@@ -1123,6 +1164,12 @@ const styles = StyleSheet.create({
   // Goal Section
   goalSection: {
     padding: Spacing.sm,
+  },
+  goalSectionBorder: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.stroke,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.lg,
   },
   goalHeader: {
     flexDirection: 'row',

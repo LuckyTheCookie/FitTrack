@@ -48,3 +48,4 @@ scripts/release.js
 .vscode/settings.json
 TODO.md
 /releases
+/docs

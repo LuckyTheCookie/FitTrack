@@ -36,6 +36,7 @@ import Animated, {
     FadeIn,
     FadeInDown,
     FadeOut,
+    ZoomIn,
     runOnJS,
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
@@ -61,9 +62,9 @@ import { GlassCard, PoseCameraView } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import type { PlankDebugInfo, EllipticalState } from '../src/utils/poseDetection';
 import {
-    startEllipticalMovingCalibration,
-    completeEllipticalMovingCalibration,
-    completeEllipticalStoppedCalibration,
+    startEllipticalStillFirstCalibration,
+    completeEllipticalStillPhase,
+    completeEllipticalPedalingPhase,
     detectEllipticalMovement,
     isEllipticalCalibrated,
     resetEllipticalState,
@@ -85,7 +86,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 type ExerciseType = 'pushups' | 'situps' | 'squats' | 'jumping_jacks' | 'plank' | 'elliptical';
 type DetectionMode = 'sensor' | 'camera' | 'manual';
 type CameraView = 'front' | 'side';
-type EllipticalCalibrationPhase = 'none' | 'start_moving' | 'moving' | 'start_stopping' | 'stopping' | 'done';
+type EllipticalCalibrationPhase = 'none' | 'intro' | 'get_ready' | 'still' | 'still_done' | 'pedaling' | 'complete' | 'start_moving' | 'moving' | 'start_stopping' | 'stopping' | 'done';
 
 interface ExerciseConfig {
     id: ExerciseType;
@@ -790,8 +791,9 @@ export default function RepCounterScreen() {
                     const newSeconds = prev + 1;
                     const now = Date.now();
                     
-                    // Play keep going every 5 minutes (300 seconds)
-                    const keepGoingInterval = selectedExercise.keepGoingIntervalSeconds || 300;
+                    // Play keep going every X minutes (from settings, default 5 min)
+                    const keepGoingIntervalMinutes = settings.keepGoingIntervalMinutes ?? 5;
+                    const keepGoingInterval = keepGoingIntervalMinutes * 60;
                     if (newSeconds > 0 && newSeconds % keepGoingInterval === 0) {
                         if (now - lastKeepGoingTime.current > 60000) { // At least 1 minute apart
                             playKeepGoingSound();
@@ -815,45 +817,114 @@ export default function RepCounterScreen() {
 
     // Start elliptical calibration process
     const [ellipticalCalibrationFailed, setEllipticalCalibrationFailed] = useState(false);
+    const [calibrationCountdown, setCalibrationCountdown] = useState(0);
+    const [calibrationFunnyPhrase, setCalibrationFunnyPhrase] = useState('');
+    const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    // Get random funny phrase from translations
+    const getRandomPhrase = useCallback((key: 'funnyStillPhrases' | 'funnyStillDone') => {
+        const phrases = t(`repCounter.elliptical.${key}`, { returnObjects: true }) as string[];
+        return phrases[Math.floor(Math.random() * phrases.length)];
+    }, [t]);
+
+    // New automatic calibration flow
     const startEllipticalCalibration = useCallback(() => {
-        // Reset failure flag and state
+        // Reset states
         setEllipticalCalibrationFailed(false);
         resetEllipticalState();
-        setEllipticalCalibrationPhase('start_moving');
-        startEllipticalMovingCalibration();
-        
-        // After 1 second, transition to 'moving' phase where user should pedal
-        setTimeout(() => {
-            setEllipticalCalibrationPhase('moving');
-        }, 1500);
+        setEllipticalCalibrationPhase('intro');
     }, []);
 
-    // Complete the moving phase of calibration
-    const completeMovingPhase = useCallback(() => {
-        const variance = completeEllipticalMovingCalibration();
-        if (variance > 0) {
-            setEllipticalCalibrationPhase('start_stopping');
+    // User clicked "Let's go" - start the automatic calibration sequence
+    const beginCalibrationSequence = useCallback(() => {
+        setEllipticalCalibrationPhase('get_ready');
+        
+        // 3 second countdown with sound
+        setCalibrationCountdown(3);
+        playSecondsSound();
+        
+        countdownIntervalRef.current = setInterval(() => {
+            setCalibrationCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownIntervalRef.current!);
+                    // Transition to "don't move" phase
+                    startStillPhase();
+                    return 0;
+                }
+                playSecondsSound();
+                return prev - 1;
+            });
+        }, 1000);
+    }, [playSecondsSound]);
+
+    // Start the "don't move" phase (5 seconds)
+    const startStillPhase = useCallback(() => {
+        setEllipticalCalibrationPhase('still');
+        setCalibrationFunnyPhrase(getRandomPhrase('funnyStillPhrases'));
+        startEllipticalStillFirstCalibration(); // Initialize calibration and start collecting samples
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        
+        setCalibrationCountdown(5);
+        countdownIntervalRef.current = setInterval(() => {
+            setCalibrationCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownIntervalRef.current!);
+                    // Complete still phase and transition to pedaling
+                    completeStillPhase();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, [getRandomPhrase]);
+
+    // Complete the still phase - records stoppedVariance
+    const completeStillPhase = useCallback(() => {
+        const variance = completeEllipticalStillPhase();
+        if (variance >= 0) {
+            // Stopped variance recorded, prepare for moving phase
+            setCalibrationFunnyPhrase(getRandomPhrase('funnyStillDone'));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             
-            // After 1.5 seconds, transition to 'stopping' phase
+            // Brief pause to show success message, then start pedaling phase
             setTimeout(() => {
-                setEllipticalCalibrationPhase('stopping');
+                startPedalingPhase();
             }, 1500);
         } else {
-            // Not enough data, show failure and allow retry
-            setEllipticalCalibrationPhase('none');
+            // Failed - not enough samples
+            setEllipticalCalibrationPhase('intro');
             setEllipticalCalibrationFailed(true);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            console.warn('[Elliptical Calibration] Not enough movement detected — ask user to retry');
         }
+    }, [getRandomPhrase]);
+
+    // Start the pedaling phase (7 seconds) - continues collecting samples
+    const startPedalingPhase = useCallback(() => {
+        setEllipticalCalibrationPhase('pedaling');
+        // Samples collection continues from still phase (we already called startEllipticalStillFirstCalibration)
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        
+        setCalibrationCountdown(7);
+        countdownIntervalRef.current = setInterval(() => {
+            setCalibrationCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownIntervalRef.current!);
+                    // Complete pedaling phase
+                    completePedalingPhaseCallback();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
     }, []);
 
-    // Complete the stopped phase and finalize calibration
-    const completeStoppedPhase = useCallback(() => {
-        const success = completeEllipticalStoppedCalibration();
+    // Complete pedaling phase and finalize calibration
+    const completePedalingPhaseCallback = useCallback(() => {
+        const success = completeEllipticalPedalingPhase();
         if (success) {
-            setEllipticalCalibrationPhase('done');
+            setEllipticalCalibrationPhase('complete');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            playNewRecordSound(); // Celebration sound
             
             // Start tracking after brief celebration
             setTimeout(() => {
@@ -862,14 +933,31 @@ export default function RepCounterScreen() {
                 setEllipticalSeconds(0);
                 setIsEllipticalActive(false);
                 lastKeepGoingTime.current = 0;
-            }, 1000);
+            }, 2000);
         } else {
-            // Calibration failed, show retry option
-            setEllipticalCalibrationPhase('none');
+            // Calibration failed
+            setEllipticalCalibrationPhase('intro');
             setEllipticalCalibrationFailed(true);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            console.warn('[Elliptical Calibration] Stopped-phase calibration failed — allow retry');
         }
+    }, [playNewRecordSound]);
+
+    // Cleanup countdown interval on unmount
+    useEffect(() => {
+        return () => {
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+            }
+        };
+    }, []);
+
+    // Legacy functions kept for compatibility
+    const completeMovingPhase = useCallback(() => {
+        // Now handled automatically
+    }, []);
+
+    const completeStoppedPhase = useCallback(() => {
+        // Now handled automatically
     }, []);
 
     // Manual mode toggle for elliptical
@@ -1189,10 +1277,17 @@ export default function RepCounterScreen() {
     };
 
     // Calcul des calories (approximatif)
-    // Planche: ~4 cal/min, autres exercices: ~0.5 cal/rep
-    const calories = selectedExercise?.isTimeBased 
-        ? Math.round((plankSeconds / 60) * 4)
-        : Math.round(repCount * 0.5);
+    // Planche: ~4 cal/min, Elliptique: ~8 cal/min, autres exercices: ~0.5 cal/rep
+    const getCalories = () => {
+        if (!selectedExercise) return 0;
+        if (selectedExercise.id === 'elliptical') {
+            return Math.round((ellipticalSeconds / 60) * 8); // ~8 cal/min for elliptical
+        } else if (selectedExercise.isTimeBased) {
+            return Math.round((plankSeconds / 60) * 4); // ~4 cal/min for plank
+        }
+        return Math.round(repCount * 0.5); // ~0.5 cal/rep for other exercises
+    };
+    const calories = getCalories();
     const progress = Math.min(repCount / 50, 1); // Objectif de 50 reps
 
     return (
@@ -1377,37 +1472,7 @@ export default function RepCounterScreen() {
                             {/* Calibration screen for elliptical in camera mode */}
                             {selectedExercise.id === 'elliptical' && detectionMode === 'camera' ? (
                                 <Animated.View entering={FadeIn} style={styles.calibrationContainer}>
-                                    <View style={[styles.calibrationIconWrapper, { backgroundColor: `${selectedExercise.color}20` }]}>
-                                        <Text style={styles.calibrationIcon}>🚴</Text>
-                                    </View>
-                                    
-                                    <Text style={styles.calibrationTitle}>
-                                        {ellipticalCalibrationPhase === 'start_moving' || ellipticalCalibrationPhase === 'moving'
-                                            ? t('repCounter.elliptical.calibrationMoving')
-                                            : ellipticalCalibrationPhase === 'start_stopping' || ellipticalCalibrationPhase === 'stopping'
-                                                ? t('repCounter.elliptical.calibrationStopping')
-                                                : ellipticalCalibrationPhase === 'done'
-                                                    ? t('repCounter.elliptical.calibrationDone')
-                                                    : t('repCounter.elliptical.calibrationStart')
-                                        }
-                                    </Text>
-                                    
-                                    <Text style={styles.calibrationSubtitle}>
-                                        {ellipticalCalibrationPhase === 'start_moving'
-                                            ? t('repCounter.elliptical.calibrationMovingHint')
-                                            : ellipticalCalibrationPhase === 'moving'
-                                                ? t('repCounter.elliptical.calibrationKeepMoving')
-                                                : ellipticalCalibrationPhase === 'start_stopping'
-                                                    ? t('repCounter.elliptical.calibrationStoppingHint')
-                                                    : ellipticalCalibrationPhase === 'stopping'
-                                                        ? t('repCounter.elliptical.calibrationKeepStill')
-                                                        : ellipticalCalibrationPhase === 'done'
-                                                            ? t('repCounter.elliptical.calibrationReady')
-                                                            : t('repCounter.elliptical.calibrationIntro')
-                                        }
-                                    </Text>
-
-                                    {/* Hidden camera for calibration */}
+                                    {/* Hidden camera for calibration - always active during calibration */}
                                     <View style={styles.hiddenCameraContainer}>
                                         <PoseCameraView
                                             facing="front"
@@ -1415,78 +1480,153 @@ export default function RepCounterScreen() {
                                             exerciseType="elliptical"
                                             currentCount={0}
                                             onRepDetected={() => {}}
-                                            isActive={ellipticalCalibrationPhase !== 'none' && ellipticalCalibrationPhase !== 'done'}
+                                            isActive={ellipticalCalibrationPhase !== 'none' && ellipticalCalibrationPhase !== 'complete'}
                                             style={styles.hiddenCamera}
                                         />
                                     </View>
 
-                                    {/* Calibration buttons */}
-                                    {ellipticalCalibrationPhase === 'moving' && (
-                                        <TouchableOpacity
-                                            onPress={completeMovingPhase}
-                                            activeOpacity={0.9}
-                                            style={styles.calibrationButton}
-                                        >
-                                            <LinearGradient
-                                                colors={[selectedExercise.color, `${selectedExercise.color}dd`]}
-                                                style={styles.calibrationButtonGradient}
-                                            >
-                                                <Check size={24} color="#fff" />
-                                                <Text style={styles.calibrationButtonText}>
-                                                    {t('repCounter.elliptical.doneMoving')}
-                                                </Text>
-                                            </LinearGradient>
-                                        </TouchableOpacity>
-                                    )}
+                                    {/* INTRO PHASE - Explain calibration */}
+                                    {(ellipticalCalibrationPhase === 'intro' || ellipticalCalibrationPhase === 'none') && (
+                                        <Animated.View entering={FadeInDown.springify()} style={styles.calibrationPhaseContainer}>
+                                            <View style={[styles.calibrationIconWrapper, { backgroundColor: `${selectedExercise.color}20` }]}>
+                                                <Text style={styles.calibrationIcon}>📱</Text>
+                                            </View>
+                                            
+                                            <Text style={styles.calibrationTitle}>
+                                                {t('repCounter.elliptical.calibrationStart')}
+                                            </Text>
+                                            
+                                            <Text style={styles.calibrationSubtitle}>
+                                                {t('repCounter.elliptical.calibrationIntro')}
+                                            </Text>
 
-                                    {ellipticalCalibrationPhase === 'stopping' && (
-                                        <TouchableOpacity
-                                            onPress={completeStoppedPhase}
-                                            activeOpacity={0.9}
-                                            style={styles.calibrationButton}
-                                        >
-                                            <LinearGradient
-                                                colors={[selectedExercise.color, `${selectedExercise.color}dd`]}
-                                                style={styles.calibrationButtonGradient}
-                                            >
-                                                <Check size={24} color="#fff" />
-                                                <Text style={styles.calibrationButtonText}>
-                                                    {t('repCounter.elliptical.doneStopping')}
-                                                </Text>
-                                            </LinearGradient>
-                                        </TouchableOpacity>
-                                    )}
-
-                                    {(ellipticalCalibrationPhase === 'start_moving' || ellipticalCalibrationPhase === 'start_stopping') && (
-                                        <View style={styles.calibrationLoading}>
-                                            <ActivityIndicator size="large" color={selectedExercise.color} />
-                                        </View>
-                                    )}
-
-                                    {/* Retry UI when calibration was not successful or user needs to restart */}
-                                    {(ellipticalCalibrationFailed || ellipticalCalibrationPhase === 'none') && (
-                                        <View style={styles.calibrationRetryContainer}>
                                             {ellipticalCalibrationFailed && (
-                                                <Text style={styles.calibrationErrorText}>
-                                                    {t('repCounter.elliptical.calibrationFailed')}
-                                                </Text>
+                                                <View style={styles.calibrationErrorContainer}>
+                                                    <Text style={styles.calibrationErrorText}>
+                                                        {t('repCounter.elliptical.calibrationFailed')}
+                                                    </Text>
+                                                </View>
                                             )}
+
                                             <TouchableOpacity
-                                                onPress={startEllipticalCalibration}
+                                                onPress={beginCalibrationSequence}
                                                 activeOpacity={0.9}
-                                                style={styles.calibrationRetryButton}
+                                                style={styles.calibrationButton}
                                             >
                                                 <LinearGradient
-                                                    colors={[selectedExercise.color, `${selectedExercise.color}dd`]}
+                                                    colors={[Colors.cta, Colors.cta2]}
+                                                    start={{ x: 0, y: 0 }}
+                                                    end={{ x: 1, y: 0 }}
                                                     style={styles.calibrationButtonGradient}
                                                 >
-                                                    <RotateCcw size={20} color="#fff" />
                                                     <Text style={styles.calibrationButtonText}>
-                                                        {t('repCounter.elliptical.retryCalibration')}
+                                                        {t('repCounter.elliptical.letsGo')}
                                                     </Text>
+                                                    <ChevronRight size={20} color="#fff" />
                                                 </LinearGradient>
                                             </TouchableOpacity>
-                                        </View>
+                                        </Animated.View>
+                                    )}
+
+                                    {/* GET READY PHASE - 3 second countdown */}
+                                    {ellipticalCalibrationPhase === 'get_ready' && (
+                                        <Animated.View entering={FadeIn} style={styles.calibrationPhaseContainer}>
+                                            <View style={[styles.calibrationIconWrapper, { backgroundColor: `${selectedExercise.color}20` }]}>
+                                                <Text style={styles.calibrationIcon}>⏱️</Text>
+                                            </View>
+                                            
+                                            <Text style={styles.calibrationTitle}>
+                                                {t('repCounter.elliptical.calibrationStarting')}
+                                            </Text>
+                                            
+                                            <Text style={styles.calibrationSubtitle}>
+                                                {t('repCounter.elliptical.getReady')}
+                                            </Text>
+
+                                            <Animated.View 
+                                                entering={ZoomIn.springify()} 
+                                                key={calibrationCountdown}
+                                                style={styles.countdownCircle}
+                                            >
+                                                <Text style={styles.countdownText}>{calibrationCountdown}</Text>
+                                            </Animated.View>
+                                        </Animated.View>
+                                    )}
+
+                                    {/* STILL PHASE - Don't move for 5 seconds */}
+                                    {ellipticalCalibrationPhase === 'still' && (
+                                        <Animated.View entering={FadeIn} style={styles.calibrationPhaseContainer}>
+                                            <View style={[styles.calibrationIconWrapper, { backgroundColor: '#fbbf2420' }]}>
+                                                <Text style={styles.calibrationIcon}>🗿</Text>
+                                            </View>
+                                            
+                                            <Text style={styles.calibrationTitle}>
+                                                {t('repCounter.elliptical.dontMove')}
+                                            </Text>
+                                            
+                                            <Text style={styles.calibrationFunnyPhrase}>
+                                                {calibrationFunnyPhrase}
+                                            </Text>
+
+                                            <View style={styles.stillCountdownContainer}>
+                                                <Text style={styles.stillCountdownNumber}>{calibrationCountdown}</Text>
+                                                <Text style={styles.stillCountdownLabel}>sec</Text>
+                                            </View>
+                                        </Animated.View>
+                                    )}
+
+                                    {/* STILL DONE - Brief success before pedaling */}
+                                    {ellipticalCalibrationPhase === 'still_done' && (
+                                        <Animated.View entering={ZoomIn.springify()} style={styles.calibrationPhaseContainer}>
+                                            <View style={[styles.calibrationIconWrapper, { backgroundColor: '#22c55e20' }]}>
+                                                <Text style={styles.calibrationIcon}>✅</Text>
+                                            </View>
+                                            
+                                            <Text style={styles.calibrationFunnyPhrase}>
+                                                {calibrationFunnyPhrase}
+                                            </Text>
+                                        </Animated.View>
+                                    )}
+
+                                    {/* PEDALING PHASE - Start pedaling for 7 seconds */}
+                                    {ellipticalCalibrationPhase === 'pedaling' && (
+                                        <Animated.View entering={FadeIn} style={styles.calibrationPhaseContainer}>
+                                            <View style={[styles.calibrationIconWrapper, { backgroundColor: `${selectedExercise.color}20` }]}>
+                                                <Text style={styles.calibrationIcon}>🚴</Text>
+                                            </View>
+                                            
+                                            <Text style={styles.calibrationTitle}>
+                                                {t('repCounter.elliptical.startPedaling')}
+                                            </Text>
+                                            
+                                            <Text style={styles.calibrationSubtitle}>
+                                                {t('repCounter.elliptical.analyzingMovement')}
+                                            </Text>
+
+                                            <View style={styles.pedalingCountdownContainer}>
+                                                <View style={styles.pedalingProgressRing}>
+                                                    <Text style={styles.pedalingCountdownNumber}>{calibrationCountdown}</Text>
+                                                </View>
+                                                <ActivityIndicator size="large" color={selectedExercise.color} style={styles.pedalingSpinner} />
+                                            </View>
+                                        </Animated.View>
+                                    )}
+
+                                    {/* COMPLETE PHASE - Calibration done! */}
+                                    {ellipticalCalibrationPhase === 'complete' && (
+                                        <Animated.View entering={ZoomIn.springify()} style={styles.calibrationPhaseContainer}>
+                                            <View style={[styles.calibrationIconWrapper, { backgroundColor: '#22c55e20' }]}>
+                                                <Text style={styles.calibrationIcon}>🎉</Text>
+                                            </View>
+                                            
+                                            <Text style={styles.calibrationTitle}>
+                                                {t('repCounter.elliptical.calibrationComplete')}
+                                            </Text>
+                                            
+                                            <Text style={styles.calibrationSubtitle}>
+                                                {t('repCounter.elliptical.letsRide')}
+                                            </Text>
+                                        </Animated.View>
                                     )}
                                 </Animated.View>
                             ) : (
@@ -1783,14 +1923,22 @@ export default function RepCounterScreen() {
                                         <View style={styles.summaryItem}>
                                             <Dumbbell size={20} color={selectedExercise.color} />
                                             <Text style={styles.summaryValue}>
-                                                {selectedExercise.isTimeBased ? `${plankSeconds}s` : repCount}
+                                                {selectedExercise.id === 'elliptical' 
+                                                    ? formatTime(ellipticalSeconds)
+                                                    : selectedExercise.isTimeBased 
+                                                        ? `${plankSeconds}s` 
+                                                        : repCount}
                                             </Text>
                                             <Text style={styles.summaryLabel}>{t(`repCounter.exercises.${selectedExercise.id}`)}</Text>
                                         </View>
                                         <View style={styles.summaryDivider} />
                                         <View style={styles.summaryItem}>
                                             <Timer size={20} color={Colors.muted} />
-                                            <Text style={styles.summaryValue}>{formatTime(elapsedTime)}</Text>
+                                            <Text style={styles.summaryValue}>
+                                                {selectedExercise.id === 'elliptical' 
+                                                    ? formatTime(ellipticalSeconds) 
+                                                    : formatTime(elapsedTime)}
+                                            </Text>
                                             <Text style={styles.summaryLabel}>{t('repCounter.duration')}</Text>
                                         </View>
                                         <View style={styles.summaryDivider} />
@@ -2597,6 +2745,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.xl,
     },
+    calibrationPhaseContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     calibrationIconWrapper: {
         width: 120,
         height: 120,
@@ -2623,6 +2775,16 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.xxl,
         paddingHorizontal: Spacing.lg,
     },
+    calibrationFunnyPhrase: {
+        fontSize: FontSize.md,
+        color: Colors.muted,
+        textAlign: 'center',
+        lineHeight: 24,
+        marginTop: Spacing.md,
+        marginBottom: Spacing.xl,
+        paddingHorizontal: Spacing.lg,
+        fontStyle: 'italic',
+    },
     calibrationButton: {
         borderRadius: BorderRadius.full,
         overflow: 'hidden',
@@ -2647,14 +2809,78 @@ const styles = StyleSheet.create({
         marginTop: Spacing.lg,
         alignItems: 'center',
     },
+    calibrationErrorContainer: {
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        marginBottom: Spacing.lg,
+    },
     calibrationErrorText: {
         color: Colors.error,
         fontSize: FontSize.md,
-        marginBottom: Spacing.sm,
         textAlign: 'center',
     },
     calibrationRetryButton: {
         borderRadius: BorderRadius.full,
         overflow: 'hidden',
+    },
+    // Countdown styles
+    countdownCircle: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: 'rgba(124, 58, 237, 0.2)',
+        borderWidth: 4,
+        borderColor: Colors.cta,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: Spacing.xl,
+    },
+    countdownText: {
+        fontSize: 56,
+        fontWeight: FontWeight.extrabold,
+        color: Colors.cta,
+    },
+    // Still phase countdown
+    stillCountdownContainer: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        marginTop: Spacing.xl,
+    },
+    stillCountdownNumber: {
+        fontSize: 72,
+        fontWeight: FontWeight.extrabold,
+        color: '#fbbf24',
+    },
+    stillCountdownLabel: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
+        color: '#fbbf24',
+        marginLeft: Spacing.xs,
+    },
+    // Pedaling phase styles
+    pedalingCountdownContainer: {
+        alignItems: 'center',
+        marginTop: Spacing.xl,
+        position: 'relative',
+    },
+    pedalingProgressRing: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'rgba(34, 197, 94, 0.15)',
+        borderWidth: 4,
+        borderColor: Colors.success,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pedalingCountdownNumber: {
+        fontSize: 40,
+        fontWeight: FontWeight.extrabold,
+        color: Colors.success,
+    },
+    pedalingSpinner: {
+        position: 'absolute',
+        bottom: -40,
     },
 });
