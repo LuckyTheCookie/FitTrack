@@ -204,6 +204,25 @@ export default function PreferencesScreen() {
           />
         </GlassCard>
 
+        {/* Skip Sensor Selection */}
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Sparkles size={20} color="#a78bfa" />}
+            iconColor="#a78bfa"
+            title={t('settings.skipSensorSelection', { defaultValue: 'Afficher le mode capteur dans le tracking' })}
+            subtitle={t('settings.skipSensorSelectionDesc', { defaultValue: 'Désactiver pour passer directement à l\'écran de positionnement' })}
+            rightElement={
+              <Switch
+                value={!(settings.skipSensorSelection ?? false)}
+                onValueChange={(value) => updateSettings({ skipSensorSelection: !value })}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            }
+            delay={250}
+          />
+        </GlassCard>
+
         {/* Spacer */}
         <View style={{ height: 40 }} />
       </ScrollView>

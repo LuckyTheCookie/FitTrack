@@ -160,6 +160,8 @@ export interface UserSettings {
   keepGoingIntervalMinutes?: number; // Minutes between "keep going" sounds (default: 5)
   // Developer mode (hidden by default, activated by tapping About 10 times)
   developerMode?: boolean;
+  // Skip sensor/camera selection screen in rep counter (go directly to position screen)
+  skipSensorSelection?: boolean;
 }
 
 // ============================================================================

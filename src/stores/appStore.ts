@@ -104,6 +104,7 @@ const defaultSettings: UserSettings = {
     preferCameraDetection: false,
     debugPlank: false,
     developerMode: false,
+    skipSensorSelection: false,
 };
 
 // ============================================================================

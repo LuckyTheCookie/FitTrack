@@ -1305,7 +1305,15 @@ export default function RepCounterScreen() {
         // Reset elliptical state when switching exercises
         resetEllipticalState();
         setEllipticalCalibrationPhase('none');
-    }, []);
+        
+        // Skip to position screen if setting is enabled and exercise is not elliptical or time-based
+        if (settings.skipSensorSelection && !exercise.isTimeBased && exercise.id !== 'elliptical') {
+            // Set sensor mode as default
+            setDetectionMode('sensor');
+            // Go directly to position screen
+            setTimeout(() => setStep('position'), 100);
+        }
+    }, [settings.skipSensorSelection]);
 
     // Passer à l'étape suivante
     const handleNext = useCallback(() => {

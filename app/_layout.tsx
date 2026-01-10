@@ -1,4 +1,4 @@
-import { Tabs, usePathname, useRouter, useRootNavigationState, useSegments } from 'expo-router';
+import { Stack, usePathname, useRouter, useRootNavigationState, useSegments, useNavigation, useNavigationContainerRef } from 'expo-router';
 import React, { useEffect } from 'react';
 import { useSettings, useSocialStore } from '../src/stores';
 import { View, StyleSheet, Pressable } from 'react-native';
@@ -13,8 +13,8 @@ import { ErrorBoundary } from '../src/components';
 // Initialize i18n
 import '../src/i18n';
 
-// Configuration des icônes
-const TAB_CONFIG = [
+// Configuration des écrans
+const SCREEN_CONFIG = [
     { name: 'index', label: 'Today', Icon: LayoutDashboard },
     { name: 'workout', label: 'Workout', Icon: Dumbbell },
     { name: 'gamification', label: 'Ploppy', Icon: Trophy },
@@ -25,7 +25,7 @@ const TAB_CONFIG = [
 ];
 
 // Composant Bouton avec transition douce
-const TabButton = ({ route, descriptor, isFocused, navigation, config }: any) => {
+const NavButton = ({ screenName, isFocused, router, config }: any) => {
     const Icon = config.Icon;
 
     // Valeurs d'animation pour l'opacité et l'échelle
@@ -56,14 +56,8 @@ const TabButton = ({ route, descriptor, isFocused, navigation, config }: any) =>
     const inactiveColor = '#FFFFFF'; // Blanc (l'opacité gère le gris)
 
     const onPress = () => {
-        const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-        });
-
-        if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
+        if (!isFocused) {
+            router.push(`/${screenName === 'index' ? '' : screenName}`);
         }
     };
 
@@ -94,54 +88,50 @@ const TabButton = ({ route, descriptor, isFocused, navigation, config }: any) =>
     );
 };
 
-function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
+function CustomNavBar() {
     const insets = useSafeAreaInsets();
     const pathname = usePathname();
     const settings = useSettings();
+    const router = useRouter();
+    const { socialEnabled } = useSocialStore();
 
-    // Cacher la tab bar sur l'écran rep-counter
-    if (pathname === '/rep-counter') {
+    // Cacher la barre de navigation sur certains écrans
+    if (pathname === '/rep-counter' || pathname === '/health-connect' || pathname === '/onboarding') {
         return null;
     }
 
-    // Cacher la tab bar sur l'écran health-connect
-    if (pathname === '/health-connect') {
-        return null;
-    }
+    // Filtrer les écrans visibles
+    const visibleScreens = SCREEN_CONFIG.filter(screen => {
+        if (screen.name === 'workout' && settings.hiddenTabs?.workout) return false;
+        if (screen.name === 'tools' && settings.hiddenTabs?.tools) return false;
+        if (screen.name === 'social' && !socialEnabled) return false;
+        return true;
+    });
 
-    // Cacher la tab bar sur l'écran onboarding
-    if (pathname === '/onboarding') {
-        return null;
-    }
-
-    // Ne montrer que les onglets visibles
-    const visibleRoutes = state.routes.filter((route: any) =>
-        visibleTabs.some((tab: any) => tab.name === route.name)
-    );
+    // Déterminer quel écran est actif
+    const currentScreen = pathname === '/' ? 'index' : pathname.split('/')[1];
 
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md }]}>
             <View style={[styles.floatingBarWrapper, settings.fullOpacityNavbar && styles.floatingBarOpaque]}>
                 {!settings.fullOpacityNavbar && (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
-
+                    <>
+                        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+                        {/* Fallback background semi-transparent pour Android si BlurView bug */}
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
+                    </>
                 )}
 
                 <View style={styles.tabBarContent}>
-                    {visibleRoutes.map((route: any) => {
-                        const config = visibleTabs.find((c: any) => c.name === route.name) || { name: route.name, label: route.name, Icon: LayoutDashboard };
-                        const index = state.routes.findIndex((r: any) => r.key === route.key);
-                        return (
-                            <TabButton
-                                key={`tab-${route.name}`}
-                                route={route}
-                                descriptor={descriptors[route.key]}
-                                isFocused={state.index === index}
-                                navigation={navigation}
-                                config={config}
-                            />
-                        );
-                    })}
+                    {visibleScreens.map((config) => (
+                        <NavButton
+                            key={`nav-${config.name}`}
+                            screenName={config.name}
+                            isFocused={currentScreen === config.name}
+                            router={router}
+                            config={config}
+                        />
+                    ))}
                 </View>
             </View>
         </View>
@@ -150,7 +140,6 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
 
 export default function Layout() {
     const settings = useSettings();
-    const { socialEnabled } = useSocialStore();
     const router = useRouter();
     const segments = useSegments();
     const rootNavigationState = useRootNavigationState();
@@ -180,50 +169,33 @@ export default function Layout() {
         }
     }, [settings.onboardingCompleted, segments, rootNavigationState?.key]);
 
-    // Filtrer les onglets visibles pour le CustomTabBar
-    const visibleTabs = TAB_CONFIG.filter(tab => {
-        if (tab.name === 'workout' && settings.hiddenTabs?.workout) return false;
-        if (tab.name === 'tools' && settings.hiddenTabs?.tools) return false;
-        if (tab.name === 'social' && !socialEnabled) return false;
-        return true;
-    });
-
     return (
         <ErrorBoundary>
-            <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
-                <Tabs
-                    tabBar={(props) => <CustomTabBar {...props} visibleTabs={visibleTabs} />}
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <Stack
                     screenOptions={{
                         headerShown: false,
-                        tabBarStyle: { display: 'none' },
+                        contentStyle: { backgroundColor: Colors.bg },
+                        animation: 'fade_from_bottom',
+                        animationDuration: 250,
                     }}
                 >
-                    <Tabs.Screen name="index" options={{ title: "Today" }} />
-                    <Tabs.Screen
-                        name="workout"
-                        options={{
-                            title: "Workout",
-                            href: settings.hiddenTabs?.workout ? null : undefined,
-                        }}
-                    />
-                    <Tabs.Screen name="gamification" options={{ title: "Ploppy" }} />
-                    <Tabs.Screen
-                        name="social"
-                        options={{
-                            title: "Social",
-                            href: socialEnabled ? undefined : null,
-                        }}
-                    />
-                    <Tabs.Screen name="progress" options={{ title: "Progress" }} />
-                    <Tabs.Screen
-                        name="tools"
-                        options={{
-                            title: "Tools",
-                            href: settings.hiddenTabs?.tools ? null : undefined,
-                        }}
-                    />
-                    <Tabs.Screen name="settings" options={{ title: "Settings" }} />
-                </Tabs>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="workout" />
+                    <Stack.Screen name="gamification" />
+                    <Stack.Screen name="social" />
+                    <Stack.Screen name="progress" />
+                    <Stack.Screen name="tools" />
+                    <Stack.Screen name="settings" />
+                    <Stack.Screen name="onboarding" />
+                    <Stack.Screen name="rep-counter" />
+                    <Stack.Screen name="health-connect" />
+                    <Stack.Screen name="auth" />
+                    <Stack.Screen name="profile" />
+                    <Stack.Screen name="privacy-policy" />
+                    <Stack.Screen name="terms-of-service" />
+                </Stack>
+                <CustomNavBar />
             </GestureHandlerRootView>
         </ErrorBoundary>
     );

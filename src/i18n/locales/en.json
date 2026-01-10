@@ -675,6 +675,8 @@
     "disableDeveloperModeDesc": "Hide these advanced options",
     "cameraPreview": "Camera preview",
     "cameraPreviewDesc": "See camera feed during tracking",
+    "skipSensorSelection": "Show sensor mode in tracking",
+    "skipSensorSelectionDesc": "Disable to skip directly to positioning screen",
     "enableToolsScreen": "Enable workout creation screen (beta)",
     "enableToolsScreenDesc": "Very experimental! Shows the Tools icon in the nav bar."
   },

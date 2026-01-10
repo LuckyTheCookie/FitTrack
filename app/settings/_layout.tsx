@@ -11,7 +11,7 @@ export default function SettingsLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: Colors.bg },
-        animation: 'slide_from_right',
+        animation: 'fade_from_bottom',
         animationDuration: 200,
       }}
     >

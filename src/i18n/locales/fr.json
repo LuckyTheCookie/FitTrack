@@ -670,6 +670,8 @@
     "disableDeveloperModeDesc": "Masquer ces options avancées",
     "cameraPreview": "Aperçu caméra",
     "cameraPreviewDesc": "Voir le flux caméra lors du tracking",
+    "skipSensorSelection": "Afficher le mode capteur dans le tracking",
+    "skipSensorSelectionDesc": "Désactiver pour passer directement à l'écran de positionnement",
     "enableToolsScreen": "Activer le screen de création de séance (bêta)",
     "enableToolsScreenDesc": "Très expérimental ! Affiche l'icône Outils dans la barre de navigation."
   },
