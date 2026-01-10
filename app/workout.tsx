@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { LegendList } from '@legendapp/list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -388,18 +389,14 @@ export default function WorkoutScreen() {
         />
       </Animated.View>
 
-      <FlatList
+      <LegendList
         data={filteredEntries}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        getItemLayout={getItemLayout}
+        estimatedItemSize={ITEM_HEIGHT}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        initialNumToRender={10}
-        windowSize={10}
+        recycleItems
         ListEmptyComponent={
           <EmptyState 
             icon="📋" 
