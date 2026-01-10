@@ -36,7 +36,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLOPPY_IMAGE = require('../assets/ploppy.png');
 
 // Composant pour l'anneau de progression XP avec animation optimisée
-const XPRing = ({ progress, animatedProgress, size = 180 }: { progress: number; animatedProgress: Animated.SharedValue<number>; size?: number }) => {
+const XPRing = ({ progress, animatedProgress, size = 180 }: { progress: number; animatedProgress: { value: number }; size?: number }) => {
     const strokeWidth = 8;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
@@ -245,8 +245,8 @@ export default function GamificationScreen() {
         React.useCallback(() => {
             const previousLevelValue = lastSeenLevel ?? level;
             const previousXpValue = lastSeenXp ?? xp;
-            let timeoutId: NodeJS.Timeout | null = null;
-            let updateTimeoutId: NodeJS.Timeout | null = null;
+            let timeoutId: ReturnType<typeof setTimeout> | null = null;
+            let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
             // Vérifier s'il y a eu un changement de niveau
             if (level > previousLevelValue) {

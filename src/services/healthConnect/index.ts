@@ -200,7 +200,9 @@ export async function getRecentWorkouts(daysBack: number = 7): Promise<HealthCon
              healthConnectLogger.debug(`- ${EXERCISE_TYPE_NAMES[r.exerciseType as number] || r.exerciseType} | Date: ${new Date(r.startTime).toLocaleDateString()} ${new Date(r.startTime).toLocaleTimeString()}`);
         });
 
-        return result.records.map((record) => {
+        return result.records
+            .slice(0, MAX_HEALTH_CONNECT_WORKOUTS) // Apply pagination limit
+            .map((record) => {
             const start = new Date(record.startTime);
             const end = new Date(record.endTime);
             const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);

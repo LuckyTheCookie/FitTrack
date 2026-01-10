@@ -40,6 +40,7 @@ import {
     type ArchiveAnalysis, 
     type ArchiveResult 
 } from '../utils/archive';
+import { validateBackup, type ValidationResult } from '../utils/validation';
 
 // ============================================================================
 // TYPES DU STORE
@@ -280,14 +281,26 @@ export const useAppStore = create<AppState>()(
             },
 
             restoreFromBackup: (data) => {
+                // Validate backup data with Zod
+                const validation = validateBackup(data);
+                
+                if (!validation.success) {
+                    storeLogger.warn('[Backup] Validation failed:', validation.error);
+                    // Still try to restore with basic fallbacks for backwards compatibility
+                }
+                
+                const validData = validation.data || data;
+                
                 set({
-                    entries: data.entries || [],
+                    entries: validData.entries || [],
                     settings: {
                         ...defaultSettings,
-                        ...data.settings,
+                        ...validData.settings,
                     },
-                    unlockedBadges: data.unlockedBadges || [],
+                    unlockedBadges: validData.unlockedBadges || [],
                 });
+                
+                storeLogger.info('[Backup] Restored successfully');
             },
 
             // ========================================
