@@ -39,6 +39,12 @@ export const MAX_HEALTH_CONNECT_WORKOUTS = 500;
 /** Nombre maximum d'entrées avant archivage suggéré */
 export const MAX_ENTRIES_BEFORE_ARCHIVE_WARNING = 5000;
 
+/** Nombre de jours après lesquels une entrée peut être archivée (default: 365 jours = 1 an) */
+export const ARCHIVE_THRESHOLD_DAYS = 365;
+
+/** Nombre minimum d'entrées à conserver (ne pas archiver si moins que ça) */
+export const MIN_ENTRIES_TO_KEEP = 100;
+
 // ============================================================================
 // ANIMATIONS
 // ============================================================================

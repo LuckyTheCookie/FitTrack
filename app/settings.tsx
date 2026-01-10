@@ -489,15 +489,16 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Motivation interval setting */}
+          {/* Motivation interval setting - ELLIPTICAL ONLY */}
           <View style={[styles.goalSection, styles.goalSectionBorder]}>
             <View style={styles.goalHeader}>
-              <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(251, 191, 36, 0.2)' }]}>
-                <Zap size={20} color="#fbbf24" />
+              <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
+                <Zap size={20} color="#10b981" />
               </View>
               <View style={styles.goalInfo}>
                 <Text style={styles.settingTitle}>{t('settings.keepGoingInterval')}</Text>
                 <Text style={styles.settingSubtitle}>{t('settings.keepGoingIntervalDesc', { count: settings.keepGoingIntervalMinutes ?? 5 })}</Text>
+                <Text style={[styles.settingSubtitle, { fontSize: 11, color: Colors.muted, marginTop: 2 }]}>🚴 {t('settings.keepGoingEllipticalOnly')}</Text>
               </View>
             </View>
             <View style={styles.goalInputRow}>

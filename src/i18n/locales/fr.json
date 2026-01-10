@@ -519,6 +519,7 @@
         "Magnifique ! Les statues de cire sont jalouses. 🎭"
       ],
       "startPedaling": "Commence à pédaler !",
+      "waitingForMovement": "J'attends que tu commences à bouger...",
       "analyzingMovement": "J'analyse tes mouvements...",
       "calibrationComplete": "Calibration terminée !",
       "letsRide": "C'est parti ! 🚴",
@@ -550,7 +551,8 @@
     "weeklyGoalSave": "Objectif hebdo: {{count}} séances",
     "weeklyGoalError": "L'objectif doit être entre 1 et 14",
     "keepGoingInterval": "Intervalle motivation",
-    "keepGoingIntervalDesc": "Son toutes les {{count}} min pendant l'exercice",
+    "keepGoingIntervalDesc": "Son toutes les {{count}} min pendant l'elliptique",
+    "keepGoingEllipticalOnly": "Vélo elliptique uniquement - les autres exercices jouent un son toutes les 10 reps",
     "keepGoingError": "L'intervalle doit être entre 1 et 60 minutes",
     "keepGoingSaved": "Intervalle de motivation : {{interval}} min",
     "streakReminder": "Rappel de streak",

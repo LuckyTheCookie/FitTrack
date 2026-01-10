@@ -524,6 +524,7 @@
         "Magnificent! Wax statues are jealous. 🎭"
       ],
       "startPedaling": "Start pedaling!",
+      "waitingForMovement": "Waiting for you to start moving...",
       "analyzingMovement": "Analyzing your movement...",
       "calibrationComplete": "Calibration complete!",
       "letsRide": "Let's ride! 🚴",
@@ -555,7 +556,8 @@
     "weeklyGoalSave": "Weekly goal: {{count}} workouts",
     "weeklyGoalError": "Goal must be between 1 and 14",
     "keepGoingInterval": "Motivation interval",
-    "keepGoingIntervalDesc": "Sound every {{count}} min during exercise",
+    "keepGoingIntervalDesc": "Sound every {{count}} min during elliptical",
+    "keepGoingEllipticalOnly": "Elliptical only - other exercises play sounds every 10 reps",
     "keepGoingError": "Interval must be between 1 and 60 minutes",
     "keepGoingSaved": "Motivation interval: {{interval}} min",
     "streakReminder": "Streak Reminder",

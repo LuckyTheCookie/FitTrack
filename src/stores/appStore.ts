@@ -34,6 +34,12 @@ import {
     STORAGE_KEYS,
     MAX_RECENT_ENTRIES,
 } from '../constants/values';
+import { 
+    analyzeArchivable, 
+    separateForArchive, 
+    type ArchiveAnalysis, 
+    type ArchiveResult 
+} from '../utils/archive';
 
 // ============================================================================
 // TYPES DU STORE
@@ -61,6 +67,10 @@ interface AppState {
     // Actions - Data management
     resetAllData: () => void;
     restoreFromBackup: (data: { entries: Entry[]; settings: Partial<UserSettings>; unlockedBadges: BadgeId[] }) => void;
+    
+    // Actions - Archivage
+    getArchiveAnalysis: () => ArchiveAnalysis;
+    performArchive: () => ArchiveResult;
     
     // Gamification sync helper
     syncGamificationAfterChange: (entries: Entry[]) => void;
@@ -278,6 +288,31 @@ export const useAppStore = create<AppState>()(
                     },
                     unlockedBadges: data.unlockedBadges || [],
                 });
+            },
+
+            // ========================================
+            // ACTIONS - ARCHIVAGE
+            // ========================================
+
+            getArchiveAnalysis: () => {
+                const { entries } = get();
+                return analyzeArchivable(entries);
+            },
+
+            performArchive: () => {
+                const { entries } = get();
+                const result = separateForArchive(entries);
+                
+                // Mettre à jour le store avec seulement les entrées récentes
+                set({ entries: result.keptEntries });
+                
+                // Sync gamification avec les nouvelles entrées
+                const currentEntries = get().entries;
+                get().syncGamificationAfterChange(currentEntries);
+                
+                storeLogger.info(`[Archive] Archived ${result.archivedCount} entries, kept ${result.keptEntries.length}`);
+                
+                return result;
             },
 
             // ========================================

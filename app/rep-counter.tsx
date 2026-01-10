@@ -69,6 +69,8 @@ import {
     isEllipticalCalibrated,
     resetEllipticalState,
     addEllipticalHeadSample,
+    hasEllipticalMovementStarted,
+    resetEllipticalSamples,
 } from '../src/utils/poseDetection';
 import { useTranslation } from 'react-i18next';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
@@ -819,6 +821,7 @@ export default function RepCounterScreen() {
     const [ellipticalCalibrationFailed, setEllipticalCalibrationFailed] = useState(false);
     const [calibrationCountdown, setCalibrationCountdown] = useState(0);
     const [calibrationFunnyPhrase, setCalibrationFunnyPhrase] = useState('');
+    const [waitingForMovement, setWaitingForMovement] = useState(false); // True when waiting for user to start moving
     const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Get random funny phrase from translations
@@ -835,90 +838,10 @@ export default function RepCounterScreen() {
         setEllipticalCalibrationPhase('intro');
     }, []);
 
-    // User clicked "Let's go" - start the automatic calibration sequence
-    const beginCalibrationSequence = useCallback(() => {
-        setEllipticalCalibrationPhase('get_ready');
-        
-        // 3 second countdown with sound
-        setCalibrationCountdown(3);
-        playSecondsSound();
-        
-        countdownIntervalRef.current = setInterval(() => {
-            setCalibrationCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownIntervalRef.current!);
-                    // Transition to "don't move" phase
-                    startStillPhase();
-                    return 0;
-                }
-                playSecondsSound();
-                return prev - 1;
-            });
-        }, 1000);
-    }, [playSecondsSound]);
+    // Ref for the movement detection interval
+    const movementDetectionRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Start the "don't move" phase (5 seconds)
-    const startStillPhase = useCallback(() => {
-        setEllipticalCalibrationPhase('still');
-        setCalibrationFunnyPhrase(getRandomPhrase('funnyStillPhrases'));
-        startEllipticalStillFirstCalibration(); // Initialize calibration and start collecting samples
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        
-        setCalibrationCountdown(5);
-        countdownIntervalRef.current = setInterval(() => {
-            setCalibrationCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownIntervalRef.current!);
-                    // Complete still phase and transition to pedaling
-                    completeStillPhase();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-    }, [getRandomPhrase]);
-
-    // Complete the still phase - records stoppedVariance
-    const completeStillPhase = useCallback(() => {
-        const variance = completeEllipticalStillPhase();
-        if (variance >= 0) {
-            // Stopped variance recorded, prepare for moving phase
-            setCalibrationFunnyPhrase(getRandomPhrase('funnyStillDone'));
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            
-            // Brief pause to show success message, then start pedaling phase
-            setTimeout(() => {
-                startPedalingPhase();
-            }, 1500);
-        } else {
-            // Failed - not enough samples
-            setEllipticalCalibrationPhase('intro');
-            setEllipticalCalibrationFailed(true);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        }
-    }, [getRandomPhrase]);
-
-    // Start the pedaling phase (7 seconds) - continues collecting samples
-    const startPedalingPhase = useCallback(() => {
-        setEllipticalCalibrationPhase('pedaling');
-        // Samples collection continues from still phase (we already called startEllipticalStillFirstCalibration)
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        
-        setCalibrationCountdown(7);
-        countdownIntervalRef.current = setInterval(() => {
-            setCalibrationCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownIntervalRef.current!);
-                    // Complete pedaling phase
-                    completePedalingPhaseCallback();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-    }, []);
-
-    // Complete pedaling phase and finalize calibration
+    // Complete pedaling phase and finalize calibration (defined first to avoid circular deps)
     const completePedalingPhaseCallback = useCallback(() => {
         const success = completeEllipticalPedalingPhase();
         if (success) {
@@ -942,11 +865,137 @@ export default function RepCounterScreen() {
         }
     }, [playNewRecordSound]);
 
-    // Cleanup countdown interval on unmount
+    // Start the actual pedaling countdown (after movement detected)
+    const startPedalingCountdown = useCallback(() => {
+        // Reset samples again to collect clean pedaling data
+        resetEllipticalSamples();
+        
+        // 7 second countdown
+        setCalibrationCountdown(7);
+        
+        // Wait 1 second before starting countdown
+        setTimeout(() => {
+            countdownIntervalRef.current = setInterval(() => {
+                setCalibrationCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownIntervalRef.current!);
+                        // Complete pedaling phase
+                        completePedalingPhaseCallback();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }, 1000);
+    }, [completePedalingPhaseCallback]);
+
+    // Wait for user to actually start moving before starting the pedaling timer
+    const waitForUserToStartPedaling = useCallback(() => {
+        setEllipticalCalibrationPhase('pedaling');
+        // Reset samples to collect fresh movement data
+        resetEllipticalSamples();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        
+        // Don't start countdown yet - wait for movement to be detected
+        setWaitingForMovement(true);
+        setCalibrationCountdown(7);
+        
+        // Check every 200ms if user has started moving
+        movementDetectionRef.current = setInterval(() => {
+            if (hasEllipticalMovementStarted()) {
+                // User started moving! Start the actual countdown
+                clearInterval(movementDetectionRef.current!);
+                movementDetectionRef.current = null;
+                setWaitingForMovement(false);
+                startPedalingCountdown();
+            }
+        }, 200);
+    }, [startPedalingCountdown]);
+
+    // Start the pedaling phase - legacy function kept for reference (now uses waitForUserToStartPedaling)
+    const startPedalingPhase = useCallback(() => {
+        waitForUserToStartPedaling();
+    }, [waitForUserToStartPedaling]);
+
+    // Complete the still phase - records stoppedVariance
+    const completeStillPhase = useCallback(() => {
+        const variance = completeEllipticalStillPhase();
+        if (variance >= 0) {
+            // Stopped variance recorded, prepare for moving phase
+            setCalibrationFunnyPhrase(getRandomPhrase('funnyStillDone'));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            
+            // Brief pause to show success message, then wait for user to start moving
+            setTimeout(() => {
+                waitForUserToStartPedaling();
+            }, 1500);
+        } else {
+            // Failed - not enough samples
+            setEllipticalCalibrationPhase('intro');
+            setEllipticalCalibrationFailed(true);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        }
+    }, [getRandomPhrase, waitForUserToStartPedaling]);
+
+    // Start the "don't move" phase (5 seconds)
+    const startStillPhase = useCallback(() => {
+        setEllipticalCalibrationPhase('still');
+        setCalibrationFunnyPhrase(getRandomPhrase('funnyStillPhrases'));
+        startEllipticalStillFirstCalibration(); // Initialize calibration and start collecting samples
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        
+        // Start at 5 seconds and wait 1 second before first decrement
+        setCalibrationCountdown(5);
+        
+        // Wait 1 second before starting the countdown interval
+        setTimeout(() => {
+            countdownIntervalRef.current = setInterval(() => {
+                setCalibrationCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownIntervalRef.current!);
+                        // Complete still phase and transition to pedaling
+                        completeStillPhase();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }, 1000);
+    }, [getRandomPhrase, completeStillPhase]);
+
+    // User clicked "Let's go" - start the automatic calibration sequence
+    const beginCalibrationSequence = useCallback(() => {
+        setEllipticalCalibrationPhase('get_ready');
+        
+        // 3 second countdown with sound - start at 3 and wait before first decrement
+        setCalibrationCountdown(3);
+        playSecondsSound();
+        
+        // Wait 1 second before starting the countdown interval
+        setTimeout(() => {
+            countdownIntervalRef.current = setInterval(() => {
+                setCalibrationCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownIntervalRef.current!);
+                        // Transition to "don't move" phase
+                        startStillPhase();
+                        return 0;
+                    }
+                    playSecondsSound();
+                    return prev - 1;
+                });
+            }, 1000);
+        }, 1000);
+    }, [playSecondsSound, startStillPhase]);
+
+    // Cleanup countdown interval and movement detection on unmount
     useEffect(() => {
         return () => {
             if (countdownIntervalRef.current) {
                 clearInterval(countdownIntervalRef.current);
+            }
+            if (movementDetectionRef.current) {
+                clearInterval(movementDetectionRef.current);
             }
         };
     }, []);
@@ -1592,7 +1641,7 @@ export default function RepCounterScreen() {
                                     {ellipticalCalibrationPhase === 'pedaling' && (
                                         <Animated.View entering={FadeIn} style={styles.calibrationPhaseContainer}>
                                             <View style={[styles.calibrationIconWrapper, { backgroundColor: `${selectedExercise.color}20` }]}>
-                                                <Text style={styles.calibrationIcon}>🚴</Text>
+                                                <Text style={styles.calibrationIcon}>{waitingForMovement ? '👆' : '🚴'}</Text>
                                             </View>
                                             
                                             <Text style={styles.calibrationTitle}>
@@ -1600,14 +1649,23 @@ export default function RepCounterScreen() {
                                             </Text>
                                             
                                             <Text style={styles.calibrationSubtitle}>
-                                                {t('repCounter.elliptical.analyzingMovement')}
+                                                {waitingForMovement 
+                                                    ? t('repCounter.elliptical.waitingForMovement')
+                                                    : t('repCounter.elliptical.analyzingMovement')
+                                                }
                                             </Text>
 
                                             <View style={styles.pedalingCountdownContainer}>
-                                                <View style={styles.pedalingProgressRing}>
-                                                    <Text style={styles.pedalingCountdownNumber}>{calibrationCountdown}</Text>
-                                                </View>
-                                                <ActivityIndicator size="large" color={selectedExercise.color} style={styles.pedalingSpinner} />
+                                                {waitingForMovement ? (
+                                                    <ActivityIndicator size="large" color={selectedExercise.color} />
+                                                ) : (
+                                                    <>
+                                                        <View style={styles.pedalingProgressRing}>
+                                                            <Text style={styles.pedalingCountdownNumber}>{calibrationCountdown}</Text>
+                                                        </View>
+                                                        <ActivityIndicator size="large" color={selectedExercise.color} style={styles.pedalingSpinner} />
+                                                    </>
+                                                )}
                                             </View>
                                         </Animated.View>
                                     )}

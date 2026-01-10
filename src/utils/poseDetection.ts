@@ -640,6 +640,29 @@ export const getEllipticalCalibration = (): EllipticalCalibration => currentElli
 export const isEllipticalCalibrated = (): boolean => currentEllipticalCalibration.isCalibrated;
 
 /**
+ * Check if user has started moving during calibration pedaling phase
+ * Compares current variance to the stopped variance from still phase
+ * Returns true when variance exceeds stopped variance by a significant margin
+ */
+export const hasEllipticalMovementStarted = (): boolean => {
+    if (currentEllipticalCalibration.samples.length < 30) return false; // Need ~1 second of samples
+    
+    const recentSamples = currentEllipticalCalibration.samples.slice(-30);
+    const currentVariance = calculateVariance(recentSamples);
+    const stoppedVariance = currentEllipticalCalibration.stoppedVariance;
+    
+    // User has started moving if current variance is at least 2x the stopped variance
+    // This accounts for the fact that the user should be actively pedaling
+    const movementDetected = currentVariance > stoppedVariance * 2;
+    
+    if (movementDetected) {
+        console.log(`[Elliptical] Movement detected! Variance: ${currentVariance.toFixed(6)} vs stopped: ${stoppedVariance.toFixed(6)}`);
+    }
+    
+    return movementDetected;
+};
+
+/**
  * Reset elliptical calibration and state
  */
 export const resetEllipticalState = (): void => {
