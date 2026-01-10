@@ -3,6 +3,8 @@
 // ============================================================================
 
 import { Platform } from 'react-native';
+import { healthConnectLogger, errorLogger } from '../../utils/logger';
+import { MAX_HEALTH_CONNECT_WORKOUTS } from '../../constants/values';
 
 // Lazy load to prevent crashes on non-Android
 let healthConnectModule: typeof import('react-native-health-connect') | null = null;
@@ -13,7 +15,7 @@ async function getHealthConnectModule() {
         try {
             healthConnectModule = await import('react-native-health-connect');
         } catch (error) {
-            console.error('Failed to load Health Connect module:', error);
+            errorLogger.error('Failed to load Health Connect module:', error);
             return null;
         }
     }
@@ -128,7 +130,7 @@ export async function checkHealthConnectAvailability(): Promise<{
             status,
         };
     } catch (error) {
-        console.error('Check avail error:', error);
+        errorLogger.error('Check avail error:', error);
         return { available: false, needsInstall: false, status: null };
     }
 }
@@ -141,7 +143,7 @@ export async function initializeHealthConnect(): Promise<boolean> {
         await hc.initialize();
         return true;
     } catch (error) {
-        console.error('Init error:', error);
+        errorLogger.error('Init error:', error);
         return false;
     }
 }
@@ -161,7 +163,7 @@ export async function requestHealthConnectPermissions(): Promise<boolean> {
 
         return granted.some(p => p.recordType === 'ExerciseSession' && p.accessType === 'read');
     } catch (error) {
-        console.error('Perms error:', error);
+        errorLogger.error('Perms error:', error);
         return false;
     }
 }
@@ -192,11 +194,10 @@ export async function getRecentWorkouts(daysBack: number = 7): Promise<HealthCon
             },
         });
 
-        // DEBUG: Gardons les logs pour vérifier
-        console.log(`📥 RECUS (Corrigés): ${result.records.length}`);
+        // Debug: log received workouts
+        healthConnectLogger.debug(`Received ${result.records.length} workouts`);
         result.records.forEach((r) => {
-             // On loggue pour vérifier si la date correspond à celle manquante
-             console.log(`- ${EXERCISE_TYPE_NAMES[r.exerciseType as number] || r.exerciseType} | Date: ${new Date(r.startTime).toLocaleDateString()} ${new Date(r.startTime).toLocaleTimeString()}`);
+             healthConnectLogger.debug(`- ${EXERCISE_TYPE_NAMES[r.exerciseType as number] || r.exerciseType} | Date: ${new Date(r.startTime).toLocaleDateString()} ${new Date(r.startTime).toLocaleTimeString()}`);
         });
 
         return result.records.map((record) => {
@@ -223,7 +224,7 @@ export async function getRecentWorkouts(daysBack: number = 7): Promise<HealthCon
             };
         });
     } catch (error) {
-        console.error('Error reading workouts:', error);
+        errorLogger.error('Error reading workouts:', error);
         return [];
     }
 }

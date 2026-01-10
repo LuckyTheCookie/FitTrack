@@ -9,6 +9,8 @@ import type { Profile, LeaderboardEntry, Encouragement, Friendship } from '../se
 import * as SocialService from '../services/supabase/social';
 import { isSocialAvailable } from '../services/supabase';
 import * as Notifications from '../services/notifications';
+import { storeLogger, errorLogger } from '../utils/logger';
+import { STORAGE_KEYS } from '../constants/values';
 
 // ============================================================================
 // TYPES
@@ -243,8 +245,9 @@ export const useSocialStore = create<SocialState>()(
                         unreadEncouragements: [],
                         recentEncouragements: [],
                     });
+                    storeLogger.debug('User data deleted and social disabled');
                 } catch (error) {
-                    console.error('Failed to delete user data:', error);
+                    errorLogger.error('Failed to delete user data:', error);
                     throw error;
                 }
             },
@@ -272,7 +275,7 @@ export const useSocialStore = create<SocialState>()(
                         set({ profile });
                     }
                 } catch (err) {
-                    console.warn('Failed to refresh profile after sync', err);
+                    storeLogger.warn('Failed to refresh profile after sync', err);
                 }
 
                 // Refresh leaderboards to reflect updated values
@@ -395,14 +398,14 @@ export const useSocialStore = create<SocialState>()(
                 try {
                     const result = await Notifications.registerForPushNotifications();
                     if (result.success) {
-                        console.log('Push token:', result.token);
+                        storeLogger.debug('Push token obtained:', result.token?.slice(0, 20) + '...');
                         // Optionally save token to backend for remote push
                     } else if (result.reason !== 'permission_denied') {
                         // Only log non-permission errors (user chose to deny = silent)
-                        console.log('Push notifications unavailable:', result.reason);
+                        storeLogger.debug('Push notifications unavailable:', result.reason);
                     }
                 } catch (error) {
-                    console.error('Failed to register for notifications:', error);
+                    errorLogger.error('Failed to register for notifications:', error);
                 }
             },
 
@@ -453,9 +456,9 @@ export const useSocialStore = create<SocialState>()(
                 if (!get().isAuthenticated) return;
                 try {
                     await SocialService.savePushToken(token);
-                    console.log('Push token saved successfully');
+                    storeLogger.debug('Push token saved successfully');
                 } catch (error) {
-                    console.error('Failed to save push token:', error);
+                    errorLogger.error('Failed to save push token:', error);
                 }
             },
 
@@ -467,15 +470,15 @@ export const useSocialStore = create<SocialState>()(
                     if (result.success) {
                         await get().savePushToken(result.token);
                     } else {
-                        console.log('Push token registration failed:', result.reason);
+                        storeLogger.debug('Push token registration failed:', result.reason);
                     }
                 } catch (error) {
-                    console.error('Error registering push token:', error);
+                    errorLogger.error('Error registering push token:', error);
                 }
             },
         }),
         {
-            name: 'fittrack-social-storage',
+            name: STORAGE_KEYS.socialStore,
             storage: createJSONStorage(() => zustandStorage),
             partialize: (state) => ({
                 socialEnabled: state.socialEnabled,

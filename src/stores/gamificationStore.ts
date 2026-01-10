@@ -4,6 +4,13 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { nanoid } from 'nanoid/non-secure';
 import { zustandStorage } from '../storage';
 import { getWeek, getYear, startOfWeek } from 'date-fns';
+import { storeLogger } from '../utils/logger';
+import { 
+    MAX_GAMIFICATION_HISTORY_ENTRIES, 
+    STORAGE_KEYS,
+    XP_MULTIPLIER_PER_LEVEL,
+    AVERAGE_XP_PER_WORKOUT,
+} from '../constants/values';
 
 // Types
 export interface Quest {
@@ -61,8 +68,8 @@ const getRank = (level: number): string => {
     return 'Maître';
 };
 
-// Seuil d'XP pour niveau suivant : 100 * niveau
-const getXpForNextLevel = (level: number) => level * 100;
+// Seuil d'XP pour niveau suivant : XP_MULTIPLIER_PER_LEVEL * niveau
+const getXpForNextLevel = (level: number) => level * XP_MULTIPLIER_PER_LEVEL;
 
 export const useGamificationStore = create<GamificationState>()(
     persist(
@@ -90,7 +97,7 @@ export const useGamificationStore = create<GamificationState>()(
                         type: 'xp_gain' as const
                     },
                     ...history
-                ].slice(0, 50); // Keep last 50 entries
+                ].slice(0, MAX_GAMIFICATION_HISTORY_ENTRIES);
 
                 if (newXp >= nextLevelXp) {
                     // Level UP!
@@ -147,7 +154,7 @@ export const useGamificationStore = create<GamificationState>()(
                             type: 'xp_gain' as const
                         },
                         ...newHistory
-                    ].slice(0, 50);
+                    ].slice(0, MAX_GAMIFICATION_HISTORY_ENTRIES);
                 }
 
                 set({
@@ -167,6 +174,7 @@ export const useGamificationStore = create<GamificationState>()(
                 const { quests, addXp } = get();
                 let xpToAdd = 0;
                 let completedQuestTitle = '';
+                let hasChanges = false;
 
                 const updatedQuests = quests.map(quest => {
                     if (!quest.completed && quest.type === type) {
@@ -178,13 +186,20 @@ export const useGamificationStore = create<GamificationState>()(
                             completedQuestTitle = quest.description;
                         }
 
+                        // Check if there's an actual change
+                        if (newCurrent !== quest.current || isCompleted !== quest.completed) {
+                            hasChanges = true;
+                        }
+
                         return { ...quest, current: newCurrent, completed: isCompleted };
                     }
                     return quest;
                 });
 
-                if (JSON.stringify(updatedQuests) !== JSON.stringify(quests)) {
+                // Only update state if there are actual changes (avoids expensive JSON.stringify)
+                if (hasChanges) {
                     set({ quests: updatedQuests });
+                    storeLogger.debug('Quest progress updated', { type, amount });
                 }
 
                 if (xpToAdd > 0) {
@@ -198,6 +213,7 @@ export const useGamificationStore = create<GamificationState>()(
 
             recalculateQuestProgress: (type, newTotal) => {
                 const { quests, removeXp, history } = get();
+                let hasChanges = false;
 
                 const updatedQuests = quests.map(quest => {
                     if (quest.type === type) {
@@ -215,18 +231,24 @@ export const useGamificationStore = create<GamificationState>()(
                             removeXp(quest.rewardXp, `Quête annulée : ${quest.description}`, relatedHistoryIds);
                         }
 
+                        // Check if there's an actual change
+                        if (newCurrent !== quest.current || isCompleted !== quest.completed) {
+                            hasChanges = true;
+                        }
+
                         return { ...quest, current: newCurrent, completed: isCompleted };
                     }
                     return quest;
                 });
 
-                if (JSON.stringify(updatedQuests) !== JSON.stringify(quests)) {
+                if (hasChanges) {
                     set({ quests: updatedQuests });
                 }
             },
 
             recalculateAllQuests: (totals) => {
                 const { quests, removeXp, history } = get();
+                let hasChanges = false;
 
                 const updatedQuests = quests.map(quest => {
                     const newTotal = totals[quest.type] || 0;
@@ -244,11 +266,17 @@ export const useGamificationStore = create<GamificationState>()(
                         removeXp(quest.rewardXp, `Quête annulée : ${quest.description}`, relatedHistoryIds);
                     }
 
+                    // Check if there's an actual change
+                    if (newCurrent !== quest.current || isCompleted !== quest.completed) {
+                        hasChanges = true;
+                    }
+
                     return { ...quest, current: newCurrent, completed: isCompleted };
                 });
 
-                if (JSON.stringify(updatedQuests) !== JSON.stringify(quests)) {
+                if (hasChanges) {
                     set({ quests: updatedQuests });
+                    storeLogger.debug('All quests recalculated', totals);
                 }
             },
 
@@ -260,9 +288,8 @@ export const useGamificationStore = create<GamificationState>()(
                 // Calculer les XP basés sur les totaux
                 let totalXp = 0;
                 
-                // XP pour les séances (50 XP par séance maison, 30 base + 5 par km pour run, 15 + 1/5min pour beat saber)
-                // On fait une approximation moyenne : 40 XP par séance
-                totalXp += totals.totalWorkouts * 40;
+                // XP pour les séances (approximation moyenne)
+                totalXp += totals.totalWorkouts * AVERAGE_XP_PER_WORKOUT;
 
                 // Recalculer les quêtes et ajouter les XP de quêtes complétées
                 const updatedQuests = quests.map(quest => {
@@ -404,7 +431,7 @@ export const useGamificationStore = create<GamificationState>()(
             },
         }),
         {
-            name: 'fittrack-gamification-store',
+            name: STORAGE_KEYS.gamificationStore,
             storage: createJSONStorage(() => zustandStorage),
         }
     )

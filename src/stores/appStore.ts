@@ -27,6 +27,13 @@ import {
 import { checkBadges } from '../utils/badges';
 import { calculateQuestTotals } from '../utils/questCalculator';
 import { useGamificationStore } from './gamificationStore';
+import { storeLogger } from '../utils/logger';
+import { 
+    SPORT_ENTRY_TYPES, 
+    isSportEntryType,
+    STORAGE_KEYS,
+    MAX_RECENT_ENTRIES,
+} from '../constants/values';
 
 // ============================================================================
 // TYPES DU STORE
@@ -117,10 +124,10 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification after adding entry
-                setTimeout(() => {
-                    get().syncGamificationAfterChange(get().entries);
-                }, 0);
+                // Sync gamification synchronously after state update
+                const currentEntries = get().entries;
+                get().syncGamificationAfterChange(currentEntries);
+                storeLogger.debug('Added home workout', entry.id);
             },
 
             addRun: (data, customDate) => {
@@ -143,10 +150,10 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification after adding entry
-                setTimeout(() => {
-                    get().syncGamificationAfterChange(get().entries);
-                }, 0);
+                // Sync gamification synchronously after state update
+                const currentEntries = get().entries;
+                get().syncGamificationAfterChange(currentEntries);
+                storeLogger.debug('Added run', entry.id);
             },
 
             addBeatSaber: (data, customDate) => {
@@ -163,10 +170,10 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification after adding entry
-                setTimeout(() => {
-                    get().syncGamificationAfterChange(get().entries);
-                }, 0);
+                // Sync gamification synchronously after state update
+                const currentEntries = get().entries;
+                get().syncGamificationAfterChange(currentEntries);
+                storeLogger.debug('Added BeatSaber session', entry.id);
             },
 
             addMeal: (data, customDate) => {
@@ -198,17 +205,40 @@ export const useAppStore = create<AppState>()(
             },
 
             deleteEntry: (id) => {
+                // Get the entry before deletion to check if it affects gamification
+                const entryToDelete = get().entries.find(e => e.id === id);
+                const affectsGamification = entryToDelete && isSportEntryType(entryToDelete.type);
+                
                 set((state) => ({
                     entries: state.entries.filter((e) => e.id !== id),
                 }));
+                
+                // Sync gamification if deleted entry was a sport entry
+                if (affectsGamification) {
+                    const currentEntries = get().entries;
+                    get().syncGamificationAfterChange(currentEntries);
+                    storeLogger.debug('Deleted sport entry, synced gamification', id);
+                }
             },
 
             updateEntry: (id, updates) => {
+                // Check if entry is a sport entry before update
+                const entryToUpdate = get().entries.find(e => e.id === id);
+                const affectsGamification = entryToUpdate && isSportEntryType(entryToUpdate.type);
+                
                 set((state) => ({
                     entries: state.entries.map((e) => 
                         e.id === id ? { ...e, ...updates } as Entry : e
                     ),
                 }));
+                
+                // Sync gamification if updated entry was a sport entry
+                // This handles cases like editing totalReps in a home workout
+                if (affectsGamification) {
+                    const currentEntries = get().entries;
+                    get().syncGamificationAfterChange(currentEntries);
+                    storeLogger.debug('Updated sport entry, synced gamification', id);
+                }
             },
 
             // ========================================
@@ -267,7 +297,7 @@ export const useAppStore = create<AppState>()(
             recheckBadges: (entries) => {
                 // Calculate streak based on current entries
                 const sportDates = entries
-                    .filter((e) => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber')
+                    .filter((e) => isSportEntryType(e.type))
                     .map((e) => e.date);
                 const streak = calculateStreak(sportDates);
                 
@@ -290,7 +320,7 @@ export const useAppStore = create<AppState>()(
             getStreak: () => {
                 const { entries } = get();
                 const sportDates = entries
-                    .filter((e) => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber')
+                    .filter((e) => isSportEntryType(e.type))
                     .map((e) => e.date);
                 return calculateStreak(sportDates);
             },
@@ -298,11 +328,11 @@ export const useAppStore = create<AppState>()(
             getWeekWorkoutsCount: () => {
                 const { entries } = get();
                 return entries.filter(
-                    (e) => (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') && isInCurrentWeek(e.date)
+                    (e) => isSportEntryType(e.type) && isInCurrentWeek(e.date)
                 ).length;
             },
 
-            getRecentEntries: (limit = 10) => {
+            getRecentEntries: (limit = MAX_RECENT_ENTRIES) => {
                 const { entries } = get();
                 return entries.slice(0, limit);
             },
@@ -310,7 +340,7 @@ export const useAppStore = create<AppState>()(
             getSportEntries: () => {
                 const { entries } = get();
                 return entries.filter(
-                    (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => e.type === 'home' || e.type === 'run' || e.type === 'beatsaber'
+                    (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => isSportEntryType(e.type)
                 );
             },
 
@@ -321,7 +351,7 @@ export const useAppStore = create<AppState>()(
                 return months.map((month) => {
                     const count = entries.filter(
                         (e) =>
-                            (e.type === 'home' || e.type === 'run' || e.type === 'beatsaber') &&
+                            isSportEntryType(e.type) &&
                             e.date.startsWith(month)
                     ).length;
                     return { month, count };
@@ -334,7 +364,7 @@ export const useAppStore = create<AppState>()(
             },
         }),
         {
-            name: 'fittrack-app-store',
+            name: STORAGE_KEYS.appStore,
             storage: createJSONStorage(() => zustandStorage),
         }
     )

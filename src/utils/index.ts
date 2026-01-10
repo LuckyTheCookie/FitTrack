@@ -4,3 +4,4 @@ export * from './badges';
 export * from './export';
 export * from './questCalculator';
 export * from './poseDetection';
+export * from './logger';
