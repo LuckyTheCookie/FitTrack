@@ -1,6 +1,6 @@
 import { Tabs, usePathname, useRouter, useRootNavigationState, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
-import { useSettings } from '../src/stores';
+import { useSettings, useSocialStore } from '../src/stores';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -115,7 +115,7 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
     }
 
     // Ne montrer que les onglets visibles
-    const visibleRoutes = state.routes.filter((route: any) => 
+    const visibleRoutes = state.routes.filter((route: any) =>
         visibleTabs.some((tab: any) => tab.name === route.name)
     );
 
@@ -123,11 +123,8 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
         <View style={[styles.container, { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md }]}>
             <View style={[styles.floatingBarWrapper, settings.fullOpacityNavbar && styles.floatingBarOpaque]}>
                 {!settings.fullOpacityNavbar && (
-                    <>
-                        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-                        {/* Fallback background semi-transparent pour Android si BlurView bug */}
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
-                    </>
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(26, 27, 34, 0.85)' }]} />
+
                 )}
 
                 <View style={styles.tabBarContent}>
@@ -153,6 +150,7 @@ function CustomTabBar({ state, descriptors, navigation, visibleTabs }: any) {
 
 export default function Layout() {
     const settings = useSettings();
+    const { socialEnabled } = useSocialStore();
     const router = useRouter();
     const segments = useSegments();
     const rootNavigationState = useRootNavigationState();
@@ -162,7 +160,7 @@ export default function Layout() {
         // Wait for navigation to be ready and segments to be populated
         if (!rootNavigationState?.key) return;
         if (!segments) return;
-        
+
         const isOnboardingRoute = segments[0] === 'onboarding';
         const onboardingCompleted = settings.onboardingCompleted ?? false;
 
@@ -186,12 +184,13 @@ export default function Layout() {
     const visibleTabs = TAB_CONFIG.filter(tab => {
         if (tab.name === 'workout' && settings.hiddenTabs?.workout) return false;
         if (tab.name === 'tools' && settings.hiddenTabs?.tools) return false;
+        if (tab.name === 'social' && !socialEnabled) return false;
         return true;
     });
 
     return (
         <ErrorBoundary>
-            <GestureHandlerRootView style={{ flex: 1 }}>
+            <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
                 <Tabs
                     tabBar={(props) => <CustomTabBar {...props} visibleTabs={visibleTabs} />}
                     screenOptions={{
@@ -200,22 +199,28 @@ export default function Layout() {
                     }}
                 >
                     <Tabs.Screen name="index" options={{ title: "Today" }} />
-                    <Tabs.Screen 
-                        name="workout" 
-                        options={{ 
+                    <Tabs.Screen
+                        name="workout"
+                        options={{
                             title: "Workout",
                             href: settings.hiddenTabs?.workout ? null : undefined,
-                        }} 
+                        }}
                     />
                     <Tabs.Screen name="gamification" options={{ title: "Ploppy" }} />
-                    <Tabs.Screen name="social" options={{ title: "Social" }} />
+                    <Tabs.Screen
+                        name="social"
+                        options={{
+                            title: "Social",
+                            href: socialEnabled ? undefined : null,
+                        }}
+                    />
                     <Tabs.Screen name="progress" options={{ title: "Progress" }} />
-                    <Tabs.Screen 
-                        name="tools" 
-                        options={{ 
+                    <Tabs.Screen
+                        name="tools"
+                        options={{
                             title: "Tools",
                             href: settings.hiddenTabs?.tools ? null : undefined,
-                        }} 
+                        }}
                     />
                     <Tabs.Screen name="settings" options={{ title: "Settings" }} />
                 </Tabs>

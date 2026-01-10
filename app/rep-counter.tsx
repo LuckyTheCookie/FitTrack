@@ -377,6 +377,11 @@ const PositionScreen = ({
 export default function RepCounterScreen() {
     const { settings, addHomeWorkout, entries } = useAppStore();
     const { recalculateAllQuests } = useGamificationStore();
+    
+    // Backward compatibility: debugCamera only works if developerMode is enabled
+    const showDebugOverlay = (settings.developerMode ?? false) && (settings.debugCamera ?? false);
+    // Camera preview is shown if preferCameraDetection is enabled (can work without debug)
+    const showCameraPreview = settings.preferCameraDetection ?? false;
 
     const [step, setStep] = useState<TutorialStep>('select');
     const [selectedExercise, setSelectedExercise] = useState<ExerciseConfig | null>(null);
@@ -1871,12 +1876,12 @@ export default function RepCounterScreen() {
                                 </View>
                             )}
 
-                            {/* Camera Preview - Debug mode shows full preview, otherwise hidden with active detection */}
-                            {detectionMode === 'camera' && settings.debugCamera && (
+                            {/* Camera Preview - Shows when camera preview is enabled, with optional debug overlay */}
+                            {detectionMode === 'camera' && showCameraPreview && (
                                 <View style={styles.cameraPreviewContainer}>
                                     <PoseCameraView
                                         facing="front"
-                                        showDebugOverlay={settings.debugCamera}
+                                        showDebugOverlay={showDebugOverlay}
                                         exerciseType={selectedExercise.id}
                                         currentCount={selectedExercise.isTimeBased ? plankSeconds : repCount}
                                         onRepDetected={handleCameraRepDetected}
@@ -1889,8 +1894,8 @@ export default function RepCounterScreen() {
                                 </View>
                             )}
 
-                            {/* Hidden camera for detection when debug is off */}
-                            {detectionMode === 'camera' && !settings.debugCamera && (
+                            {/* Hidden camera for detection when camera preview is off */}
+                            {detectionMode === 'camera' && !showCameraPreview && (
                                 <View style={styles.hiddenCameraContainer}>
                                     <PoseCameraView
                                         facing="front"

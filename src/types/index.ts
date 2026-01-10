@@ -158,6 +158,8 @@ export interface UserSettings {
   fitnessLevel?: FitnessLevel; // Niveau fitness choisi
   // Motivation interval for long exercises (elliptical, etc.)
   keepGoingIntervalMinutes?: number; // Minutes between "keep going" sounds (default: 5)
+  // Developer mode (hidden by default, activated by tapping About 10 times)
+  developerMode?: boolean;
 }
 
 // ============================================================================

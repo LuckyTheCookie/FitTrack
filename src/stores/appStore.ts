@@ -97,12 +97,13 @@ const defaultSettings: UserSettings = {
         distance: 'km',
     },
     hiddenTabs: {
-        tools: false,
+        tools: true, // Tools hidden by default
         workout: false,
     },
     debugCamera: false,
     preferCameraDetection: false,
     debugPlank: false,
+    developerMode: false,
 };
 
 // ============================================================================
