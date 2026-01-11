@@ -184,8 +184,12 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
         const bsEntry = entry as BeatSaberEntry;
         return (
           <>
-            <Text style={styles.cardTitle}>{bsEntry.durationMinutes} minutes</Text>
+            <Text style={styles.cardTitle}>Beat Saber</Text>
             <View style={styles.runStatsRow}>
+              <View style={styles.runStatItem}>
+                <Clock size={14} color={Colors.muted} />
+                <Text style={styles.runStatText}>{bsEntry.durationMinutes} min</Text>
+              </View>
               {bsEntry.bpmAvg && (
                 <View style={styles.runStatItem}>
                   <Flame size={14} color="#f87171" />
