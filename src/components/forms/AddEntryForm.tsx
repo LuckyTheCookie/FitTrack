@@ -271,7 +271,7 @@ export function AddEntryForm({
     const [customTotalReps, setCustomTotalReps] = useState('');
 
     const { addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, addCustomSport, updateEntry } = useAppStore();
-    const { addXp, updateQuestProgress } = useGamificationStore();
+    // Note: Les fonctions add* gèrent automatiquement la gamification (XP + quêtes)
 
     // Ajouter un exercice
     const addExercise = () => {
@@ -440,10 +440,7 @@ export function AddEntryForm({
                             bpmAvg: bsBpmAvg ? parseInt(bsBpmAvg, 10) : undefined,
                             bpmMax: bsBpmMax ? parseInt(bsBpmMax, 10) : undefined,
                         }, entryDate);
-
-                        addXp(15 + Math.floor(bsMinutesRounded / 5), `Beat Saber (${bsMinutesRounded}min)`);
-                        updateQuestProgress('duration', bsMinutesRounded);
-                        updateQuestProgress('workouts', 1);
+                        // XP et quêtes gérés automatiquement par addBeatSaber
                     }
                     break;
 
@@ -564,35 +561,7 @@ export function AddEntryForm({
                     break;
             }
 
-            if (!isEditMode) {
-                if (activeTab === 'home') {
-                    addXp(50, t('addEntry.homeSession', { name: homeName || 'Workout' }));
-                    updateQuestProgress('workouts', 1);
-                    const reps = exercises.filter(ex => ex.name.trim()).reduce((acc, curr) => acc + (parseInt(curr.sets) * parseInt(curr.reps) || 0), 0);
-                    if (reps > 0) updateQuestProgress('exercises', reps);
-                } else if (activeTab === 'run') {
-                    const km = parseFloat(runKm.trim().replace(',', '.'));
-                    addXp(30 + Math.floor(km * 5), `Running (${km}km)`);
-                    updateQuestProgress('workouts', 1);
-                } else if (activeTab === 'custom' && selectedSportId) {
-                    // XP and quest progress for custom sports
-                    const selectedSport = sportsConfig.find((s: SportConfig) => s.id === selectedSportId);
-                    addXp(40, selectedSport?.name || 'Custom Sport');
-                    updateQuestProgress('workouts', 1);
-                    if (customDuration) {
-                        const duration = Math.round(parseFloat(customDuration.trim().replace(',', '.')));
-                        if (!isNaN(duration)) updateQuestProgress('duration', duration);
-                    }
-                    if (customDistance) {
-                        const distance = parseFloat(customDistance.trim().replace(',', '.'));
-                        if (!isNaN(distance)) updateQuestProgress('distance', distance);
-                    }
-                    if (customTotalReps) {
-                        const reps = parseInt(customTotalReps, 10);
-                        if (!isNaN(reps)) updateQuestProgress('exercises', reps);
-                    }
-                }
-            }
+            // Note: Les fonctions add* et updateEntry gèrent automatiquement l'XP et les quêtes
 
             setHomeName('');
             setHomeDuration('');
@@ -639,14 +608,14 @@ export function AddEntryForm({
         }
     }, [
         activeTab,
-        homeName, homeDuration, exercises, withAbsBlock, // AJOUTÉ : homeDuration
-        runKm, runMinutes, runBpmAvg, runBpmMax, runCardiacLoad, // AJOUTÉ : runCardiacLoad
-        bsDuration, bsCardiacLoad, bsBpmAvg, bsBpmMax, // AJOUTÉ : bsDuration et les autres
+        homeName, homeDuration, exercises, withAbsBlock,
+        runKm, runMinutes, runBpmAvg, runBpmMax, runCardiacLoad,
+        bsDuration, bsCardiacLoad, bsBpmAvg, bsBpmMax,
         mealTime, mealDescription,
         weight, bodyFatPercent, waist, arm, hips,
-        selectedSportId, customSportName, customDuration, customDistance, customBpmAvg, customBpmMax, customCardiacLoad, customCalories, customExercises, customTotalReps, // Custom sport fields
-        addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, addCustomSport, updateEntry, // AJOUTÉ : addBeatSaber (par sécurité)
-        onSuccess, addXp, updateQuestProgress, isEditMode, editEntry,
+        selectedSportId, customSportName, customDuration, customDistance, customBpmAvg, customBpmMax, customCardiacLoad, customCalories, customExercises, customTotalReps,
+        addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, addCustomSport, updateEntry,
+        onSuccess, isEditMode, editEntry,
         useCustomDateTime, customDate, customTime,
         sportsConfig
     ]);

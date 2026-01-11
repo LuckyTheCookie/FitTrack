@@ -35,10 +35,9 @@ import {
   EmptyState,
   EntryDetailModal,
 } from '../src/components/ui';
-import { useAppStore, useGamificationStore, useEditorStore, useSportsConfig } from '../src/stores';
+import { useAppStore, useEditorStore, useSportsConfig } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
-import { calculateQuestTotals } from '../src/utils/questCalculator';
 import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSaberEntry, CustomSportEntry, SportConfig } from '../src/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -336,8 +335,7 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
 });
 
 export default function WorkoutScreen() {
-  const { entries, deleteEntry, syncGamificationAfterChange } = useAppStore();
-  const { recalculateAllQuests } = useGamificationStore();
+  const { entries, deleteEntry } = useAppStore();
   const { setEntryToEdit } = useEditorStore();
   const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterType>('all');
@@ -368,13 +366,10 @@ export default function WorkoutScreen() {
     };
   }, [entries]);
 
-  // Handler for delete with gamification sync - called from modal or long press
+  // Handler for delete - deleteEntry gère automatiquement la synchro gamification
   const handleDeleteEntry = useCallback((entryId: string) => {
     deleteEntry(entryId);
-    // Sync gamification after deletion
-    const remainingEntries = entries.filter(e => e.id !== entryId);
-    syncGamificationAfterChange(remainingEntries);
-  }, [deleteEntry, entries, syncGamificationAfterChange]);
+  }, [deleteEntry]);
 
   const handleDelete = useCallback((entry: Entry) => {
     Alert.alert(

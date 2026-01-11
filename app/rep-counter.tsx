@@ -73,7 +73,6 @@ import {
     resetEllipticalSamples,
 } from '../src/utils/poseDetection';
 import { useTranslation } from 'react-i18next';
-import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -376,7 +375,6 @@ const PositionScreen = ({
 // Écran principal
 export default function RepCounterScreen() {
     const { settings, addHomeWorkout, entries } = useAppStore();
-    const { recalculateAllQuests } = useGamificationStore();
     
     // Backward compatibility: debugCamera only works if developerMode is enabled
     const showDebugOverlay = (settings.developerMode ?? false) && (settings.debugCamera ?? false);
@@ -1185,6 +1183,7 @@ export default function RepCounterScreen() {
             ? Math.ceil(seconds / 60) 
             : Math.floor(elapsedTime / 60);
 
+        // addHomeWorkout gère automatiquement l'XP et les quêtes
         addHomeWorkout({
             name: t('repCounter.trackedSession', { exercise: displayName }),
             exercises: exerciseText,
@@ -1192,63 +1191,30 @@ export default function RepCounterScreen() {
             durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
         });
 
-        // Attribuer les XP pour la séance
-        const { addXp, updateQuestProgress } = useGamificationStore.getState();
-        const xpGained = isTimeBased 
-            ? 50 + Math.floor(seconds / 10) * 3 // 50 base + 3 XP par 10 secondes
-            : 50 + Math.floor(repCount / 10) * 5; // 50 base + 5 XP par 10 reps
-        console.log('[rep-counter] Before addXp, xp =', useGamificationStore.getState().xp);
-
-        await new Promise<void>((resolve) => {
-            setTimeout(() => {
-                try {
-                    const description = isTimeBased 
-                        ? `Tracking ${exerciseId} (${seconds}s)` 
-                        : `Tracking ${exerciseId} (${repCount} reps)`;
-                    addXp(xpGained, description);
-                    updateQuestProgress('workouts', 1);
-                    if (!isTimeBased && repCount > 0) updateQuestProgress('exercises', repCount);
-                    if (isTimeBased) updateQuestProgress('duration', Math.ceil(seconds / 60));
-                    console.log('[rep-counter] After addXp, xp =', useGamificationStore.getState().xp);
-
-                    // Marquer comme sauvegardé pour reset au retour
-                    setWorkoutSaved(true);
-                } catch (err) {
-                    console.error('[rep-counter] Error adding XP:', err);
-                    setWorkoutSaved(true);
-                } finally {
-                    resolve();
-                }
-            }, 60);
-        });
+        // Marquer comme sauvegardé pour reset
+        setWorkoutSaved(true);
     }, [selectedExercise, repCount, plankSeconds, ellipticalSeconds, elapsedTime, addHomeWorkout, playFinishedSound, t]);
 
-    // Recalculer les quêtes après sauvegarde (quand workoutSaved devient true)
+    // Reset après sauvegarde (addHomeWorkout gère automatiquement XP et quêtes)
     useEffect(() => {
         if (workoutSaved) {
-            // Attendre un tick pour que le store soit à jour
+            // Attendre un tick puis reset les stats
             setTimeout(() => {
-                const totals = calculateQuestTotals(entries);
-                recalculateAllQuests(totals);
-                
-                // Reset les stats après quêtes recalculées
-                setTimeout(() => {
-                    setRepCount(0);
-                    setElapsedTime(0);
-                    setPlankSeconds(0);
-                    setEllipticalSeconds(0);
-                    setIsPlankActive(false);
-                    setIsEllipticalActive(false);
-                    setEllipticalCalibrationPhase('none');
-                    resetEllipticalState();
-                    hasBeatenRecord.current = false;
-                    setWorkoutSaved(false);
-                    setStep('select');
-                    setSelectedExercise(null);
-                }, 200);
-            }, 100);
+                setRepCount(0);
+                setElapsedTime(0);
+                setPlankSeconds(0);
+                setEllipticalSeconds(0);
+                setIsPlankActive(false);
+                setIsEllipticalActive(false);
+                setEllipticalCalibrationPhase('none');
+                resetEllipticalState();
+                hasBeatenRecord.current = false;
+                setWorkoutSaved(false);
+                setStep('select');
+                setSelectedExercise(null);
+            }, 200);
         }
-    }, [workoutSaved, entries, recalculateAllQuests]);
+    }, [workoutSaved]);
 
     const finishWorkout = useCallback(() => {
         stopTracking();

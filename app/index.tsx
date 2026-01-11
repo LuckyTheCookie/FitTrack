@@ -30,7 +30,6 @@ import { AddEntryBottomSheet, AddEntryBottomSheetRef } from '../src/components/s
 import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Gradients } from '../src/constants';
 import { getWeekDaysInfo } from '../src/utils/date';
-import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { checkHealthConnectOnStartup } from '../src/services/healthConnectStartup';
 import type { Entry, HomeWorkoutEntry, RunEntry } from '../src/types';
 
@@ -61,14 +60,13 @@ export default function TodayScreen() {
         entries,
         settings,
         deleteEntry,
-        syncGamificationAfterChange,
         getStreak,
         getWeekWorkoutsCount,
         getSportEntries,
         getMonthlyStats,
     } = useAppStore();
 
-    const { recalculateAllQuests } = useGamificationStore();
+    const { checkAndRefreshQuests } = useGamificationStore();
     const { entryToEdit, setEntryToEdit } = useEditorStore();
 
     // Health Connect startup check
@@ -125,10 +123,9 @@ export default function TodayScreen() {
     }, []);
 
     const handleDeleteEntry = useCallback((id: string) => {
+        // deleteEntry gère automatiquement la synchro gamification
         deleteEntry(id);
-        const remainingEntries = entries.filter(e => e.id !== id);
-        syncGamificationAfterChange(remainingEntries);
-    }, [deleteEntry, entries, syncGamificationAfterChange]);
+    }, [deleteEntry]);
 
     const handleEditEntry = useCallback((entry: Entry) => {
         setDetailModalVisible(false);

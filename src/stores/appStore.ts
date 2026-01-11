@@ -27,8 +27,7 @@ import {
     getLastSixMonths,
 } from '../utils/date';
 import { checkBadges } from '../utils/badges';
-import { calculateQuestTotals } from '../utils/questCalculator';
-import { useGamificationStore } from './gamificationStore';
+import { useGamificationStore, calculateQuestTotals } from './gamificationStore';
 import { storeLogger } from '../utils/logger';
 import { 
     SPORT_ENTRY_TYPES, 
@@ -86,15 +85,15 @@ interface AppState {
     getArchiveAnalysis: () => ArchiveAnalysis;
     performArchive: () => ArchiveResult;
     
-    // Gamification sync helper
-    syncGamificationAfterChange: (entries: Entry[]) => void;
+    // Gamification helpers (internal use)
     recheckBadges: (entries: Entry[]) => void;
+    recalculateGamification: () => void;
 
     // Computed (recalculées à chaque appel)
     getStreak: () => { current: number; best: number };
     getWeekWorkoutsCount: () => number;
     getRecentEntries: (limit?: number) => Entry[];
-    getSportEntries: () => (HomeWorkoutEntry | RunEntry | BeatSaberEntry)[];
+    getSportEntries: () => (HomeWorkoutEntry | RunEntry | BeatSaberEntry | CustomSportEntry)[];
     getMonthlyStats: () => { month: string; count: number }[];
     getLastMeasure: () => MeasureEntry | undefined;
 }
@@ -185,9 +184,11 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification synchronously after state update
-                const currentEntries = get().entries;
-                get().syncGamificationAfterChange(currentEntries);
+                // Sync gamification: ajouter XP et mettre à jour les quêtes
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.processEntryAdded(entry);
+                gamificationStore.syncQuestsWithEntries(get().entries);
+                get().recheckBadges(get().entries);
                 storeLogger.debug('Added home workout', entry.id);
             },
 
@@ -211,9 +212,11 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification synchronously after state update
-                const currentEntries = get().entries;
-                get().syncGamificationAfterChange(currentEntries);
+                // Sync gamification: ajouter XP et mettre à jour les quêtes
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.processEntryAdded(entry);
+                gamificationStore.syncQuestsWithEntries(get().entries);
+                get().recheckBadges(get().entries);
                 storeLogger.debug('Added run', entry.id);
             },
 
@@ -231,9 +234,11 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification synchronously after state update
-                const currentEntries = get().entries;
-                get().syncGamificationAfterChange(currentEntries);
+                // Sync gamification: ajouter XP et mettre à jour les quêtes
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.processEntryAdded(entry);
+                gamificationStore.syncQuestsWithEntries(get().entries);
+                get().recheckBadges(get().entries);
                 storeLogger.debug('Added BeatSaber session', entry.id);
             },
 
@@ -279,14 +284,16 @@ export const useAppStore = create<AppState>()(
                     return { entries: newEntries };
                 });
                 
-                // Sync gamification synchronously after state update
-                const currentEntries = get().entries;
-                get().syncGamificationAfterChange(currentEntries);
+                // Sync gamification: ajouter XP et mettre à jour les quêtes
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.processEntryAdded(entry);
+                gamificationStore.syncQuestsWithEntries(get().entries);
+                get().recheckBadges(get().entries);
                 storeLogger.debug('Added custom sport', entry.id);
             },
 
             deleteEntry: (id) => {
-                // Get the entry before deletion to check if it affects gamification
+                // Get the entry before deletion to process XP removal
                 const entryToDelete = get().entries.find(e => e.id === id);
                 const affectsGamification = entryToDelete && isSportEntryType(entryToDelete.type);
                 
@@ -295,17 +302,19 @@ export const useAppStore = create<AppState>()(
                 }));
                 
                 // Sync gamification if deleted entry was a sport entry
-                if (affectsGamification) {
-                    const currentEntries = get().entries;
-                    get().syncGamificationAfterChange(currentEntries);
+                if (affectsGamification && entryToDelete) {
+                    const gamificationStore = useGamificationStore.getState();
+                    gamificationStore.processEntryDeleted(entryToDelete);
+                    gamificationStore.syncQuestsWithEntries(get().entries);
+                    get().recheckBadges(get().entries);
                     storeLogger.debug('Deleted sport entry, synced gamification', id);
                 }
             },
 
             updateEntry: (id, updates) => {
-                // Check if entry is a sport entry before update
-                const entryToUpdate = get().entries.find(e => e.id === id);
-                const affectsGamification = entryToUpdate && isSportEntryType(entryToUpdate.type);
+                // Get the original entry before update
+                const oldEntry = get().entries.find(e => e.id === id);
+                const affectsGamification = oldEntry && isSportEntryType(oldEntry.type);
                 
                 set((state) => ({
                     entries: state.entries.map((e) => 
@@ -313,11 +322,13 @@ export const useAppStore = create<AppState>()(
                     ),
                 }));
                 
-                // Sync gamification if updated entry was a sport entry
-                // This handles cases like editing totalReps in a home workout
-                if (affectsGamification) {
-                    const currentEntries = get().entries;
-                    get().syncGamificationAfterChange(currentEntries);
+                // Get the updated entry and sync gamification if needed
+                const newEntry = get().entries.find(e => e.id === id);
+                if (oldEntry && newEntry && (affectsGamification || isSportEntryType(newEntry.type))) {
+                    const gamificationStore = useGamificationStore.getState();
+                    gamificationStore.processEntryUpdated(oldEntry, newEntry);
+                    gamificationStore.syncQuestsWithEntries(get().entries);
+                    get().recheckBadges(get().entries);
                     storeLogger.debug('Updated sport entry, synced gamification', id);
                 }
             },
@@ -362,12 +373,12 @@ export const useAppStore = create<AppState>()(
                 const validData = validation.data || data;
                 
                 set({
-                    entries: validData.entries || [],
+                    entries: (validData.entries || []) as Entry[],
                     settings: {
                         ...defaultSettings,
                         ...validData.settings,
-                    },
-                    unlockedBadges: validData.unlockedBadges || [],
+                    } as UserSettings,
+                    unlockedBadges: (validData.unlockedBadges || []) as BadgeId[],
                 });
                 
                 storeLogger.info('[Backup] Restored successfully');
@@ -389,9 +400,9 @@ export const useAppStore = create<AppState>()(
                 // Mettre à jour le store avec seulement les entrées récentes
                 set({ entries: result.keptEntries });
                 
-                // Sync gamification avec les nouvelles entrées
-                const currentEntries = get().entries;
-                get().syncGamificationAfterChange(currentEntries);
+                // Recalculer complètement la gamification après archivage
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.recalculateFromEntries(get().entries);
                 
                 storeLogger.info(`[Archive] Archived ${result.archivedCount} entries, kept ${result.keptEntries.length}`);
                 
@@ -401,16 +412,6 @@ export const useAppStore = create<AppState>()(
             // ========================================
             // GAMIFICATION SYNC
             // ========================================
-
-            syncGamificationAfterChange: (entries) => {
-                // Recalculate quest totals and sync with gamification store
-                const totals = calculateQuestTotals(entries);
-                const gamificationStore = useGamificationStore.getState();
-                gamificationStore.recalculateAllQuests(totals);
-                
-                // Recheck badges and update
-                get().recheckBadges(entries);
-            },
 
             recheckBadges: (entries) => {
                 // Calculate streak based on current entries
@@ -429,6 +430,12 @@ export const useAppStore = create<AppState>()(
                 
                 // Update badges - this can remove badges if conditions no longer met
                 set({ unlockedBadges: shouldHaveBadges });
+            },
+
+            recalculateGamification: () => {
+                // Recalcule complètement la gamification depuis les entrées
+                const gamificationStore = useGamificationStore.getState();
+                gamificationStore.recalculateFromEntries(get().entries);
             },
 
             // ========================================
@@ -521,7 +528,7 @@ export const useAppStore = create<AppState>()(
                 const { entries } = get();
                 return entries.filter(
                     (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry | CustomSportEntry => 
-                        isSportEntryType(e.type) || e.type === 'custom'
+                        isSportEntryType(e.type)
                 );
             },
 

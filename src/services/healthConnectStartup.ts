@@ -24,7 +24,8 @@ export const checkHealthConnectOnStartup = async (): Promise<void> => {
     if (hasCheckedThisSession) return;
     hasCheckedThisSession = true;
 
-    const { settings, entries, addHomeWorkout, addRun, addBeatSaber, syncGamificationAfterChange } = useAppStore.getState();
+    // Note: Les fonctions add* gèrent automatiquement la gamification (XP + quêtes)
+    const { settings, entries, addHomeWorkout, addRun, addBeatSaber } = useAppStore.getState();
     const syncMode: HealthConnectSyncMode = settings.healthConnectSyncMode || 'manual';
     
     // Skip if manual mode
@@ -112,12 +113,7 @@ export const checkHealthConnectOnStartup = async (): Promise<void> => {
                         break;
                 }
             }
-            
-            if (importCount > 0) {
-                // Sync gamification after auto-import
-                const updatedEntries = useAppStore.getState().entries;
-                syncGamificationAfterChange(updatedEntries);
-            }
+            // Note: Les fonctions add* gèrent automatiquement la gamification
         }
     } catch (error) {
         console.error('Health Connect startup check error:', error);

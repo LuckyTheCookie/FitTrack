@@ -22,9 +22,11 @@ import {
   Sparkles,
   Code2,
   AlertTriangle,
+  RefreshCw,
+  Trash2,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
-import { useAppStore } from '../../src/stores';
+import { useAppStore, useGamificationStore } from '../../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
 
 // Setting Item Component
@@ -77,7 +79,45 @@ function SectionTitle({ title, delay = 0 }: { title: string; delay?: number }) {
 
 export default function DeveloperScreen() {
   const { t } = useTranslation();
-  const { settings, updateSettings } = useAppStore();
+  const { settings, updateSettings, entries, recalculateGamification } = useAppStore();
+  const { xp, level, clearHistory, recalculateFromEntries } = useGamificationStore();
+
+  // Handle recalculate gamification
+  const handleRecalculateGamification = () => {
+    Alert.alert(
+      '🔄 Recalculer la gamification ?',
+      `Cette action va recalculer l'XP et le niveau en fonction de toutes tes séances (${entries.filter(e => ['home', 'run', 'beatsaber', 'custom'].includes(e.type)).length} séances sport).\n\nActuellement: Niveau ${level}, ${xp} XP`,
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { 
+          text: 'Recalculer', 
+          onPress: () => {
+            recalculateFromEntries(entries);
+            Alert.alert('✅ Recalculé', `Niveau ${useGamificationStore.getState().level}, ${useGamificationStore.getState().xp} XP`);
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle clear gamification history
+  const handleClearHistory = () => {
+    Alert.alert(
+      '🗑️ Effacer l\'historique ?',
+      'Cela effacera uniquement l\'historique des gains XP, pas ton niveau actuel.',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { 
+          text: 'Effacer', 
+          style: 'destructive',
+          onPress: () => {
+            clearHistory();
+            Alert.alert('✅ Historique effacé');
+          },
+        },
+      ]
+    );
+  };
 
   // Handle disable developer mode
   const handleDisableDeveloperMode = () => {
@@ -169,8 +209,29 @@ export default function DeveloperScreen() {
           />
         </GlassCard>
 
+        {/* Gamification */}
+        <SectionTitle title="Gamification" delay={180} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<RefreshCw size={20} color={Colors.teal} />}
+            iconColor={Colors.teal}
+            title="Recalculer la gamification"
+            subtitle={`XP actuel: ${xp} | Niveau: ${level}`}
+            onPress={handleRecalculateGamification}
+            delay={200}
+          />
+          <SettingItem
+            icon={<Trash2 size={20} color="#f97316" />}
+            iconColor="#f97316"
+            title="Effacer l'historique XP"
+            subtitle="Supprime l'historique sans toucher aux entrées"
+            onPress={handleClearHistory}
+            delay={220}
+          />
+        </GlassCard>
+
         {/* Disable Developer Mode */}
-        <SectionTitle title="Mode développeur" delay={180} />
+        <SectionTitle title="Mode développeur" delay={240} />
         <GlassCard style={[styles.settingsCard, styles.dangerCard]}>
           <SettingItem
             icon={<Code2 size={20} color={Colors.error} />}
@@ -178,7 +239,7 @@ export default function DeveloperScreen() {
             title={t('settings.disableDeveloperMode', { defaultValue: 'Désactiver le mode développeur' })}
             subtitle={t('settings.disableDeveloperModeDesc', { defaultValue: 'Masquer ces options avancées' })}
             onPress={handleDisableDeveloperMode}
-            delay={200}
+            delay={260}
           />
         </GlassCard>
 

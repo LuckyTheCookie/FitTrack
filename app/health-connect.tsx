@@ -48,10 +48,10 @@ import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import * as healthConnect from '../src/services/healthConnect';
 import type { HealthConnectWorkout, FitTrackWorkoutType, HealthConnectWeight } from '../src/services/healthConnect';
-import { calculateQuestTotals } from '../src/utils/questCalculator';
+import { calculateQuestTotals, calculateXpForEntry } from '../src/stores/gamificationStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { SportConfig } from '../src/types';
+import type { SportConfig, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, CustomSportEntry } from '../src/types';
 import * as LucideIcons from 'lucide-react-native';
 
 // ============================================================================
@@ -395,8 +395,8 @@ export default function HealthConnectScreen() {
     const sportPickerSheetRef = useRef<TrueSheet>(null);
     const [sportPickerWorkoutId, setSportPickerWorkoutId] = useState<string | null>(null);
 
-    const { addHomeWorkout, addRun, addBeatSaber, addCustomSport, addMeasure, entries, syncGamificationAfterChange, sportsConfig } = useAppStore();
-    const { addXp, updateQuestProgress, recalculateAllQuests } = useGamificationStore();
+    // Note: les fonctions add* gèrent automatiquement la gamification
+    const { addHomeWorkout, addRun, addBeatSaber, addCustomSport, addMeasure, entries, sportsConfig } = useAppStore();
 
     useEffect(() => {
         checkAvailability();
@@ -568,15 +568,15 @@ export default function HealthConnectScreen() {
 
         setImporting(true);
         try {
-            let totalXp = 0;
             let workoutsAdded = 0;
             let weightsAdded = 0;
             let totalDuration = 0;
             let totalDistance = 0;
 
+            // Les fonctions add* gèrent automatiquement l'XP et les quêtes
             for (const workout of toImport) {
                 const date = format(workout.startTime, 'yyyy-MM-dd');
-                const createdAt = workout.startTime.toISOString(); // Use original workout time
+                const createdAt = workout.startTime.toISOString();
                 switch (workout.fitTrackType) {
                     case 'home':
                         addHomeWorkout({
@@ -585,7 +585,6 @@ export default function HealthConnectScreen() {
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
                         }, date, createdAt);
-                        totalXp += 20 + Math.floor(workout.durationMinutes / 5);
                         workoutsAdded++;
                         totalDuration += workout.durationMinutes;
                         break;
@@ -596,7 +595,6 @@ export default function HealthConnectScreen() {
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
                         }, date, createdAt);
-                        totalXp += 25 + Math.floor(distanceKm * 5);
                         workoutsAdded++;
                         totalDistance += distanceKm;
                         totalDuration += workout.durationMinutes;
@@ -606,7 +604,6 @@ export default function HealthConnectScreen() {
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
                         }, date, createdAt);
-                        totalXp += 15 + Math.floor(workout.durationMinutes / 5);
                         workoutsAdded++;
                         totalDuration += workout.durationMinutes;
                         break;
@@ -623,7 +620,6 @@ export default function HealthConnectScreen() {
                                     : undefined,
                                 healthConnectId: workout.id,
                             }, date, createdAt);
-                            totalXp += 15 + Math.floor(workout.durationMinutes / 5);
                             workoutsAdded++;
                             totalDuration += workout.durationMinutes;
                         }
@@ -643,19 +639,10 @@ export default function HealthConnectScreen() {
                 weightsAdded++;
             }
 
-            if (totalXp > 0) addXp(totalXp, t('healthConnect.importXpLabel'));
-            
-            // Recalculate quests with the FRESH entries from the store (after all imports)
-            // Note: syncGamificationAfterChange is already called by each add* method
-            // We need to get the updated entries after all imports are done
-            const freshEntries = useAppStore.getState().entries;
-            const totals = calculateQuestTotals(freshEntries);
-            recalculateAllQuests(totals);
-
             // Build success message
             let successMessage = '';
             if (workoutsAdded > 0) {
-                successMessage = t('healthConnect.importSuccess', { count: workoutsAdded, xp: totalXp });
+                successMessage = t('healthConnect.importSuccess', { count: workoutsAdded });
             }
             if (weightsAdded > 0) {
                 if (successMessage) successMessage += '\n';
