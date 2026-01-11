@@ -82,7 +82,7 @@ export const EXERCISE_TYPE_NAMES: Record<number, string> = {
     14: 'Exercice',
     16: 'Danse',
     19: 'Cours de fitness',
-    26: 'Escrime',
+    26: 'Aérobic',
     29: 'Gymnastique',
     30: 'Handball',
     31: 'HIIT', 
