@@ -51,7 +51,7 @@ import type { HealthConnectWorkout, FitTrackWorkoutType, HealthConnectWeight } f
 import { calculateQuestTotals, calculateXpForEntry } from '../src/stores/gamificationStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { SportConfig, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, CustomSportEntry } from '../src/types';
+import type { SportConfig } from '../src/types';
 import * as LucideIcons from 'lucide-react-native';
 
 // ============================================================================

@@ -1005,7 +1005,7 @@
     "sourceLabel": "Source:",
     "importedFrom": "Imported from Health Connect",
     "importXpLabel": "Health Connect Import",
-    "importSuccess": "{{count}} workout(s) imported! +{{xp}} XP",
+    "importSuccess": "{{count}} workout(s) imported!",
     "importError": "Import error occurred",
     "workoutsFound": "workouts found in the last {{days}} days",
     "weightsFound": "weight measurements",
