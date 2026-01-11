@@ -35,11 +35,11 @@ import {
   EmptyState,
   EntryDetailModal,
 } from '../src/components/ui';
-import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores';
+import { useAppStore, useGamificationStore, useEditorStore, useSportsConfig } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
-import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSaberEntry } from '../src/types';
+import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSaberEntry, CustomSportEntry, SportConfig } from '../src/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_HEIGHT = 150; // Hauteur estimée pour getItemLayout
@@ -65,7 +65,7 @@ const FILTER_DEFINITIONS = [
   { value: 'measure', icon: <Ruler size={16} color="#a78bfa" />, color: '#a78bfa' },
 ];
 
-const getEntryStyle = (type: string) => {
+const getEntryStyle = (type: string, sportConfig?: any) => {
   switch (type) {
     case 'home':
       return { icon: <Home size={20} color="#4ade80" />, color: '#4ade80', bg: 'rgba(74, 222, 128, 0.15)' };
@@ -77,6 +77,16 @@ const getEntryStyle = (type: string) => {
       return { icon: <UtensilsCrossed size={20} color="#fbbf24" />, color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' };
     case 'measure':
       return { icon: <Ruler size={20} color="#a78bfa" />, color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' };
+    case 'custom':
+      if (sportConfig) {
+        const color = sportConfig.color;
+        return { 
+          icon: <Text style={{ fontSize: 20 }}>{sportConfig.emoji}</Text>, 
+          color: color, 
+          bg: `${color}26` 
+        };
+      }
+      return { icon: <Flame size={20} color={Colors.cta} />, color: Colors.cta, bg: 'rgba(215, 150, 134, 0.15)' };
     default:
       return { icon: <Flame size={20} color={Colors.cta} />, color: Colors.cta, bg: 'rgba(215, 150, 134, 0.15)' };
   }
@@ -101,8 +111,17 @@ const FilterChip = React.memo(({ option, isActive, onPress }: { option: FilterOp
 
 // Composant EntryCard optimisé avec React.memo
 const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entry; onDelete: () => void; onPress?: () => void; index: number }) => {
-  const entryStyle = getEntryStyle(entry.type);
+  const sportsConfig = useSportsConfig();
   const { t } = useTranslation();
+  
+  // Get sport config for custom entries
+  let sportConfig: SportConfig | undefined;
+  if (entry.type === 'custom') {
+    const customEntry = entry as CustomSportEntry;
+    sportConfig = sportsConfig.find((s: SportConfig) => s.id === customEntry.sportId);
+  }
+  
+  const entryStyle = getEntryStyle(entry.type, sportConfig);
   
   const renderContent = useCallback(() => {
     switch (entry.type) {
@@ -228,8 +247,50 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
           </>
         );
       }
+      case 'custom': {
+        const customEntry = entry as CustomSportEntry;
+        return (
+          <>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {customEntry.name || sportConfig?.name || t('entries.custom')}
+            </Text>
+            <View style={styles.runStatsRow}>
+              {customEntry.durationMinutes && (
+                <View style={styles.runStatItem}>
+                  <Clock size={14} color={Colors.muted} />
+                  <Text style={styles.runStatText}>{customEntry.durationMinutes} min</Text>
+                </View>
+              )}
+              {customEntry.distanceKm && (
+                <View style={styles.runStatItem}>
+                  <TrendingUp size={14} color={Colors.muted} />
+                  <Text style={styles.runStatText}>{customEntry.distanceKm} km</Text>
+                </View>
+              )}
+              {customEntry.totalReps && (
+                <View style={styles.runStatItem}>
+                  <TrendingUp size={14} color={Colors.muted} />
+                  <Text style={styles.runStatText}>{customEntry.totalReps} reps</Text>
+                </View>
+              )}
+              {customEntry.bpmAvg && (
+                <View style={styles.runStatItem}>
+                  <Flame size={14} color="#f87171" />
+                  <Text style={styles.runStatText}>{customEntry.bpmAvg} bpm</Text>
+                </View>
+              )}
+              {customEntry.calories && (
+                <View style={styles.runStatItem}>
+                  <Flame size={14} color="#fbbf24" />
+                  <Text style={styles.runStatText}>{customEntry.calories} kcal</Text>
+                </View>
+              )}
+            </View>
+          </>
+        );
+      }
     }
-  }, [entry]);
+  }, [entry, sportConfig]);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).duration(300)}>

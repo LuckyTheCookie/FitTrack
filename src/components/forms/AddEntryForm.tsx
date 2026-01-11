@@ -644,9 +644,11 @@ export function AddEntryForm({
         bsDuration, bsCardiacLoad, bsBpmAvg, bsBpmMax, // AJOUTÉ : bsDuration et les autres
         mealTime, mealDescription,
         weight, bodyFatPercent, waist, arm, hips,
-        addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, updateEntry, // AJOUTÉ : addBeatSaber (par sécurité)
+        selectedSportId, customSportName, customDuration, customDistance, customBpmAvg, customBpmMax, customCardiacLoad, customCalories, customExercises, customTotalReps, // Custom sport fields
+        addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, addCustomSport, updateEntry, // AJOUTÉ : addBeatSaber (par sécurité)
         onSuccess, addXp, updateQuestProgress, isEditMode, editEntry,
-        useCustomDateTime, customDate, customTime
+        useCustomDateTime, customDate, customTime,
+        sportsConfig
     ]);
 
     const handleStartActivity = (type: EntryType) => {

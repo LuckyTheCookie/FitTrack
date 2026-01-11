@@ -26,9 +26,10 @@ export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
     let title: string;
     
     if (entry.type === 'custom') {
-        sportConfig = sportsConfig.find((s: SportConfig) => s.id === entry.sportId);
+        const customEntry = entry as CustomSportEntry;
+        sportConfig = sportsConfig.find((s: SportConfig) => s.id === customEntry.sportId);
         icon = sportConfig?.emoji || '💪';
-        title = entry.name || sportConfig?.name || t('entries.custom');
+        title = customEntry.name || sportConfig?.name || t('entries.custom');
     } else if (entry.type === 'run') {
         sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'run');
         icon = sportConfig?.emoji || '🏃';
@@ -57,13 +58,14 @@ export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
             return parts.join(' • ');
         }
         if (entry.type === 'custom') {
+            const customEntry = entry as CustomSportEntry;
             const parts: string[] = [];
-            if (entry.durationMinutes) parts.push(`${entry.durationMinutes} min`);
-            if (entry.distanceKm) parts.push(`${entry.distanceKm} km`);
-            if (entry.totalReps) parts.push(`${entry.totalReps} reps`);
-            if (entry.bpmAvg) parts.push(`${entry.bpmAvg} BPM`);
-            if (entry.cardiacLoad) parts.push(`Charge ${entry.cardiacLoad}`);
-            if (entry.calories) parts.push(`${entry.calories} kcal`);
+            if (customEntry.durationMinutes) parts.push(`${customEntry.durationMinutes} min`);
+            if (customEntry.distanceKm) parts.push(`${customEntry.distanceKm} km`);
+            if (customEntry.totalReps) parts.push(`${customEntry.totalReps} reps`);
+            if (customEntry.bpmAvg) parts.push(`${customEntry.bpmAvg} BPM`);
+            if (customEntry.cardiacLoad) parts.push(`Charge ${customEntry.cardiacLoad}`);
+            if (customEntry.calories) parts.push(`${customEntry.calories} kcal`);
             return parts.length > 0 ? parts.join(' • ') : t('entries.noData');
         }
         // Pour home workout, afficher les premiers exercices
