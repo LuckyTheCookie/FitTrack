@@ -216,6 +216,58 @@ export async function cancelStreakReminder(): Promise<void> {
 }
 
 /**
+ * Planifie un rappel de repas
+ */
+export async function scheduleMealReminder(
+    index: number,
+    hour: number,
+    minute: number
+): Promise<string> {
+    // Annuler le rappel précédent pour cet index
+    await cancelMealReminder(index);
+
+    const identifier = await Notifications.scheduleNotificationAsync({
+        content: {
+            title: i18n.t('notifications.mealReminder.title'),
+            body: i18n.t('notifications.mealReminder.body'),
+            sound: 'default',
+            data: { type: 'meal_reminder', index },
+        },
+        trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour,
+            minute,
+        },
+    });
+
+    return identifier;
+}
+
+/**
+ * Annule un rappel de repas spécifique
+ */
+export async function cancelMealReminder(index: number): Promise<void> {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notif of scheduled) {
+        if (notif.content.data?.type === 'meal_reminder' && notif.content.data?.index === index) {
+            await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+        }
+    }
+}
+
+/**
+ * Annule tous les rappels de repas
+ */
+export async function cancelAllMealReminders(): Promise<void> {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notif of scheduled) {
+        if (notif.content.data?.type === 'meal_reminder') {
+            await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+        }
+    }
+}
+
+/**
  * Écoute les notifications reçues
  */
 export function addNotificationReceivedListener(

@@ -3,10 +3,10 @@
 // ============================================================================
 
 import React, { forwardRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { useTranslation } from 'react-i18next';
-import { Settings, Bell, Zap, Hand } from 'lucide-react-native';
+import { Settings, Bell, Zap, Hand, ExternalLink } from 'lucide-react-native';
 import { useAppStore } from '../../stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import type { HealthConnectSyncMode } from '../../types';
@@ -55,6 +55,21 @@ export const HealthConnectSettingsSheet = forwardRef<HealthConnectSettingsSheetR
   const handleModeChange = useCallback((mode: HealthConnectSyncMode) => {
     updateSettings({ healthConnectSyncMode: mode });
   }, [updateSettings]);
+
+  const openNativeSettings = useCallback(async () => {
+    try {
+      // Open Health Connect app settings
+      await Linking.openURL('content://com.google.android.apps.healthdata');
+    } catch (error) {
+      // Fallback: try to open the app directly
+      try {
+        await Linking.openURL('package:com.google.android.apps.healthdata');
+      } catch {
+        // Last fallback: open app settings
+        Linking.openSettings();
+      }
+    }
+  }, []);
 
   React.useImperativeHandle(ref, () => ({
     present: () => sheetRef.current?.present(),
@@ -115,6 +130,14 @@ export const HealthConnectSettingsSheet = forwardRef<HealthConnectSettingsSheetR
             />
           ))}
         </View>
+
+        <TouchableOpacity
+          style={styles.nativeSettingsButton}
+          onPress={openNativeSettings}
+        >
+          <ExternalLink size={18} color={Colors.cta} />
+          <Text style={styles.nativeSettingsText}>{t('healthConnect.settings.nativeSettings')}</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.doneButton}
@@ -216,7 +239,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   doneButton: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
     paddingVertical: Spacing.md,
     backgroundColor: Colors.overlay,
     borderRadius: BorderRadius.lg,
@@ -228,5 +251,23 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     color: Colors.muted,
+  },
+  nativeSettingsButton: {
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: `${Colors.cta}15`,
+    borderRadius: BorderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: `${Colors.cta}30`,
+  },
+  nativeSettingsText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.cta,
   },
 });

@@ -26,7 +26,7 @@ interface EntryDetailModalProps {
 }
 
 const typeConfigs: Record<string, { icon: string; labelKey: string; color: string }> = {
-  home: { icon: '🏠', labelKey: 'entries.workout', color: 'rgba(147, 51, 234, 0.20)' },
+  home: { icon: '💪', labelKey: 'entries.workout', color: 'rgba(147, 51, 234, 0.20)' },
   run: { icon: '🏃', labelKey: 'entries.run', color: 'rgba(34, 197, 94, 0.20)' },
   beatsaber: { icon: '🕹️', labelKey: 'entries.beatsaber', color: 'rgba(244, 63, 94, 0.12)' },
   meal: { icon: '🍽️', labelKey: 'entries.meal', color: 'rgba(251, 191, 36, 0.20)' },

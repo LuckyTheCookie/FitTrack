@@ -282,21 +282,8 @@ export default function DataScreen() {
           />
         </GlassCard>
 
-        {/* Health Connect */}
-        <SectionTitle title="Intégrations" delay={180} />
-        <GlassCard style={styles.settingsCard}>
-          <SettingItem
-            icon={<Heart size={20} color="#f43f5e" />}
-            iconColor="#f43f5e"
-            title={t('settings.healthConnect')}
-            subtitle={t('settings.healthConnectDesc')}
-            onPress={() => router.push('/health-connect')}
-            delay={200}
-          />
-        </GlassCard>
-
         {/* Danger Zone */}
-        <SectionTitle title={t('settings.dangerZone')} delay={220} />
+        <SectionTitle title={t('settings.dangerZone')} delay={180} />
         <GlassCard style={[styles.settingsCard, styles.dangerCard]}>
           <SettingItem
             icon={<Trash2 size={20} color={Colors.error} />}

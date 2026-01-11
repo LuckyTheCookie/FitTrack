@@ -159,12 +159,100 @@ export async function requestHealthConnectPermissions(): Promise<boolean> {
             { accessType: 'read', recordType: 'ExerciseSession' },
             { accessType: 'read', recordType: 'Distance' },
             { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+            { accessType: 'read', recordType: 'Weight' },
+            { accessType: 'read', recordType: 'BodyFat' },
         ]);
 
         return granted.some(p => p.recordType === 'ExerciseSession' && p.accessType === 'read');
     } catch (error) {
         errorLogger.error('Perms error:', error);
         return false;
+    }
+}
+
+// ============================================================================
+// WEIGHT RECORDS
+// ============================================================================
+
+export interface HealthConnectWeight {
+    id: string;
+    time: Date;
+    weightKg: number;
+}
+
+export async function getRecentWeights(daysBack: number = 30): Promise<HealthConnectWeight[]> {
+    if (Platform.OS !== 'android') return [];
+
+    try {
+        const hc = await getHealthConnectModule();
+        if (!hc) return [];
+
+        const endTime = new Date();
+        const startTime = new Date();
+        startTime.setDate(startTime.getDate() - daysBack);
+        startTime.setHours(0, 0, 0, 0);
+
+        const result = await hc.readRecords('Weight', {
+            timeRangeFilter: {
+                operator: 'between',
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+            },
+        });
+
+        healthConnectLogger.debug(`Received ${result.records.length} weight records`);
+
+        return result.records.map((record: any) => ({
+            id: record.metadata?.id || `hc-weight-${new Date(record.time).getTime()}`,
+            time: new Date(record.time),
+            weightKg: record.weight?.inKilograms || 0,
+        }));
+    } catch (error) {
+        errorLogger.error('Error reading weight records:', error);
+        return [];
+    }
+}
+
+// ============================================================================
+// BODY FAT RECORDS
+// ============================================================================
+
+export interface HealthConnectBodyFat {
+    id: string;
+    time: Date;
+    percentage: number;
+}
+
+export async function getRecentBodyFat(daysBack: number = 30): Promise<HealthConnectBodyFat[]> {
+    if (Platform.OS !== 'android') return [];
+
+    try {
+        const hc = await getHealthConnectModule();
+        if (!hc) return [];
+
+        const endTime = new Date();
+        const startTime = new Date();
+        startTime.setDate(startTime.getDate() - daysBack);
+        startTime.setHours(0, 0, 0, 0);
+
+        const result = await hc.readRecords('BodyFat', {
+            timeRangeFilter: {
+                operator: 'between',
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+            },
+        });
+
+        healthConnectLogger.debug(`Received ${result.records.length} body fat records`);
+
+        return result.records.map((record: any) => ({
+            id: record.metadata?.id || `hc-bodyfat-${new Date(record.time).getTime()}`,
+            time: new Date(record.time),
+            percentage: record.percentage || 0,
+        }));
+    } catch (error) {
+        errorLogger.error('Error reading body fat records:', error);
+        return [];
     }
 }
 

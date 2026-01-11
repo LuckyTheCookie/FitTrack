@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Bell, Clock } from 'lucide-react-native';
+import { ArrowLeft, Bell, Clock, UtensilsCrossed, Plus, X } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
@@ -70,6 +70,90 @@ export default function NotificationsScreen() {
   const [timePickerVisible, setTimePickerVisible] = useState(false);
   const [timePickerHour, setTimePickerHour] = useState(String(settings.streakReminderHour ?? 20));
   const [timePickerMinute, setTimePickerMinute] = useState(String(settings.streakReminderMinute ?? 0).padStart(2, '0'));
+
+  // Meal reminder states
+  const [mealTimePickerVisible, setMealTimePickerVisible] = useState(false);
+  const [mealTimePickerHour, setMealTimePickerHour] = useState('12');
+  const [mealTimePickerMinute, setMealTimePickerMinute] = useState('00');
+  const [editingMealIndex, setEditingMealIndex] = useState<number | null>(null);
+
+  const handleAddMealReminder = useCallback(() => {
+    const currentReminders = settings.mealReminders || [];
+    if (currentReminders.length >= 4) return;
+    
+    // Default times: 7:00, 12:00, 19:00, 16:00
+    const defaultTimes = [
+      { hour: 7, minute: 0 },
+      { hour: 12, minute: 0 },
+      { hour: 19, minute: 0 },
+      { hour: 16, minute: 0 },
+    ];
+    const nextDefault = defaultTimes[currentReminders.length] || { hour: 12, minute: 0 };
+    
+    setMealTimePickerHour(String(nextDefault.hour));
+    setMealTimePickerMinute(String(nextDefault.minute).padStart(2, '0'));
+    setEditingMealIndex(null); // null means adding new
+    setMealTimePickerVisible(true);
+  }, [settings.mealReminders]);
+
+  const handleSaveMealReminder = useCallback(async () => {
+    const hour = parseInt(mealTimePickerHour, 10);
+    const minute = parseInt(mealTimePickerMinute, 10);
+    
+    if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      Alert.alert(t('common.error'), t('settings.reminderInvalid'));
+      return;
+    }
+    
+    const currentReminders = [...(settings.mealReminders || [])];
+    
+    if (editingMealIndex !== null) {
+      // Update existing
+      currentReminders[editingMealIndex] = { enabled: true, hour, minute };
+      if (currentReminders[editingMealIndex].enabled) {
+        await NotificationService.scheduleMealReminder(editingMealIndex, hour, minute);
+      }
+    } else {
+      // Add new
+      const newIndex = currentReminders.length;
+      currentReminders.push({ enabled: true, hour, minute });
+      await NotificationService.scheduleMealReminder(newIndex, hour, minute);
+    }
+    
+    updateSettings({ mealReminders: currentReminders });
+    setMealTimePickerVisible(false);
+  }, [mealTimePickerHour, mealTimePickerMinute, editingMealIndex, settings.mealReminders, updateSettings, t]);
+
+  const handleToggleMealReminder = useCallback(async (index: number, enabled: boolean) => {
+    const currentReminders = [...(settings.mealReminders || [])];
+    if (!currentReminders[index]) return;
+    
+    currentReminders[index].enabled = enabled;
+    
+    if (enabled) {
+      await NotificationService.scheduleMealReminder(index, currentReminders[index].hour, currentReminders[index].minute);
+    } else {
+      await NotificationService.cancelMealReminder(index);
+    }
+    
+    updateSettings({ mealReminders: currentReminders });
+  }, [settings.mealReminders, updateSettings]);
+
+  const handleDeleteMealReminder = useCallback(async (index: number) => {
+    await NotificationService.cancelMealReminder(index);
+    
+    const currentReminders = [...(settings.mealReminders || [])];
+    currentReminders.splice(index, 1);
+    
+    // Reschedule remaining reminders with new indices
+    for (let i = 0; i < currentReminders.length; i++) {
+      if (currentReminders[i].enabled) {
+        await NotificationService.scheduleMealReminder(i, currentReminders[i].hour, currentReminders[i].minute);
+      }
+    }
+    
+    updateSettings({ mealReminders: currentReminders });
+  }, [settings.mealReminders, updateSettings]);
 
   const handleToggleReminder = useCallback(async (value: boolean) => {
     if (value) {
@@ -172,6 +256,67 @@ export default function NotificationsScreen() {
           )}
         </GlassCard>
 
+        {/* Meal Reminders */}
+        <Animated.View entering={FadeIn.delay(200)}>
+          <Text style={styles.sectionTitle}>{t('settings.mealReminders')}</Text>
+        </Animated.View>
+        
+        <GlassCard style={styles.settingsCard}>
+          {/* Existing meal reminders */}
+          {(settings.mealReminders || []).map((reminder, index) => (
+            <Animated.View 
+              key={index} 
+              entering={FadeInDown.delay(250 + index * 50).springify()}
+              style={styles.mealReminderRow}
+            >
+              <View style={styles.mealReminderLeft}>
+                <View style={[styles.settingIconContainer, { backgroundColor: '#fbbf2420' }]}>
+                  <UtensilsCrossed size={20} color="#fbbf24" />
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditingMealIndex(index);
+                    setMealTimePickerHour(String(reminder.hour));
+                    setMealTimePickerMinute(String(reminder.minute).padStart(2, '0'));
+                    setMealTimePickerVisible(true);
+                  }}
+                >
+                  <Text style={styles.mealReminderTime}>
+                    {String(reminder.hour).padStart(2, '0')}:{String(reminder.minute).padStart(2, '0')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.mealReminderActions}>
+                <Switch
+                  value={reminder.enabled}
+                  onValueChange={(value) => handleToggleMealReminder(index, value)}
+                  trackColor={{ false: Colors.card, true: Colors.teal }}
+                  thumbColor="#fff"
+                />
+                <TouchableOpacity
+                  style={styles.deleteMealButton}
+                  onPress={() => handleDeleteMealReminder(index)}
+                >
+                  <X size={18} color={Colors.muted} />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          ))}
+          
+          {/* Add new reminder button (max 4) */}
+          {(settings.mealReminders || []).length < 4 && (
+            <Animated.View entering={FadeInDown.delay(300).springify()}>
+              <TouchableOpacity 
+                style={styles.addMealButton}
+                onPress={handleAddMealReminder}
+              >
+                <Plus size={18} color={Colors.cta} />
+                <Text style={styles.addMealButtonText}>{t('settings.addMealReminder')}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </GlassCard>
+
         {/* Spacer */}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -226,6 +371,64 @@ export default function NotificationsScreen() {
               <TouchableOpacity 
                 style={styles.timePickerConfirmButton}
                 onPress={handleSaveTime}
+              >
+                <Text style={styles.timePickerConfirmText}>{t('common.validate')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Meal Time Picker Modal */}
+      <Modal
+        visible={mealTimePickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMealTimePickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.timePickerModal}>
+            <Text style={styles.timePickerTitle}>{t('settings.mealReminderTime')}</Text>
+            <Text style={styles.timePickerSubtitle}>{t('settings.mealReminderTimeDesc')}</Text>
+            
+            <View style={styles.timePickerInputs}>
+              <TextInput
+                style={styles.timePickerInput}
+                value={mealTimePickerHour}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, '');
+                  if (num.length <= 2) setMealTimePickerHour(num);
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="HH"
+                placeholderTextColor={Colors.muted}
+              />
+              <Text style={styles.timePickerSeparator}>:</Text>
+              <TextInput
+                style={styles.timePickerInput}
+                value={mealTimePickerMinute}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, '');
+                  if (num.length <= 2) setMealTimePickerMinute(num);
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="MM"
+                placeholderTextColor={Colors.muted}
+              />
+            </View>
+
+            <View style={styles.timePickerButtons}>
+              <TouchableOpacity 
+                style={styles.timePickerCancelButton}
+                onPress={() => setMealTimePickerVisible(false)}
+              >
+                <Text style={styles.timePickerCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.timePickerConfirmButton}
+                onPress={handleSaveMealReminder}
               >
                 <Text style={styles.timePickerConfirmText}>{t('common.validate')}</Text>
               </TouchableOpacity>
@@ -391,5 +594,51 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
     color: '#fff',
+  },
+  sectionTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
+  mealReminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.stroke,
+  },
+  mealReminderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  mealReminderTime: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    color: Colors.text,
+  },
+  mealReminderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  deleteMealButton: {
+    padding: Spacing.xs,
+  },
+  addMealButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  addMealButtonText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.medium,
+    color: Colors.cta,
   },
 });

@@ -130,7 +130,7 @@ export const Labels = {
         30: '30 min',
     },
     entryType: {
-        home: 'Maison',
+        home: 'Musculation',
         run: 'Course',
         meal: 'Repas',
         measure: 'Mesures',
@@ -139,7 +139,7 @@ export const Labels = {
 
 // Icons (emoji ou noms pour expo vector icons)
 export const Icons = {
-    home: '🏠',
+    home: '💪',
     run: '🏃',
     meal: '🍽️',
     measure: '📏',

@@ -94,7 +94,7 @@ export default function ToolsScreen() {
 
         {/* GÉNÉRATEUR */}
         <GlassCard style={styles.section}>
-          <SectionHeader title="Générateur de séance 🏠" />
+          <SectionHeader title="Générateur de séance 💪" />
           <Text style={styles.description}>
             Génère une séance adaptée à tes objectifs et au temps que tu as.
           </Text>

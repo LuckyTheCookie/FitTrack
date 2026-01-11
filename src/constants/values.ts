@@ -7,12 +7,12 @@
 // TYPES D'ENTRÉES
 // ============================================================================
 
-/** Types d'entrées considérées comme des activités sportives */
-export const SPORT_ENTRY_TYPES = ['home', 'run', 'beatsaber'] as const;
+/** Types d'entrées considérées comme des activités sportives (par défaut) */
+export const SPORT_ENTRY_TYPES = ['home', 'run', 'beatsaber', 'custom'] as const;
 export type SportEntryType = typeof SPORT_ENTRY_TYPES[number];
 
 /** Tous les types d'entrées possibles */
-export const ALL_ENTRY_TYPES = ['home', 'run', 'beatsaber', 'meal', 'measure'] as const;
+export const ALL_ENTRY_TYPES = ['home', 'run', 'beatsaber', 'meal', 'measure', 'custom'] as const;
 export type EntryType = typeof ALL_ENTRY_TYPES[number];
 
 /** Helper pour vérifier si un type est un sport */

@@ -171,6 +171,9 @@ export const useGamificationStore = create<GamificationState>()(
             },
 
             updateQuestProgress: (type, amount) => {
+                // QUESTS DISABLED - Early return to prevent any quest XP gain
+                return;
+                
                 const { quests, addXp } = get();
                 let xpToAdd = 0;
                 let completedQuestTitle = '';
@@ -212,6 +215,9 @@ export const useGamificationStore = create<GamificationState>()(
             },
 
             recalculateQuestProgress: (type, newTotal) => {
+                // QUESTS DISABLED - Early return to prevent any quest XP changes
+                return;
+                
                 const { quests, removeXp, history } = get();
                 let hasChanges = false;
 
@@ -247,6 +253,9 @@ export const useGamificationStore = create<GamificationState>()(
             },
 
             recalculateAllQuests: (totals) => {
+                // QUESTS DISABLED - Early return to prevent any quest XP changes
+                return;
+                
                 const { quests, removeXp, history } = get();
                 let hasChanges = false;
 
@@ -333,6 +342,9 @@ export const useGamificationStore = create<GamificationState>()(
             },
 
             generateWeeklyQuests: () => {
+                // QUESTS DISABLED - Early return to prevent quest generation
+                return;
+                
                 const now = new Date();
                 const weekNum = getWeek(now, { weekStartsOn: 1 });
                 const yearNum = getYear(now);
@@ -400,6 +412,9 @@ export const useGamificationStore = create<GamificationState>()(
             },
 
             checkAndRefreshQuests: () => {
+                // QUESTS DISABLED - Early return
+                return;
+                
                 const { lastQuestWeek, generateWeeklyQuests } = get();
                 const now = new Date();
                 const weekNum = getWeek(now, { weekStartsOn: 1 });

@@ -2,7 +2,7 @@
 // FORMULAIRES D'AJOUT - Avec nouveau format exercices + import JSON
 // ============================================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -18,15 +18,34 @@ import {
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Video, Calendar, Clock } from 'lucide-react-native';
+import { Video, Calendar, Clock, ChevronLeft, Dumbbell } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { InputField, TextArea, Button, SegmentedControl, GlassCard } from '../ui';
-import { useAppStore, useGamificationStore } from '../../stores';
-import type { EntryType, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
+import { useAppStore, useGamificationStore, useSportsConfig } from '../../stores';
+import type { EntryType, Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry, SportConfig } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import { nanoid } from 'nanoid/non-secure';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+interface Exercise {
+    id: string;
+    name: string;
+    reps: string;
+    sets: string;
+}
+
+interface AddEntryFormProps {
+    onSuccess?: () => void;
+    onDismiss?: () => void;
+    initialTab?: EntryType;
+    prefillExercises?: string;
+    includeAbsBlock?: boolean;
+    editEntry?: Entry | null;
+}
+
+// Category type for first selection screen
+type CategoryType = 'sport' | 'meal' | 'measure';
 
 interface Exercise {
     id: string;
@@ -76,6 +95,13 @@ export function AddEntryForm({
     const { t } = useTranslation();
     const isEditMode = editEntry !== null;
     const [activeTab, setActiveTab] = useState<EntryType>(editEntry?.type || initialTab);
+    const sportsConfig = useSportsConfig();
+
+    // Get visible sports only
+    const visibleSports = useMemo(() => 
+        sportsConfig.filter((s: SportConfig) => !s.isHidden),
+        [sportsConfig]
+    );
 
     // Tabs need translation, create them here
     const tabs: TabOption[] = [
@@ -99,6 +125,9 @@ export function AddEntryForm({
 
     // State pour l'intro step - skip intro in edit mode
     const [hasStarted, setHasStarted] = useState(isEditMode);
+    
+    // New state for category selection flow
+    const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
 
     // Handler pour le tracking temps réel
     const handleRealTimeTracking = useCallback(() => {
@@ -179,12 +208,13 @@ export function AddEntryForm({
             const e = editEntry as MeasureEntry;
             return {
                 weight: e.weight?.toString() || '',
+                bodyFatPercent: e.bodyFatPercent?.toString() || '',
                 waist: e.waist?.toString() || '',
                 arm: e.arm?.toString() || '',
                 hips: e.hips?.toString() || '',
             };
         }
-        return { weight: '', waist: '', arm: '', hips: '' };
+        return { weight: '', bodyFatPercent: '', waist: '', arm: '', hips: '' };
     };
 
     const initialHome = getInitialHomeWorkout();
@@ -223,6 +253,7 @@ export function AddEntryForm({
 
     // Measure
     const [weight, setWeight] = useState(initialMeasure.weight);
+    const [bodyFatPercent, setBodyFatPercent] = useState(initialMeasure.bodyFatPercent);
     const [waist, setWaist] = useState(initialMeasure.waist);
     const [arm, setArm] = useState(initialMeasure.arm);
     const [hips, setHips] = useState(initialMeasure.hips);
@@ -425,11 +456,12 @@ export function AddEntryForm({
 
                 case 'measure':
                     const wClean = weight.trim().replace(',', '.');
+                    const bfClean = bodyFatPercent.trim().replace(',', '.');
                     const waistClean = waist.trim().replace(',', '.');
                     const armClean = arm.trim().replace(',', '.');
                     const hipsClean = hips.trim().replace(',', '.');
 
-                    const hasAnyMeasure = wClean || waistClean || armClean || hipsClean;
+                    const hasAnyMeasure = wClean || bfClean || waistClean || armClean || hipsClean;
                     if (!hasAnyMeasure) {
                         Alert.alert('Erreur', 'Ajoute au moins une mesure');
                         return;
@@ -437,6 +469,7 @@ export function AddEntryForm({
 
                     const data = {
                         weight: wClean ? parseFloat(wClean) : undefined,
+                        bodyFatPercent: bfClean ? parseFloat(bfClean) : undefined,
                         waist: waistClean ? parseFloat(waistClean) : undefined,
                         arm: armClean ? parseFloat(armClean) : undefined,
                         hips: hipsClean ? parseFloat(hipsClean) : undefined,
@@ -478,6 +511,7 @@ export function AddEntryForm({
             setBsBpmMax('');
             setMealDescription('');
             setWeight('');
+            setBodyFatPercent('');
             setWaist('');
             setArm('');
             setHips('');
@@ -488,6 +522,7 @@ export function AddEntryForm({
             setCustomTime(format(new Date(), 'HH:mm'));
 
             setHasStarted(false);
+            setSelectedCategory(null);
             onSuccess?.();
         } finally {
             setLoading(false);
@@ -498,7 +533,7 @@ export function AddEntryForm({
         runKm, runMinutes, runBpmAvg, runBpmMax, runCardiacLoad, // AJOUTÉ : runCardiacLoad
         bsDuration, bsCardiacLoad, bsBpmAvg, bsBpmMax, // AJOUTÉ : bsDuration et les autres
         mealTime, mealDescription,
-        weight, waist, arm, hips,
+        weight, bodyFatPercent, waist, arm, hips,
         addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, updateEntry, // AJOUTÉ : addBeatSaber (par sécurité)
         onSuccess, addXp, updateQuestProgress, isEditMode, editEntry,
         useCustomDateTime, customDate, customTime
@@ -507,13 +542,53 @@ export function AddEntryForm({
     const handleStartActivity = (type: EntryType) => {
         setActiveTab(type);
         setHasStarted(true);
+        setSelectedCategory(null);
     };
 
-    if (!hasStarted) {
+    const handleSelectCategory = (category: CategoryType) => {
+        if (category === 'meal') {
+            handleStartActivity('meal');
+        } else if (category === 'measure') {
+            handleStartActivity('measure');
+        } else {
+            setSelectedCategory('sport');
+        }
+    };
+
+    const handleSelectSport = (sportId: string) => {
+        // Map sport ID to entry type
+        if (sportId === 'home') {
+            handleStartActivity('home');
+        } else if (sportId === 'run') {
+            handleStartActivity('run');
+        } else if (sportId === 'beatsaber') {
+            handleStartActivity('beatsaber');
+        } else {
+            // Custom sport - for now map to 'home' type, TODO: implement custom sport form
+            handleStartActivity('home');
+        }
+    };
+
+    const handleBackFromSportSelection = () => {
+        setSelectedCategory(null);
+    };
+
+    // Show sport selection screen
+    if (!hasStarted && selectedCategory === 'sport') {
         return (
             <View style={styles.introContainer}>
-                <Text style={styles.introTitle}>{t('addEntry.title')}</Text>
-                <Text style={styles.introSubtitle}>{t('addEntry.subtitle')}</Text>
+                <View style={styles.sportSelectionHeader}>
+                    <TouchableOpacity 
+                        onPress={handleBackFromSportSelection}
+                        style={styles.sportBackButton}
+                    >
+                        <ChevronLeft size={24} color={Colors.text} />
+                    </TouchableOpacity>
+                    <View>
+                        <Text style={styles.introTitle}>{t('addEntry.selectSport', { defaultValue: 'Choisis ton sport' })}</Text>
+                        <Text style={styles.introSubtitle}>{t('addEntry.selectSportDesc', { defaultValue: 'Quel sport as-tu pratiqué ?' })}</Text>
+                    </View>
+                </View>
 
                 <TouchableOpacity
                     style={styles.realTimeButton}
@@ -535,24 +610,81 @@ export function AddEntryForm({
                 </TouchableOpacity>
 
                 <Text style={styles.orText}>{t('addEntry.or')}</Text>
+
+                <ScrollView
+                    nestedScrollEnabled={true}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                >
+                    <View style={styles.activityGrid}>
+                        {visibleSports.map((sport: SportConfig) => (
+                            <TouchableOpacity
+                                key={sport.id}
+                                style={styles.activityTouch}
+                                onPress={() => handleSelectSport(sport.id)}
+                            >
+                                <GlassCard style={[styles.activityCard, { borderColor: sport.color + '40' }]}>
+                                    <Text style={styles.activityEmoji}>{sport.emoji}</Text>
+                                    <Text style={styles.activityLabel}>{sport.name}</Text>
+                                </GlassCard>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </ScrollView>
+            </View>
+        );
+    }
+
+    // Show main category selection screen
+    if (!hasStarted) {
+        return (
+            <View style={styles.introContainer}>
+                <Text style={styles.introTitle}>{t('addEntry.title')}</Text>
+                <Text style={styles.introSubtitle}>{t('addEntry.subtitle')}</Text>
+
                 <ScrollView
                     nestedScrollEnabled={true}
                     contentContainerStyle={{ flexGrow: 1 }}
                 >    
-                <View style={styles.activityGrid}>
-                    {tabs.map((tab) => (
+                    <View style={styles.categoryGrid}>
+                        {/* Sport Category */}
                         <TouchableOpacity
-                            key={tab.value}
-                            style={styles.activityTouch}
-                            onPress={() => handleStartActivity(tab.value)}
+                            style={styles.categoryTouch}
+                            onPress={() => handleSelectCategory('sport')}
+                        >
+                            <LinearGradient
+                                colors={['rgba(139, 92, 246, 0.3)', 'rgba(139, 92, 246, 0.1)']}
+                                style={styles.categoryCard}
+                            >
+                                <View style={styles.categoryIconContainer}>
+                                    <Dumbbell size={32} color="#8B5CF6" />
+                                </View>
+                                <Text style={styles.categoryLabel}>{t('addEntry.sportCategory', { defaultValue: 'Sport' })}</Text>
+                                <Text style={styles.categoryDesc}>{t('addEntry.sportCategoryDesc', { defaultValue: 'Musculation, course, etc.' })}</Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                        {/* Meal Category */}
+                        <TouchableOpacity
+                            style={styles.categoryTouch}
+                            onPress={() => handleSelectCategory('meal')}
                         >
                             <GlassCard style={styles.activityCard}>
-                                <Text style={styles.activityEmoji}>{tab.label.split(' ')[0]}</Text>
-                                <Text style={styles.activityLabel}>{tab.label.split(' ').slice(1).join(' ')}</Text>
+                                <Text style={styles.activityEmoji}>{t('addEntry.meal').split(' ')[0]}</Text>
+                                <Text style={styles.activityLabel}>{t('addEntry.meal').split(' ').slice(1).join(' ')}</Text>
                             </GlassCard>
                         </TouchableOpacity>
-                    ))}
-                </View>
+
+                        {/* Measure Category */}
+                        <TouchableOpacity
+                            style={styles.categoryTouch}
+                            onPress={() => handleSelectCategory('measure')}
+                        >
+                            <GlassCard style={styles.activityCard}>
+                                <Text style={styles.activityEmoji}>{t('addEntry.measure').split(' ')[0]}</Text>
+                                <Text style={styles.activityLabel}>{t('addEntry.measure').split(' ').slice(1).join(' ')}</Text>
+                            </GlassCard>
+                        </TouchableOpacity>
+                    </View>
                 </ScrollView>            
             </View>
         );
@@ -884,6 +1016,16 @@ export function AddEntryForm({
                                 containerStyle={styles.halfInput}
                             />
                             <InputField
+                                label="% Masse grasse"
+                                placeholder="18.5"
+                                value={bodyFatPercent}
+                                onChangeText={setBodyFatPercent}
+                                keyboardType="decimal-pad"
+                                containerStyle={styles.halfInput}
+                            />
+                        </View>
+                        <View style={styles.row}>
+                            <InputField
                                 label="Tour de taille (cm)"
                                 placeholder="82"
                                 value={waist}
@@ -891,8 +1033,6 @@ export function AddEntryForm({
                                 keyboardType="decimal-pad"
                                 containerStyle={styles.halfInput}
                             />
-                        </View>
-                        <View style={styles.row}>
                             <InputField
                                 label="Bras (cm)"
                                 placeholder="31"
@@ -901,6 +1041,8 @@ export function AddEntryForm({
                                 keyboardType="decimal-pad"
                                 containerStyle={styles.halfInput}
                             />
+                        </View>
+                        <View style={styles.row}>
                             <InputField
                                 label="Hanches (cm)"
                                 placeholder="94"
@@ -1213,6 +1355,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 12,
         backgroundColor: 'rgba(255,255,255,0.05)', // Slightly lighter than default glass
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     activityEmoji: {
         fontSize: 48,
@@ -1223,6 +1367,64 @@ const styles = StyleSheet.create({
         fontWeight: FontWeight.bold,
         color: Colors.text,
         textAlign: 'center',
+    },
+    // Category selection styles
+    categoryGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 16,
+        justifyContent: 'center',
+        width: '100%',
+    },
+    categoryTouch: {
+        width: '45%',
+        aspectRatio: 1.1,
+    },
+    categoryCard: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        borderColor: 'rgba(139, 92, 246, 0.3)',
+    },
+    categoryIconContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    categoryLabel: {
+        fontSize: FontSize.lg,
+        fontWeight: FontWeight.bold,
+        color: Colors.text,
+        textAlign: 'center',
+    },
+    categoryDesc: {
+        fontSize: FontSize.xs,
+        color: Colors.muted,
+        textAlign: 'center',
+    },
+    // Sport selection header
+    sportSelectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        marginBottom: Spacing.lg,
+        width: '100%',
+    },
+    sportBackButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.card,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     headerRow: {
         flexDirection: 'row',

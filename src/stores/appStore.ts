@@ -13,8 +13,10 @@ import type {
     BeatSaberEntry,
     MealEntry,
     MeasureEntry,
+    CustomSportEntry,
     UserSettings,
     BadgeId,
+    SportConfig,
 } from '../types';
 import { zustandStorage } from '../storage';
 import {
@@ -51,19 +53,30 @@ interface AppState {
     entries: Entry[];
     settings: UserSettings;
     unlockedBadges: BadgeId[];
+    sportsConfig: SportConfig[]; // Configuration des sports (par défaut + custom)
 
-    // Actions - Entries (optional customDate for Health Connect imports)
-    addHomeWorkout: (data: Omit<HomeWorkoutEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
-    addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>, customDate?: string) => void;
-    addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
-    addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
-    addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string) => void;
+    // Actions - Entries (optional customDate and customCreatedAt for Health Connect imports)
+    addHomeWorkout: (data: Omit<HomeWorkoutEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string, customCreatedAt?: string) => void;
+    addRun: (data: Omit<RunEntry, 'id' | 'type' | 'createdAt' | 'date' | 'avgSpeed'>, customDate?: string, customCreatedAt?: string) => void;
+    addMeal: (data: Omit<MealEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string, customCreatedAt?: string) => void;
+    addMeasure: (data: Omit<MeasureEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string, customCreatedAt?: string) => void;
+    addBeatSaber: (data: Omit<BeatSaberEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string, customCreatedAt?: string) => void;
+    addCustomSport: (data: Omit<CustomSportEntry, 'id' | 'type' | 'createdAt' | 'date'>, customDate?: string, customCreatedAt?: string) => void;
     deleteEntry: (id: string) => void;
     updateEntry: (id: string, updates: Partial<Entry>) => void;
 
     // Actions - Settings
     updateWeeklyGoal: (goal: number) => void;
     updateSettings: (settings: Partial<UserSettings>) => void;
+
+    // Actions - Sports management
+    addSportConfig: (sport: Omit<SportConfig, 'id' | 'isDefault'>) => string;
+    updateSportConfig: (id: string, updates: Partial<SportConfig>) => void;
+    deleteSportConfig: (id: string) => void;
+    toggleSportVisibility: (id: string) => void;
+    getSportConfig: (id: string) => SportConfig | undefined;
+    getVisibleSports: () => SportConfig[];
+    getAllSports: () => SportConfig[];
 
     // Actions - Data management
     resetAllData: () => void;
@@ -107,6 +120,40 @@ const defaultSettings: UserSettings = {
     skipSensorSelection: false,
 };
 
+// Configuration par défaut des sports
+const defaultSportsConfig: SportConfig[] = [
+    {
+        id: 'home',
+        name: 'Musculation',
+        emoji: '💪',
+        icon: 'Dumbbell',
+        color: '#8B5CF6', // Purple
+        trackingFields: ['duration', 'exercises', 'totalReps'],
+        isDefault: true,
+        isHidden: false,
+    },
+    {
+        id: 'run',
+        name: 'Course',
+        emoji: '🏃',
+        icon: 'Footprints',
+        color: '#22C55E', // Green
+        trackingFields: ['duration', 'distance', 'bpmAvg', 'bpmMax', 'cardiacLoad'],
+        isDefault: true,
+        isHidden: false,
+    },
+    {
+        id: 'beatsaber',
+        name: 'Beat Saber',
+        emoji: '🕹️',
+        icon: 'Gamepad2',
+        color: '#EF4444', // Red
+        trackingFields: ['duration', 'bpmAvg', 'bpmMax', 'cardiacLoad'],
+        isDefault: true,
+        isHidden: false,
+    },
+];
+
 // ============================================================================
 // STORE
 // ============================================================================
@@ -118,16 +165,17 @@ export const useAppStore = create<AppState>()(
             entries: [],
             settings: defaultSettings,
             unlockedBadges: [],
+            sportsConfig: defaultSportsConfig,
 
             // ========================================
             // ACTIONS - AJOUT D'ENTRÉES
             // ========================================
 
-            addHomeWorkout: (data, customDate) => {
+            addHomeWorkout: (data, customDate, customCreatedAt) => {
                 const entry: HomeWorkoutEntry = {
                     id: nanoid(),
                     type: 'home',
-                    createdAt: getNowISO(),
+                    createdAt: customCreatedAt || getNowISO(),
                     date: customDate || getTodayDateString(),
                     ...data,
                 };
@@ -143,7 +191,7 @@ export const useAppStore = create<AppState>()(
                 storeLogger.debug('Added home workout', entry.id);
             },
 
-            addRun: (data, customDate) => {
+            addRun: (data, customDate, customCreatedAt) => {
                 // Calculer la vitesse moyenne
                 const avgSpeed = data.durationMinutes > 0
                     ? Math.round((data.distanceKm / (data.durationMinutes / 60)) * 10) / 10
@@ -152,7 +200,7 @@ export const useAppStore = create<AppState>()(
                 const entry: RunEntry = {
                     id: nanoid(),
                     type: 'run',
-                    createdAt: getNowISO(),
+                    createdAt: customCreatedAt || getNowISO(),
                     date: customDate || getTodayDateString(),
                     avgSpeed,
                     ...data,
@@ -169,11 +217,11 @@ export const useAppStore = create<AppState>()(
                 storeLogger.debug('Added run', entry.id);
             },
 
-            addBeatSaber: (data, customDate) => {
+            addBeatSaber: (data, customDate, customCreatedAt) => {
                 const entry: BeatSaberEntry = {
                     id: nanoid(),
                     type: 'beatsaber',
-                    createdAt: getNowISO(),
+                    createdAt: customCreatedAt || getNowISO(),
                     date: customDate || getTodayDateString(),
                     ...data,
                 };
@@ -189,11 +237,11 @@ export const useAppStore = create<AppState>()(
                 storeLogger.debug('Added BeatSaber session', entry.id);
             },
 
-            addMeal: (data, customDate) => {
+            addMeal: (data, customDate, customCreatedAt) => {
                 const entry: MealEntry = {
                     id: nanoid(),
                     type: 'meal',
-                    createdAt: getNowISO(),
+                    createdAt: customCreatedAt || getNowISO(),
                     date: customDate || getTodayDateString(),
                     ...data,
                 };
@@ -203,11 +251,11 @@ export const useAppStore = create<AppState>()(
                 }));
             },
 
-            addMeasure: (data, customDate) => {
+            addMeasure: (data, customDate, customCreatedAt) => {
                 const entry: MeasureEntry = {
                     id: nanoid(),
                     type: 'measure',
-                    createdAt: getNowISO(),
+                    createdAt: customCreatedAt || getNowISO(),
                     date: customDate || getTodayDateString(),
                     ...data,
                 };
@@ -215,6 +263,26 @@ export const useAppStore = create<AppState>()(
                 set((state) => ({
                     entries: [entry, ...state.entries],
                 }));
+            },
+
+            addCustomSport: (data, customDate, customCreatedAt) => {
+                const entry: CustomSportEntry = {
+                    id: nanoid(),
+                    type: 'custom',
+                    createdAt: customCreatedAt || getNowISO(),
+                    date: customDate || getTodayDateString(),
+                    ...data,
+                };
+
+                set((state) => {
+                    const newEntries = [entry, ...state.entries];
+                    return { entries: newEntries };
+                });
+                
+                // Sync gamification synchronously after state update
+                const currentEntries = get().entries;
+                get().syncGamificationAfterChange(currentEntries);
+                storeLogger.debug('Added custom sport', entry.id);
             },
 
             deleteEntry: (id) => {
@@ -364,6 +432,68 @@ export const useAppStore = create<AppState>()(
             },
 
             // ========================================
+            // SPORTS MANAGEMENT
+            // ========================================
+
+            addSportConfig: (sport) => {
+                const id = `custom_${nanoid()}`;
+                const newSport: SportConfig = {
+                    ...sport,
+                    id,
+                    isDefault: false,
+                };
+                
+                set((state) => ({
+                    sportsConfig: [...state.sportsConfig, newSport],
+                }));
+                
+                storeLogger.debug('Added custom sport', id);
+                return id;
+            },
+
+            updateSportConfig: (id, updates) => {
+                set((state) => ({
+                    sportsConfig: state.sportsConfig.map((sport) =>
+                        sport.id === id ? { ...sport, ...updates } : sport
+                    ),
+                }));
+            },
+
+            deleteSportConfig: (id) => {
+                // Ne pas supprimer les sports par défaut
+                const sport = get().sportsConfig.find(s => s.id === id);
+                if (sport?.isDefault) {
+                    storeLogger.warn('Cannot delete default sport', id);
+                    return;
+                }
+                
+                set((state) => ({
+                    sportsConfig: state.sportsConfig.filter((sport) => sport.id !== id),
+                }));
+                storeLogger.debug('Deleted custom sport', id);
+            },
+
+            toggleSportVisibility: (id) => {
+                set((state) => ({
+                    sportsConfig: state.sportsConfig.map((sport) =>
+                        sport.id === id ? { ...sport, isHidden: !sport.isHidden } : sport
+                    ),
+                }));
+            },
+
+            getSportConfig: (id) => {
+                return get().sportsConfig.find(s => s.id === id);
+            },
+
+            getVisibleSports: () => {
+                return get().sportsConfig.filter(s => !s.isHidden);
+            },
+
+            getAllSports: () => {
+                return get().sportsConfig;
+            },
+
+            // ========================================
             // GETTERS COMPUTED
             // ========================================
 
@@ -390,7 +520,8 @@ export const useAppStore = create<AppState>()(
             getSportEntries: () => {
                 const { entries } = get();
                 return entries.filter(
-                    (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry => isSportEntryType(e.type)
+                    (e): e is HomeWorkoutEntry | RunEntry | BeatSaberEntry | CustomSportEntry => 
+                        isSportEntryType(e.type) || e.type === 'custom'
                 );
             },
 
@@ -427,3 +558,4 @@ export const useAppStore = create<AppState>()(
 export const useEntries = () => useAppStore((state) => state.entries);
 export const useSettings = () => useAppStore((state) => state.settings);
 export const useBadges = () => useAppStore((state) => state.unlockedBadges);
+export const useSportsConfig = () => useAppStore((state) => state.sportsConfig);

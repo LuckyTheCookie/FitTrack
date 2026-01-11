@@ -638,6 +638,43 @@
     "termsOfService": "Conditions d'utilisation",
     "legal": "Légal",
     "dangerZone": "Zone de danger",
+    "sportsManagement": "Gestion des sports",
+    "manageSports": "Gérer mes sports",
+    "manageSportsDesc": "Ajouter, masquer ou personnaliser",
+    "sports": {
+      "default": "Par défaut",
+      "custom": "Personnalisé",
+      "hidden": "Masqué",
+      "defaultSports": "Sports par défaut",
+      "customSports": "Mes sports personnalisés",
+      "addTitle": "Nouveau sport",
+      "addSubtitle": "Crée un sport adapté à ta pratique",
+      "addButton": "Ajouter un sport",
+      "preview": "Aperçu",
+      "nameLabel": "Nom du sport",
+      "namePlaceholder": "Ex: Natation, Yoga, Boxe...",
+      "emojiLabel": "Emoji",
+      "iconLabel": "Icône pour l'historique",
+      "colorLabel": "Couleur",
+      "fieldsLabel": "Champs à tracker",
+      "fieldsHint": "Sélectionne les informations que tu veux enregistrer",
+      "fields": {
+        "duration": "Durée (minutes)",
+        "distance": "Distance (km)",
+        "bpmAvg": "BPM moyen",
+        "bpmMax": "BPM max",
+        "cardiacLoad": "Charge cardiaque",
+        "calories": "Calories",
+        "exercises": "Exercices (texte)",
+        "totalReps": "Répétitions totales"
+      },
+      "save": "Créer le sport",
+      "deleteTitle": "Supprimer ce sport ?",
+      "deleteMessage": "Le sport \"{{name}}\" sera supprimé définitivement.",
+      "errorNoName": "Donne un nom à ton sport",
+      "errorNoFields": "Sélectionne au moins un champ à tracker",
+      "infoText": "Masque les sports que tu ne pratiques pas, ou crée tes propres sports personnalisés avec les champs de ton choix."
+    },
     "deleteAccount": "Supprimer mon compte",
     "deleteAccountDesc": "Effacer toutes tes données",
     "changeTime": {
@@ -646,6 +683,10 @@
       "minute": "Minute"
     },
     "changeTimeDesc": "Choisis l'heure de notification",
+    "mealReminders": "Rappels de repas",
+    "addMealReminder": "Ajouter un rappel",
+    "mealReminderTime": "Heure du rappel",
+    "mealReminderTimeDesc": "Choisis l'heure du rappel de repas",
     "chooseFile": "Choisir un fichier",
     "futureFeatures": {
       "notifications": "Notifications intelligentes",
@@ -698,7 +739,7 @@
     "customDate": "Date personnalisée",
     "date": "Date (JJ/MM/AAAA)",
     "time": "Heure (HH:MM)",
-    "home": "🏠 Maison",
+    "home": "💪 Musculation",
     "run": "🏃 Course",
     "beatsaber": "🕹️ Beat Saber",
     "meal": "🍽️ Repas",
@@ -718,7 +759,7 @@
     "error": {
       "noExercise": "Ajoute au moins un exercice"
     },
-    "homeSession": "Séance maison : {{name}}",
+    "homeSession": "Musculation : {{name}}",
     "edit": "Modifier",
     "editSubtitle": "Mets à jour tes données",
     "absShort": "Abdos"
@@ -962,6 +1003,11 @@
     "importSuccess": "{{count}} séance(s) importée(s) ! +{{xp}} XP",
     "importError": "Problème lors de l'import",
     "workoutsFound": "séances détectées ces {{days}} derniers jours",
+    "weightsFound": "mesures de poids",
+    "weightsImported": "{{count}} poids importé(s)",
+    "workoutsSection": "🏋️ Séances",
+    "weightsSection": "⚖️ Poids",
+    "measures": "mesure(s)",
     "emptyTitle": "Rien à l'horizon",
     "emptyMessage": "Aucune nouvelle séance trouvée.",
     "selectedLabel": "Sélectionnées",
@@ -975,7 +1021,8 @@
       "notifyTitle": "Notifier au démarrage",
       "notifyDesc": "Proposer d'importer les nouvelles activités au lancement de l'app",
       "autoTitle": "Import automatique",
-      "autoDesc": "Importer automatiquement les séances au démarrage"
+      "autoDesc": "Importer automatiquement les séances au démarrage",
+      "nativeSettings": "Paramètres Health Connect"
     },
     "newActivitiesTitle": "Nouvelles activités détectées",
     "newActivitiesMessage": "De nouvelles séances ont été trouvées dans Health Connect ({{count}}). Veux-tu les importer ?",
@@ -985,7 +1032,9 @@
       "message": "De nouvelles séances ont été trouvées dans Health Connect. Veux-tu les importer ?",
       "import": "Importer",
       "skip": "Ignorer"
-    }
+    },
+    "chooseSport": "Choisir un sport",
+    "other": "Autre"
   },
   "notifications": {
     "defaultChannel": "Par défaut",
@@ -1003,6 +1052,10 @@
     "streakReminder": {
       "title": "N'oublie pas ta séance ! 🏋️",
       "body": "Maintiens ton streak de {{count}} jours !"
+    },
+    "mealReminder": {
+      "title": "🍽️ C'est l'heure du repas !",
+      "body": "Bon appétit ! N'oublie pas d'enregistrer ton repas."
     },
     "encouragement": {
       "title": "Encouragement reçu ! 💪",
@@ -1044,8 +1097,8 @@
     }
   },
   "workout": {
-    "homeLabel": "Séance maison",
-    "defaultHomeName": "Séance maison",
+    "homeLabel": "Musculation",
+    "defaultHomeName": "Musculation",
     "historyTitle": "Historique",
     "historySubtitle": "{{total}} entrées • {{sport}} séances • {{today}} aujourd'hui",
     "noEntriesTitle": "Aucune entrée",
@@ -1053,7 +1106,7 @@
     "noEntriesType": "Aucune entrée de ce type",
     "filters": {
       "all": "Tous",
-      "home": "Maison",
+      "home": "Musculation",
       "run": "Course",
       "beatsaber": "Beat Saber",
       "meal": "Repas",

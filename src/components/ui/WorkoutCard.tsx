@@ -18,7 +18,7 @@ interface WorkoutCardProps {
 export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
     const isRun = entry.type === 'run';
     const isBeat = entry.type === 'beatsaber';
-    const icon = isRun ? '🏃' : (isBeat ? '🕹️' : '🏠');
+    const icon = isRun ? '🏃' : (isBeat ? '🕹️' : '💪');
     const { t } = useTranslation();
     const title = isRun ? t('entries.run') : (isBeat ? t('entries.beatsaber') : (entry.name || t('workout.defaultHomeName')));
 

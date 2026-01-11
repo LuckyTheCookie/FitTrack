@@ -4,10 +4,37 @@
 
 // Types de base
 export type WorkoutType = 'home' | 'run' | 'beatsaber';
-export type EntryType = 'home' | 'run' | 'meal' | 'measure' | 'beatsaber';
+export type EntryType = 'home' | 'run' | 'meal' | 'measure' | 'beatsaber' | 'custom';
 export type FocusArea = 'upper' | 'abs' | 'legs' | 'full';
 export type Intensity = 'easy' | 'medium' | 'hard';
 export type Duration = 10 | 20 | 30;
+
+// ============================================================================
+// SPORTS PERSONNALISÉS
+// ============================================================================
+
+/** Champs disponibles pour un sport personnalisé */
+export type SportTrackingField = 
+  | 'duration'      // Durée en minutes
+  | 'distance'      // Distance en km
+  | 'bpmAvg'        // BPM moyen
+  | 'bpmMax'        // BPM max
+  | 'cardiacLoad'   // Charge cardiaque
+  | 'calories'      // Calories brûlées
+  | 'exercises'     // Texte libre exercices
+  | 'totalReps';    // Nombre total de répétitions
+
+/** Configuration d'un sport (par défaut ou personnalisé) */
+export interface SportConfig {
+  id: string;                    // ID unique (ex: 'home', 'run', 'custom_xyz')
+  name: string;                  // Nom affiché
+  emoji: string;                 // Emoji pour la bottom sheet
+  icon: string;                  // Nom d'icône Lucide pour l'historique
+  color: string;                 // Couleur hex pour l'historique (ex: '#60A5FA')
+  trackingFields: SportTrackingField[]; // Champs à tracker
+  isDefault: boolean;            // true si sport par défaut (ne peut pas être supprimé)
+  isHidden: boolean;             // true si masqué par l'utilisateur
+}
 
 // ============================================================================
 // ENTRÉES (Logs)
@@ -62,13 +89,29 @@ export interface MealEntry extends BaseEntry {
 export interface MeasureEntry extends BaseEntry {
   type: 'measure';
   weight?: number; // kg
+  bodyFatPercent?: number; // % masse grasse
   waist?: number; // cm - tour de taille
   arm?: number; // cm - tour de bras
   hips?: number; // cm - hanches
 }
 
-export type Entry = HomeWorkoutEntry | RunEntry | BeatSaberEntry | MealEntry | MeasureEntry;
-export type SportEntry = HomeWorkoutEntry | RunEntry | BeatSaberEntry;
+// Sport personnalisé (type générique)
+export interface CustomSportEntry extends BaseEntry {
+  type: 'custom';
+  sportId: string;               // ID du sport personnalisé
+  name?: string;                 // Nom de la séance
+  durationMinutes?: number;
+  distanceKm?: number;
+  bpmAvg?: number;
+  bpmMax?: number;
+  cardiacLoad?: number;
+  calories?: number;
+  exercises?: string;
+  totalReps?: number;
+}
+
+export type Entry = HomeWorkoutEntry | RunEntry | BeatSaberEntry | MealEntry | MeasureEntry | CustomSportEntry;
+export type SportEntry = HomeWorkoutEntry | RunEntry | BeatSaberEntry | CustomSportEntry;
 
 // ============================================================================
 // GAMIFICATION
@@ -148,6 +191,12 @@ export interface UserSettings {
   streakReminderEnabled?: boolean;
   streakReminderHour?: number; // Heure du rappel (0-23)
   streakReminderMinute?: number; // Minute du rappel (0-59)
+  // Meal reminders (up to 4 per day)
+  mealReminders?: Array<{
+    enabled: boolean;
+    hour: number;
+    minute: number;
+  }>;
   // Navigation bar opacity
   fullOpacityNavbar?: boolean; // Navbar avec opacité complète (sans glassmorphism)
   // Health Connect sync settings

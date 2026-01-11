@@ -30,6 +30,8 @@ import {
   Users,
   Code2,
   Languages,
+  Dumbbell,
+  Heart,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore, useSocialStore } from '../../src/stores';
@@ -236,6 +238,32 @@ export default function SettingsMainScreen() {
             subtitle={`${LANGUAGES[currentLanguage].flag} ${LANGUAGES[currentLanguage].nativeName}`}
             onPress={() => router.push('/settings/language')}
             delay={220}
+          />
+        </GlassCard>
+
+        {/* SPORTS MANAGEMENT */}
+        <SectionTitle title={t('settings.sportsManagement', { defaultValue: 'Gestion des sports' })} delay={230} />
+        <GlassCard style={styles.categoryCard}>
+          <CategoryButton
+            icon={<Dumbbell size={22} color="#8B5CF6" />}
+            iconColor="#8B5CF6"
+            title={t('settings.manageSports', { defaultValue: 'Gérer mes sports' })}
+            subtitle={t('settings.manageSportsDesc', { defaultValue: 'Ajouter, masquer ou personnaliser' })}
+            onPress={() => router.push('/settings/sports')}
+            delay={240}
+          />
+        </GlassCard>
+
+        {/* INTÉGRATION */}
+        <SectionTitle title={t('settings.integration', { defaultValue: 'Intégration' })} delay={245} />
+        <GlassCard style={styles.categoryCard}>
+          <CategoryButton
+            icon={<Heart size={22} color="#f43f5e" />}
+            iconColor="#f43f5e"
+            title={t('settings.healthConnect')}
+            subtitle={t('settings.healthConnectDesc')}
+            onPress={() => router.push('/health-connect')}
+            delay={250}
           />
         </GlassCard>
 

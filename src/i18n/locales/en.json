@@ -643,6 +643,43 @@
     "termsOfService": "Terms of Service",
     "legal": "Legal",
     "dangerZone": "Danger Zone",
+    "sportsManagement": "Sports Management",
+    "manageSports": "Manage My Sports",
+    "manageSportsDesc": "Add, hide or customize",
+    "sports": {
+      "default": "Default",
+      "custom": "Custom",
+      "hidden": "Hidden",
+      "defaultSports": "Default Sports",
+      "customSports": "My Custom Sports",
+      "addTitle": "New Sport",
+      "addSubtitle": "Create a sport tailored to your practice",
+      "addButton": "Add a sport",
+      "preview": "Preview",
+      "nameLabel": "Sport name",
+      "namePlaceholder": "E.g. Swimming, Yoga, Boxing...",
+      "emojiLabel": "Emoji",
+      "iconLabel": "History icon",
+      "colorLabel": "Color",
+      "fieldsLabel": "Fields to track",
+      "fieldsHint": "Select the information you want to record",
+      "fields": {
+        "duration": "Duration (minutes)",
+        "distance": "Distance (km)",
+        "bpmAvg": "Average BPM",
+        "bpmMax": "Max BPM",
+        "cardiacLoad": "Cardiac Load",
+        "calories": "Calories",
+        "exercises": "Exercises (text)",
+        "totalReps": "Total Reps"
+      },
+      "save": "Create Sport",
+      "deleteTitle": "Delete this sport?",
+      "deleteMessage": "The sport \"{{name}}\" will be permanently deleted.",
+      "errorNoName": "Give your sport a name",
+      "errorNoFields": "Select at least one field to track",
+      "infoText": "Hide sports you don't practice, or create your own custom sports with the fields of your choice."
+    },
     "deleteAccount": "Delete My Account",
     "deleteAccountDesc": "Erase all your data",
     "changeTime": {
@@ -651,6 +688,10 @@
       "minute": "Minute"
     },
     "changeTimeDesc": "Pick the notification time",
+    "mealReminders": "Meal Reminders",
+    "addMealReminder": "Add a reminder",
+    "mealReminderTime": "Reminder time",
+    "mealReminderTimeDesc": "Choose the meal reminder time",
     "chooseFile": "Choose a file",
     "futureFeatures": {
       "notifications": "Smart notifications",
@@ -703,7 +744,7 @@
     "customDate": "Custom Date",
     "date": "Date (DD/MM/YYYY)",
     "time": "Time (HH:MM)",
-    "home": "🏠 Home",
+    "home": "💪 Weight Training",
     "run": "🏃 Run",
     "beatsaber": "🕹️ Beat Saber",
     "meal": "🍽️ Meal",
@@ -967,6 +1008,11 @@
     "importSuccess": "{{count}} workout(s) imported! +{{xp}} XP",
     "importError": "Import error occurred",
     "workoutsFound": "workouts found in the last {{days}} days",
+    "weightsFound": "weight measurements",
+    "weightsImported": "{{count}} weight(s) imported",
+    "workoutsSection": "🏋️ Workouts",
+    "weightsSection": "⚖️ Weight",
+    "measures": "measure(s)",
     "emptyTitle": "Nothing Here",
     "emptyMessage": "No new workouts found.",
     "selectedLabel": "Selected",
@@ -980,7 +1026,8 @@
       "notifyTitle": "Notify on startup",
       "notifyDesc": "Offer to import new activities when app launches",
       "autoTitle": "Auto-import",
-      "autoDesc": "Automatically import sessions on startup"
+      "autoDesc": "Automatically import sessions on startup",
+      "nativeSettings": "Health Connect Settings"
     },
     "newActivitiesTitle": "New Activities Detected",
     "newActivitiesMessage": "Found {{count}} new workouts in Health Connect. Would you like to import them?",
@@ -990,7 +1037,9 @@
       "message": "New workouts were found in Health Connect. Would you like to import them?",
       "import": "Import",
       "skip": "Skip"
-    }
+    },
+    "chooseSport": "Choose a sport",
+    "other": "Other"
   },
   "notifications": {
     "defaultChannel": "Default",
@@ -1008,6 +1057,10 @@
     "streakReminder": {
       "title": "Don't forget your workout! 🏋️",
       "body": "Keep your {{count}} day streak going!"
+    },
+    "mealReminder": {
+      "title": "🍽️ Time to eat!",
+      "body": "Bon appétit! Don't forget to log your meal."
     },
     "encouragement": {
       "title": "Encouragement received! 💪",
@@ -1035,8 +1088,8 @@
     "noRecentActivityDesc": "Your XP gains will appear here"
   },
   "workout": {
-    "homeLabel": "Home workout",
-    "defaultHomeName": "Home workout",
+    "homeLabel": "Weight Training",
+    "defaultHomeName": "Weight Training",
     "historyTitle": "History",
     "historySubtitle": "{{total}} entries • {{sport}} workouts • {{today}} today",
     "noEntriesTitle": "No entries",
@@ -1044,7 +1097,7 @@
     "noEntriesType": "No entries of this type",
     "filters": {
       "all": "All",
-      "home": "Home",
+      "home": "Weight Training",
       "run": "Run",
       "beatsaber": "Beat Saber",
       "meal": "Meals",

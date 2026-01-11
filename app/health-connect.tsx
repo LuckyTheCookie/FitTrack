@@ -36,76 +36,105 @@ import {
     Calendar,
     Zap,
     Settings,
+    Scale,
+    MoreHorizontal,
+    ExternalLink,
 } from 'lucide-react-native';
+import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { GlassCard, Button } from '../src/components/ui';
 import { HealthConnectSettingsSheet, type HealthConnectSettingsSheetRef } from '../src/components/sheets';
 import { useTranslation } from 'react-i18next';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import * as healthConnect from '../src/services/healthConnect';
-import type { HealthConnectWorkout, FitTrackWorkoutType } from '../src/services/healthConnect';
+import type { HealthConnectWorkout, FitTrackWorkoutType, HealthConnectWeight } from '../src/services/healthConnect';
 import { calculateQuestTotals } from '../src/utils/questCalculator';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import type { SportConfig } from '../src/types';
+import * as LucideIcons from 'lucide-react-native';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
+type HealthConnectMappedType = 'home' | 'run' | 'beatsaber' | 'custom' | 'skip';
+
 interface ImportableWorkout extends HealthConnectWorkout {
-    fitTrackType: FitTrackWorkoutType;
+    fitTrackType: HealthConnectMappedType;
+    customSportId?: string; // ID du sport personnalisé si type === 'custom'
+    detectedSportId?: string; // ID du sport détecté automatiquement
     selected: boolean;
 }
 
 // ============================================================================
-// WORKOUT TYPE SELECTOR
+// HELPER: Get Lucide icon component by name
 // ============================================================================
 
-const WORKOUT_TYPES: { type: FitTrackWorkoutType; label: string; icon: any; color: string }[] = [
-    { type: 'home', label: 'addEntry.home', icon: Dumbbell, color: '#60A5FA' }, // Blue
-    { type: 'run', label: 'addEntry.run', icon: Footprints, color: '#F472B6' }, // Pink
-    { type: 'beatsaber', label: 'addEntry.beatsaber', icon: Gamepad2, color: '#A78BFA' }, // Purple
-    { type: 'skip', label: 'common.skip', icon: Trash2, color: '#9CA3AF' }, // Gray
-];
+function getLucideIcon(iconName: string): React.ComponentType<{ size: number; color: string; strokeWidth?: number }> {
+    const IconComponent = (LucideIcons as any)[iconName];
+    return IconComponent || LucideIcons.Activity;
+}
+
+// ============================================================================
+// WORKOUT TYPE SELECTOR - Built dynamically from sportsConfig
+// ============================================================================
+
+// Static skip option
+const SKIP_OPTION = { type: 'skip' as const, label: 'common.skip', icon: Trash2, color: '#9CA3AF' };
 
 function WorkoutTypePill({
-    type,
-    label,
-    icon: Icon,
-    color,
+    sportConfig,
+    isSkip,
     selected,
     onPress,
 }: {
-    type: FitTrackWorkoutType;
-    label: string;
-    icon: any;
-    color: string;
+    sportConfig?: SportConfig;
+    isSkip?: boolean;
     selected: boolean;
     onPress: () => void;
 }) {
     const { t } = useTranslation();
+    
+    // Handle skip button
+    if (isSkip) {
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.typePill,
+                    selected && { backgroundColor: '#374151', borderColor: '#9CA3AF' },
+                    !selected && styles.typePillInactive,
+                ]}
+                onPress={onPress}
+                activeOpacity={0.7}
+            >
+                <Trash2 size={14} color={selected ? '#9CA3AF' : Colors.muted} strokeWidth={2.5} />
+                <Text style={[styles.typePillLabel, selected ? { color: '#9CA3AF', fontWeight: '700' } : { color: Colors.muted }]}>
+                    {t('common.skip')}
+                </Text>
+            </TouchableOpacity>
+        );
+    }
+    
+    // Handle sport config
+    if (!sportConfig) return null;
+    
+    const Icon = getLucideIcon(sportConfig.icon);
+    const color = sportConfig.color;
+    
     return (
         <TouchableOpacity
             style={[
                 styles.typePill,
-                selected && { backgroundColor: type === 'skip' ? '#374151' : color + '20', borderColor: color },
+                selected && { backgroundColor: color + '20', borderColor: color },
                 !selected && styles.typePillInactive,
             ]}
             onPress={onPress}
             activeOpacity={0.7}
         >
-            <Icon
-                size={14}
-                color={selected ? (type === 'skip' ? '#9CA3AF' : color) : Colors.muted}
-                strokeWidth={2.5}
-            />
-            <Text
-                style={[
-                    styles.typePillLabel,
-                    selected ? { color: type === 'skip' ? '#9CA3AF' : color, fontWeight: '700' } : { color: Colors.muted },
-                ]}
-            >
-                {t(label)}
+            <Icon size={14} color={selected ? color : Colors.muted} strokeWidth={2.5} />
+            <Text style={[styles.typePillLabel, selected ? { color: color, fontWeight: '700' } : { color: Colors.muted }]}>
+                {sportConfig.emoji} {sportConfig.name}
             </Text>
         </TouchableOpacity>
     );
@@ -118,18 +147,50 @@ function WorkoutTypePill({
 function WorkoutImportCard({
     workout,
     onTypeChange,
+    onOpenSportPicker,
+    sportsConfig,
     index,
 }: {
     workout: ImportableWorkout;
-    onTypeChange: (type: FitTrackWorkoutType) => void;
+    onTypeChange: (type: HealthConnectMappedType, customSportId?: string) => void;
+    onOpenSportPicker: () => void;
+    sportsConfig: SportConfig[];
     index: number;
 }) {
     const { t } = useTranslation();
     const isSkipped = workout.fitTrackType === 'skip';
+    const isOther = workout.fitTrackType === 'custom';
     
-    // Determine active color based on type
-    const activeType = WORKOUT_TYPES.find(t => t.type === workout.fitTrackType);
-    const activeColor = activeType?.color || Colors.cta;
+    // Get the detected/mapped sport config (if any)
+    const detectedSportId = workout.detectedSportId;
+    const detectedSport = detectedSportId ? sportsConfig.find(s => s.id === detectedSportId) : null;
+    
+    // Get active sport config for color
+    const getActiveColor = (): string => {
+        if (isSkipped) return '#374151';
+        if (workout.fitTrackType === 'custom' && workout.customSportId) {
+            const customSport = sportsConfig.find(s => s.id === workout.customSportId);
+            return customSport?.color || Colors.cta;
+        }
+        const defaultSport = sportsConfig.find(s => s.id === workout.fitTrackType);
+        return defaultSport?.color || Colors.cta;
+    };
+    
+    const activeColor = getActiveColor();
+    
+    // Get selected sport name for "Autre" display
+    const getSelectedSportName = (): string | null => {
+        if (workout.fitTrackType === 'custom' && workout.customSportId) {
+            const sport = sportsConfig.find(s => s.id === workout.customSportId);
+            return sport ? `${sport.emoji} ${sport.name}` : null;
+        }
+        return null;
+    };
+    
+    const selectedSportName = getSelectedSportName();
+    
+    // Get visible sports (non-hidden)
+    const visibleSports = sportsConfig.filter(s => !s.isHidden);
 
     return (
         <Animated.View 
@@ -144,7 +205,7 @@ function WorkoutImportCard({
                 {/* Left Accent Bar */}
                 <View style={[
                     styles.accentBar, 
-                    { backgroundColor: isSkipped ? '#374151' : activeColor }
+                    { backgroundColor: activeColor }
                 ]} />
 
                 <View style={styles.cardContent}>
@@ -185,22 +246,134 @@ function WorkoutImportCard({
                         </Text>
                     )}
 
-                    {/* Type Selector */}
+                    {/* Type Selector - Simplified: Detected Sport | Autre | Ignorer */}
                     <View style={styles.pillContainer}>
-                        {WORKOUT_TYPES.map((wt) => (
+                        {/* Show detected sport pill if available */}
+                        {detectedSport && (
                             <WorkoutTypePill
-                                key={wt.type}
-                                type={wt.type}
-                                label={wt.label}
-                                icon={wt.icon}
-                                color={wt.color}
-                                selected={workout.fitTrackType === wt.type}
-                                onPress={() => onTypeChange(wt.type)}
+                                sportConfig={detectedSport}
+                                selected={workout.fitTrackType === detectedSport.id || 
+                                    (workout.fitTrackType === 'custom' && workout.customSportId === detectedSport.id)}
+                                onPress={() => {
+                                    if (detectedSport.isDefault) {
+                                        onTypeChange(detectedSport.id as HealthConnectMappedType);
+                                    } else {
+                                        onTypeChange('custom', detectedSport.id);
+                                    }
+                                }}
                             />
-                        ))}
+                        )}
+                        
+                        {/* "Autre" (Other) button - opens sport picker */}
+                        <TouchableOpacity
+                            style={[
+                                styles.typePill,
+                                isOther && !selectedSportName && styles.typePillInactive,
+                                isOther && selectedSportName && { backgroundColor: activeColor + '20', borderColor: activeColor },
+                                !isOther && styles.typePillInactive,
+                            ]}
+                            onPress={onOpenSportPicker}
+                            activeOpacity={0.7}
+                        >
+                            <MoreHorizontal size={14} color={isOther ? activeColor : Colors.muted} strokeWidth={2.5} />
+                            <Text style={[
+                                styles.typePillLabel, 
+                                isOther ? { color: activeColor, fontWeight: '700' } : { color: Colors.muted }
+                            ]}>
+                                {selectedSportName || t('healthConnect.other', { defaultValue: 'Autre' })}
+                            </Text>
+                        </TouchableOpacity>
+                        
+                        {/* Skip button */}
+                        <WorkoutTypePill
+                            isSkip
+                            selected={isSkipped}
+                            onPress={() => onTypeChange('skip')}
+                        />
                     </View>
                 </View>
             </View>
+        </Animated.View>
+    );
+}
+
+// ============================================================================
+// WEIGHT IMPORT CARD
+// ============================================================================
+
+interface ImportableWeight extends HealthConnectWeight {
+    selected: boolean;
+    bodyFatPercent?: number;
+}
+
+function WeightImportCard({
+    weight,
+    onToggle,
+    index,
+}: {
+    weight: ImportableWeight;
+    onToggle: () => void;
+    index: number;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <Animated.View 
+            entering={FadeInDown.delay(index * 100).springify()} 
+            layout={Layout.springify()}
+            style={{ marginBottom: Spacing.md }}
+        >
+            <TouchableOpacity 
+                onPress={onToggle}
+                activeOpacity={0.7}
+                style={[
+                    styles.cardContainer,
+                    !weight.selected && styles.cardSkipped
+                ]}
+            >
+                {/* Left Accent Bar */}
+                <View style={[
+                    styles.accentBar, 
+                    { backgroundColor: weight.selected ? '#10B981' : '#374151' }
+                ]} />
+
+                <View style={styles.cardContent}>
+                    <View style={styles.cardHeader}>
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                            <View style={[styles.weightIconCircle, !weight.selected && { backgroundColor: '#374151' }]}>
+                                <Scale size={18} color={weight.selected ? '#10B981' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text style={[styles.cardTitle, !weight.selected && styles.textSkipped]}>
+                                    {weight.weightKg.toFixed(1)} kg
+                                    {weight.bodyFatPercent !== undefined && (
+                                        <Text style={styles.cardMetaText}> • {weight.bodyFatPercent.toFixed(1)}% MG</Text>
+                                    )}
+                                </Text>
+                                <View style={styles.cardMetaRow}>
+                                    <Calendar size={12} color={Colors.muted} />
+                                    <Text style={styles.cardMetaText}>
+                                        {format(weight.time, 'EEE d MMM', { locale: fr })}
+                                    </Text>
+                                    <View style={styles.dot} />
+                                    <Clock size={12} color={Colors.muted} />
+                                    <Text style={styles.cardMetaText}>
+                                        {format(weight.time, 'HH:mm')}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                        
+                        {/* Selection indicator */}
+                        <View style={[
+                            styles.selectionIndicator, 
+                            weight.selected && styles.selectionIndicatorActive
+                        ]}>
+                            {weight.selected && <Check size={14} color="#fff" strokeWidth={3} />}
+                        </View>
+                    </View>
+                </View>
+            </TouchableOpacity>
         </Animated.View>
     );
 }
@@ -213,13 +386,16 @@ export default function HealthConnectScreen() {
     const { t } = useTranslation();
     const [status, setStatus] = useState<'loading' | 'not_available' | 'needs_install' | 'ready' | 'permission_needed'>('loading');
     const [workouts, setWorkouts] = useState<ImportableWorkout[]>([]);
+    const [weights, setWeights] = useState<ImportableWeight[]>([]);
     const [importing, setImporting] = useState(false);
     const [daysBack, setDaysBack] = useState(7);
     const [isLoadingWorkouts, setIsLoadingWorkouts] = useState(false);
     const hasLoadedOnce = useRef(false);
     const settingsSheetRef = useRef<HealthConnectSettingsSheetRef>(null);
+    const sportPickerSheetRef = useRef<TrueSheet>(null);
+    const [sportPickerWorkoutId, setSportPickerWorkoutId] = useState<string | null>(null);
 
-    const { addHomeWorkout, addRun, addBeatSaber, entries, syncGamificationAfterChange } = useAppStore();
+    const { addHomeWorkout, addRun, addBeatSaber, addCustomSport, addMeasure, entries, syncGamificationAfterChange, sportsConfig } = useAppStore();
     const { addXp, updateQuestProgress, recalculateAllQuests } = useGamificationStore();
 
     useEffect(() => {
@@ -303,14 +479,48 @@ export default function HealthConnectScreen() {
             
             const notImported = rawWorkouts.filter(workout => !alreadyImportedIds.has(workout.id));
             
-            // Simple mapping, selection logic handled inside component
-            const importable = notImported.map((w): ImportableWorkout => ({
-                ...w,
-                fitTrackType: healthConnect.getDefaultFitTrackType(w.exerciseType as number),
-                selected: true,
-            }));
+            // Map workouts with detected sport
+            const importable = notImported.map((w): ImportableWorkout => {
+                const defaultType = healthConnect.getDefaultFitTrackType(w.exerciseType as number);
+                
+                // Find the detected sport ID based on the default type
+                // If it's a default sport (home, run, beatsaber), use that ID
+                // Otherwise, it's unknown and we don't set detectedSportId
+                let detectedSportId: string | undefined;
+                if (defaultType === 'home' || defaultType === 'run' || defaultType === 'beatsaber') {
+                    detectedSportId = defaultType;
+                }
+                
+                return {
+                    ...w,
+                    fitTrackType: defaultType,
+                    detectedSportId,
+                    selected: true,
+                };
+            });
 
             setWorkouts(importable);
+            
+            // Also load weight and body fat records
+            const rawWeights = await healthConnect.getRecentWeights(daysBack);
+            const rawBodyFat = await healthConnect.getRecentBodyFat(daysBack);
+            const notImportedWeights = rawWeights.filter(w => !alreadyImportedIds.has(w.id));
+            
+            // Match body fat to weight records by finding the closest time (within 1 hour)
+            const importableWeights = notImportedWeights.map((w): ImportableWeight => {
+                // Find body fat record closest in time (within 1 hour window)
+                const matchingBodyFat = rawBodyFat.find(bf => {
+                    const timeDiff = Math.abs(bf.time.getTime() - w.time.getTime());
+                    return timeDiff < 60 * 60 * 1000; // Within 1 hour
+                });
+                
+                return {
+                    ...w,
+                    bodyFatPercent: matchingBodyFat?.percentage,
+                    selected: true,
+                };
+            });
+            setWeights(importableWeights);
         } catch (error) {
             console.error('Error loading workouts:', error);
         } finally {
@@ -318,29 +528,55 @@ export default function HealthConnectScreen() {
         }
     };
 
-    const handleTypeChange = useCallback((workoutId: string, type: FitTrackWorkoutType) => {
+    const handleTypeChange = useCallback((workoutId: string, type: HealthConnectMappedType, customSportId?: string) => {
         setWorkouts((prev) =>
             prev.map((w) =>
                 w.id === workoutId
-                    ? { ...w, fitTrackType: type, selected: type !== 'skip' }
+                    ? { ...w, fitTrackType: type, customSportId, selected: type !== 'skip' }
+                    : w
+            )
+        );
+    }, []);
+    
+    const handleWeightToggle = useCallback((weightId: string) => {
+        setWeights((prev) =>
+            prev.map((w) =>
+                w.id === weightId
+                    ? { ...w, selected: !w.selected }
                     : w
             )
         );
     }, []);
 
+    const openSportPicker = useCallback((workoutId: string) => {
+        setSportPickerWorkoutId(workoutId);
+        sportPickerSheetRef.current?.present();
+    }, []);
+
+    const handleSportSelected = useCallback((type: HealthConnectMappedType, customSportId?: string) => {
+        if (sportPickerWorkoutId) {
+            handleTypeChange(sportPickerWorkoutId, type, customSportId);
+        }
+        sportPickerSheetRef.current?.dismiss();
+        setSportPickerWorkoutId(null);
+    }, [sportPickerWorkoutId, handleTypeChange]);
+
     const handleImport = async () => {
         const toImport = workouts.filter((w) => w.selected && w.fitTrackType !== 'skip');
-        if (toImport.length === 0) return;
+        const weightsToImport = weights.filter((w) => w.selected);
+        if (toImport.length === 0 && weightsToImport.length === 0) return;
 
         setImporting(true);
         try {
             let totalXp = 0;
             let workoutsAdded = 0;
+            let weightsAdded = 0;
             let totalDuration = 0;
             let totalDistance = 0;
 
             for (const workout of toImport) {
                 const date = format(workout.startTime, 'yyyy-MM-dd');
+                const createdAt = workout.startTime.toISOString(); // Use original workout time
                 switch (workout.fitTrackType) {
                     case 'home':
                         addHomeWorkout({
@@ -348,7 +584,7 @@ export default function HealthConnectScreen() {
                             exercises: t('healthConnect.importedFrom'),
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
-                        }, date);
+                        }, date, createdAt);
                         totalXp += 20 + Math.floor(workout.durationMinutes / 5);
                         workoutsAdded++;
                         totalDuration += workout.durationMinutes;
@@ -359,7 +595,7 @@ export default function HealthConnectScreen() {
                             distanceKm, 
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
-                        }, date);
+                        }, date, createdAt);
                         totalXp += 25 + Math.floor(distanceKm * 5);
                         workoutsAdded++;
                         totalDistance += distanceKm;
@@ -369,23 +605,66 @@ export default function HealthConnectScreen() {
                         addBeatSaber({ 
                             durationMinutes: workout.durationMinutes,
                             healthConnectId: workout.id,
-                        }, date);
+                        }, date, createdAt);
                         totalXp += 15 + Math.floor(workout.durationMinutes / 5);
                         workoutsAdded++;
                         totalDuration += workout.durationMinutes;
                         break;
+                    case 'custom':
+                        // Handle custom sport
+                        if (workout.customSportId) {
+                            const sportConfig = sportsConfig.find(s => s.id === workout.customSportId);
+                            addCustomSport({
+                                sportId: workout.customSportId,
+                                name: workout.title || workout.exerciseTypeName,
+                                durationMinutes: workout.durationMinutes,
+                                distanceKm: sportConfig?.trackingFields.includes('distance') && workout.distance 
+                                    ? workout.distance / 1000 
+                                    : undefined,
+                                healthConnectId: workout.id,
+                            }, date, createdAt);
+                            totalXp += 15 + Math.floor(workout.durationMinutes / 5);
+                            workoutsAdded++;
+                            totalDuration += workout.durationMinutes;
+                        }
+                        break;
                 }
             }
 
+            // Import weight measurements (with body fat if available)
+            for (const weight of weightsToImport) {
+                const date = format(weight.time, 'yyyy-MM-dd');
+                const createdAt = weight.time.toISOString();
+                addMeasure({
+                    weight: weight.weightKg,
+                    bodyFatPercent: weight.bodyFatPercent,
+                    healthConnectId: weight.id,
+                }, date, createdAt);
+                weightsAdded++;
+            }
+
             if (totalXp > 0) addXp(totalXp, t('healthConnect.importXpLabel'));
-            if (workoutsAdded > 0) updateQuestProgress('workouts', workoutsAdded);
             
-            const totals = calculateQuestTotals([...entries, ...toImport.map(() => ({} as any))]);
+            // Recalculate quests with the FRESH entries from the store (after all imports)
+            // Note: syncGamificationAfterChange is already called by each add* method
+            // We need to get the updated entries after all imports are done
+            const freshEntries = useAppStore.getState().entries;
+            const totals = calculateQuestTotals(freshEntries);
             recalculateAllQuests(totals);
+
+            // Build success message
+            let successMessage = '';
+            if (workoutsAdded > 0) {
+                successMessage = t('healthConnect.importSuccess', { count: workoutsAdded, xp: totalXp });
+            }
+            if (weightsAdded > 0) {
+                if (successMessage) successMessage += '\n';
+                successMessage += t('healthConnect.weightsImported', { count: weightsAdded });
+            }
 
             Alert.alert(
                 t('common.success'), 
-                t('healthConnect.importSuccess', { count: workoutsAdded, xp: totalXp }),
+                successMessage,
                 [{ text: t('common.ok'), onPress: () => router.back() }]
             );
         } catch (error) {
@@ -484,6 +763,8 @@ export default function HealthConnectScreen() {
 
         // READY STATE
         const selectedCount = workouts.filter((w) => w.selected && w.fitTrackType !== 'skip').length;
+        const selectedWeightsCount = weights.filter((w) => w.selected).length;
+        const totalSelected = selectedCount + selectedWeightsCount;
 
         return (
             <>
@@ -492,7 +773,7 @@ export default function HealthConnectScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Summary Card */}
-                    {workouts.length > 0 && (
+                    {(workouts.length > 0 || weights.length > 0) && (
                         <Animated.View entering={FadeInDown.delay(100)}>
                             <LinearGradient
                                 colors={[Colors.cta + '20', 'transparent']}
@@ -500,14 +781,25 @@ export default function HealthConnectScreen() {
                             >
                                 <Zap size={20} color={Colors.cta} fill={Colors.cta} />
                                 <Text style={styles.summaryText}>
-                                    <Text style={{ fontWeight: 'bold', color: Colors.text }}>{workouts.length}</Text>{' '}
-                                    {t('healthConnect.workoutsFound', { days: daysBack })}
+                                    {workouts.length > 0 && (
+                                        <>
+                                            <Text style={{ fontWeight: 'bold', color: Colors.text }}>{workouts.length}</Text>{' '}
+                                            {t('healthConnect.workoutsFound', { days: daysBack })}
+                                        </>
+                                    )}
+                                    {workouts.length > 0 && weights.length > 0 && ' • '}
+                                    {weights.length > 0 && (
+                                        <>
+                                            <Text style={{ fontWeight: 'bold', color: Colors.text }}>{weights.length}</Text>{' '}
+                                            {t('healthConnect.weightsFound')}
+                                        </>
+                                    )}
                                 </Text>
                             </LinearGradient>
                         </Animated.View>
                     )}
 
-                    {workouts.length === 0 ? (
+                    {workouts.length === 0 && weights.length === 0 ? (
                         <View style={styles.emptyContainer}>
                             <Image 
                                 source={{ uri: 'https://cdn-icons-png.flaticon.com/512/7486/7486744.png' }} 
@@ -517,26 +809,59 @@ export default function HealthConnectScreen() {
                             <Text style={styles.emptyText}>{t('healthConnect.emptyMessage')}</Text>
                         </View>
                     ) : (
-                        workouts.map((workout, index) => (
-                            <WorkoutImportCard
-                                key={workout.id}
-                                workout={workout}
-                                index={index}
-                                onTypeChange={(type) => handleTypeChange(workout.id, type)}
-                            />
-                        ))
+                        <>
+                            {/* Workouts Section */}
+                            {workouts.length > 0 && (
+                                <>
+                                    <Text style={styles.sectionTitle}>
+                                        {t('healthConnect.workoutsSection')} ({workouts.length})
+                                    </Text>
+                                    {workouts.map((workout, index) => (
+                                        <WorkoutImportCard
+                                            key={workout.id}
+                                            workout={workout}
+                                            index={index}
+                                            sportsConfig={sportsConfig}
+                                            onTypeChange={(type, customSportId) => handleTypeChange(workout.id, type, customSportId)}
+                                            onOpenSportPicker={() => openSportPicker(workout.id)}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                            
+                            {/* Weights Section */}
+                            {weights.length > 0 && (
+                                <>
+                                    <Text style={styles.sectionTitle}>
+                                        {t('healthConnect.weightsSection')} ({weights.length})
+                                    </Text>
+                                    {weights.map((weight, index) => (
+                                        <WeightImportCard
+                                            key={weight.id}
+                                            weight={weight}
+                                            index={index}
+                                            onToggle={() => handleWeightToggle(weight.id)}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                        </>
                     )}
                     
                     <View style={{ height: 100 }} />
                 </ScrollView>
 
                 {/* Bottom Action Bar */}
-                {workouts.length > 0 && (
+                {(workouts.length > 0 || weights.length > 0) && (
                     <Animated.View entering={FadeInDown} style={styles.bottomBarContainer}>
                         <GlassCard style={styles.bottomBar}>
                             <View>
                                 <Text style={styles.bottomBarLabel}>{t('healthConnect.selectedLabel')}</Text>
-                                <Text style={styles.bottomBarValue}>{selectedCount} {t('healthConnect.sessions')}</Text>
+                                <Text style={styles.bottomBarValue}>
+                                    {selectedCount > 0 && `${selectedCount} ${t('healthConnect.sessions')}`}
+                                    {selectedCount > 0 && selectedWeightsCount > 0 && ' • '}
+                                    {selectedWeightsCount > 0 && `${selectedWeightsCount} ${t('healthConnect.measures')}`}
+                                </Text>
                             </View>
                             <Button
                                 title={importing ? t('healthConnect.importing') : t('healthConnect.importButton')}
@@ -552,6 +877,9 @@ export default function HealthConnectScreen() {
         );
     };
 
+    // Get visible sports for the picker
+    const visibleSports = sportsConfig.filter(sport => !sport.isHidden);
+
     return (
         <View style={styles.container}>
             <StatusBar style="light" />
@@ -560,6 +888,39 @@ export default function HealthConnectScreen() {
                 {renderContent()}
             </SafeAreaView>
             <HealthConnectSettingsSheet ref={settingsSheetRef} />
+            
+            {/* Sport Picker Bottom Sheet */}
+            <TrueSheet
+                ref={sportPickerSheetRef}
+                detents={['auto']}
+                cornerRadius={BorderRadius.xl}
+                backgroundColor={Colors.card}
+            >
+                <View style={styles.sportPickerContainer}>
+                    <Text style={styles.sportPickerTitle}>{t('healthConnect.chooseSport')}</Text>
+                    <ScrollView style={styles.sportPickerList} showsVerticalScrollIndicator={false}>
+                        {visibleSports.map((sport) => {
+                            const IconComponent = getLucideIcon(sport.icon);
+                            const isDefaultSport = sport.id === 'home' || sport.id === 'run' || sport.id === 'beatsaber';
+                            return (
+                                <TouchableOpacity
+                                    key={sport.id}
+                                    style={styles.sportPickerItem}
+                                    onPress={() => handleSportSelected(
+                                        isDefaultSport ? sport.id as HealthConnectMappedType : 'custom',
+                                        isDefaultSport ? undefined : sport.id
+                                    )}
+                                >
+                                    <View style={[styles.sportPickerIconContainer, { backgroundColor: sport.color + '20' }]}>
+                                        <IconComponent size={20} color={sport.color} strokeWidth={2} />
+                                    </View>
+                                    <Text style={styles.sportPickerItemText}>{sport.name}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+            </TrueSheet>
         </View>
     );
 }
@@ -813,5 +1174,74 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: Colors.text,
-    }
+    },
+    
+    // Section Title
+    sectionTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: '700',
+        color: Colors.text,
+        marginBottom: Spacing.md,
+        marginTop: Spacing.lg,
+    },
+    
+    // Weight Card
+    weightIconCircle: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#10B981' + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    selectionIndicator: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: Colors.stroke,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    selectionIndicatorActive: {
+        backgroundColor: '#10B981',
+        borderColor: '#10B981',
+    },
+    
+    // Sport Picker Sheet
+    sportPickerContainer: {
+        padding: Spacing.lg,
+        paddingBottom: Spacing.xl + 20,
+    },
+    sportPickerTitle: {
+        fontSize: FontSize.xl,
+        fontWeight: '700',
+        color: Colors.text,
+        marginBottom: Spacing.lg,
+        textAlign: 'center',
+    },
+    sportPickerList: {
+        maxHeight: 400,
+    },
+    sportPickerItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.sm,
+        borderRadius: BorderRadius.md,
+        marginBottom: Spacing.xs,
+    },
+    sportPickerIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: Spacing.md,
+    },
+    sportPickerItemText: {
+        fontSize: FontSize.md,
+        fontWeight: '500',
+        color: Colors.text,
+    },
 });

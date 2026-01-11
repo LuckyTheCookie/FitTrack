@@ -2,7 +2,7 @@
 // CALCULATEUR DE QUÊTES - Calcule les totaux pour les quêtes de gamification
 // ============================================================================
 
-import type { Entry, HomeWorkoutEntry, BeatSaberEntry, RunEntry } from '../types';
+import type { Entry, HomeWorkoutEntry, BeatSaberEntry, RunEntry, CustomSportEntry } from '../types';
 
 export interface QuestTotals {
     exercises: number;
@@ -43,6 +43,19 @@ export function calculateQuestTotals(entries: Entry[]): QuestTotals {
             case 'beatsaber':
                 workouts += 1;
                 duration += (entry as BeatSaberEntry).durationMinutes || 0;
+                break;
+            case 'custom':
+                workouts += 1;
+                const customEntry = entry as CustomSportEntry;
+                if (customEntry.durationMinutes) {
+                    duration += customEntry.durationMinutes;
+                }
+                if (customEntry.distanceKm) {
+                    distance += customEntry.distanceKm;
+                }
+                if (customEntry.totalReps) {
+                    exercises += customEntry.totalReps;
+                }
                 break;
         }
     });
