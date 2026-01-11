@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitTrack",
     "slug": "fittrack-app",
-    "version": "6.0.0",
+    "version": "7.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -19,7 +19,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "$(PRODUCT_NAME) a besoin de la caméra pour détecter vos mouvements"
       },
-      "buildNumber": "6.0.0"
+      "buildNumber": "7.0.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -35,9 +35,11 @@
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_STEPS",
-        "android.permission.health.READ_TOTAL_CALORIES_BURNED"
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_BODY_FAT"
       ],
-      "versionCode": 60000,
+      "versionCode": 70000,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
