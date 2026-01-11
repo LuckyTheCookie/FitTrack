@@ -258,7 +258,19 @@ export function AddEntryForm({
     const [arm, setArm] = useState(initialMeasure.arm);
     const [hips, setHips] = useState(initialMeasure.hips);
 
-    const { addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, updateEntry } = useAppStore();
+    // Custom sport state
+    const [selectedSportId, setSelectedSportId] = useState<string | null>(null);
+    const [customSportName, setCustomSportName] = useState('');
+    const [customDuration, setCustomDuration] = useState('');
+    const [customDistance, setCustomDistance] = useState('');
+    const [customBpmAvg, setCustomBpmAvg] = useState('');
+    const [customBpmMax, setCustomBpmMax] = useState('');
+    const [customCardiacLoad, setCustomCardiacLoad] = useState('');
+    const [customCalories, setCustomCalories] = useState('');
+    const [customExercises, setCustomExercises] = useState('');
+    const [customTotalReps, setCustomTotalReps] = useState('');
+
+    const { addHomeWorkout, addRun, addBeatSaber, addMeal, addMeasure, addCustomSport, updateEntry } = useAppStore();
     const { addXp, updateQuestProgress } = useGamificationStore();
 
     // Ajouter un exercice
@@ -481,6 +493,75 @@ export function AddEntryForm({
                         addMeasure(data, entryDate);
                     }
                     break;
+
+                case 'custom':
+                    if (!selectedSportId) {
+                        Alert.alert(t('common.error'), 'Aucun sport sélectionné');
+                        return;
+                    }
+
+                    const selectedSport = sportsConfig.find((s: SportConfig) => s.id === selectedSportId);
+                    if (!selectedSport) {
+                        Alert.alert(t('common.error'), 'Sport introuvable');
+                        return;
+                    }
+
+                    // Build custom entry data based on tracking fields
+                    const customData: any = {
+                        sportId: selectedSportId,
+                        name: customSportName.trim() || undefined,
+                    };
+
+                    if (selectedSport.trackingFields.includes('duration') && customDuration) {
+                        const durationClean = customDuration.trim().replace(',', '.');
+                        const duration = Math.round(parseFloat(durationClean));
+                        if (isNaN(duration) || duration <= 0) {
+                            Alert.alert(t('common.error'), t('addEntry.durationErrorPositive'));
+                            return;
+                        }
+                        customData.durationMinutes = duration;
+                    }
+
+                    if (selectedSport.trackingFields.includes('distance') && customDistance) {
+                        const distanceClean = customDistance.trim().replace(',', '.');
+                        const distance = parseFloat(distanceClean);
+                        if (isNaN(distance) || distance <= 0) {
+                            Alert.alert(t('common.error'), 'Distance invalide');
+                            return;
+                        }
+                        customData.distanceKm = distance;
+                    }
+
+                    if (selectedSport.trackingFields.includes('bpmAvg') && customBpmAvg) {
+                        customData.bpmAvg = parseInt(customBpmAvg, 10);
+                    }
+
+                    if (selectedSport.trackingFields.includes('bpmMax') && customBpmMax) {
+                        customData.bpmMax = parseInt(customBpmMax, 10);
+                    }
+
+                    if (selectedSport.trackingFields.includes('cardiacLoad') && customCardiacLoad) {
+                        customData.cardiacLoad = parseInt(customCardiacLoad, 10);
+                    }
+
+                    if (selectedSport.trackingFields.includes('calories') && customCalories) {
+                        customData.calories = parseInt(customCalories, 10);
+                    }
+
+                    if (selectedSport.trackingFields.includes('exercises') && customExercises) {
+                        customData.exercises = customExercises.trim();
+                    }
+
+                    if (selectedSport.trackingFields.includes('totalReps') && customTotalReps) {
+                        customData.totalReps = parseInt(customTotalReps, 10);
+                    }
+
+                    if (isEditMode && editEntry) {
+                        updateEntry(editEntry.id, { ...customData, date: entryDate || editEntry.date });
+                    } else {
+                        addCustomSport(customData, entryDate);
+                    }
+                    break;
             }
 
             if (!isEditMode) {
@@ -493,6 +574,23 @@ export function AddEntryForm({
                     const km = parseFloat(runKm.trim().replace(',', '.'));
                     addXp(30 + Math.floor(km * 5), `Running (${km}km)`);
                     updateQuestProgress('workouts', 1);
+                } else if (activeTab === 'custom' && selectedSportId) {
+                    // XP and quest progress for custom sports
+                    const selectedSport = sportsConfig.find((s: SportConfig) => s.id === selectedSportId);
+                    addXp(40, selectedSport?.name || 'Custom Sport');
+                    updateQuestProgress('workouts', 1);
+                    if (customDuration) {
+                        const duration = Math.round(parseFloat(customDuration.trim().replace(',', '.')));
+                        if (!isNaN(duration)) updateQuestProgress('duration', duration);
+                    }
+                    if (customDistance) {
+                        const distance = parseFloat(customDistance.trim().replace(',', '.'));
+                        if (!isNaN(distance)) updateQuestProgress('distance', distance);
+                    }
+                    if (customTotalReps) {
+                        const reps = parseInt(customTotalReps, 10);
+                        if (!isNaN(reps)) updateQuestProgress('exercises', reps);
+                    }
                 }
             }
 
@@ -515,6 +613,18 @@ export function AddEntryForm({
             setWaist('');
             setArm('');
             setHips('');
+            
+            // Reset custom sport fields
+            setSelectedSportId(null);
+            setCustomSportName('');
+            setCustomDuration('');
+            setCustomDistance('');
+            setCustomBpmAvg('');
+            setCustomBpmMax('');
+            setCustomCardiacLoad('');
+            setCustomCalories('');
+            setCustomExercises('');
+            setCustomTotalReps('');
             
             // Reset custom date/time
             setUseCustomDateTime(false);
@@ -564,8 +674,9 @@ export function AddEntryForm({
         } else if (sportId === 'beatsaber') {
             handleStartActivity('beatsaber');
         } else {
-            // Custom sport - for now map to 'home' type, TODO: implement custom sport form
-            handleStartActivity('home');
+            // Custom sport
+            setSelectedSportId(sportId);
+            handleStartActivity('custom');
         }
     };
 
@@ -1055,6 +1166,128 @@ export function AddEntryForm({
                     </View>
                 )}
 
+                {/* CUSTOM SPORT */}
+                {activeTab === 'custom' && selectedSportId && (
+                    <View>
+                        {(() => {
+                            const selectedSport = sportsConfig.find((s: SportConfig) => s.id === selectedSportId);
+                            if (!selectedSport) return null;
+
+                            return (
+                                <>
+                                    {/* Sport header with icon and color */}
+                                    <View style={styles.customSportHeader}>
+                                        <View style={[styles.customSportIcon, { backgroundColor: selectedSport.color + '20' }]}>
+                                            <Text style={styles.customSportEmoji}>{selectedSport.emoji}</Text>
+                                        </View>
+                                        <Text style={[styles.customSportName, { color: selectedSport.color }]}>
+                                            {selectedSport.name}
+                                        </Text>
+                                    </View>
+
+                                    {/* Session name (always show) */}
+                                    <InputField
+                                        label={t('addEntry.sessionName')}
+                                        placeholder={selectedSport.name}
+                                        value={customSportName}
+                                        onChangeText={setCustomSportName}
+                                    />
+
+                                    {/* Dynamic fields based on trackingFields */}
+                                    <View style={styles.row}>
+                                        {selectedSport.trackingFields.includes('duration') && (
+                                            <InputField
+                                                label={t('settings.sports.fields.duration')}
+                                                placeholder="30"
+                                                value={customDuration}
+                                                onChangeText={setCustomDuration}
+                                                keyboardType="decimal-pad"
+                                                containerStyle={selectedSport.trackingFields.includes('distance') ? styles.halfInput : undefined}
+                                            />
+                                        )}
+                                        {selectedSport.trackingFields.includes('distance') && (
+                                            <InputField
+                                                label={t('settings.sports.fields.distance')}
+                                                placeholder="5.0"
+                                                value={customDistance}
+                                                onChangeText={setCustomDistance}
+                                                keyboardType="decimal-pad"
+                                                containerStyle={selectedSport.trackingFields.includes('duration') ? styles.halfInput : undefined}
+                                            />
+                                        )}
+                                    </View>
+
+                                    <View style={styles.row}>
+                                        {selectedSport.trackingFields.includes('bpmAvg') && (
+                                            <InputField
+                                                label={t('settings.sports.fields.bpmAvg')}
+                                                placeholder="140"
+                                                value={customBpmAvg}
+                                                onChangeText={setCustomBpmAvg}
+                                                keyboardType="number-pad"
+                                                containerStyle={selectedSport.trackingFields.includes('bpmMax') ? styles.halfInput : undefined}
+                                            />
+                                        )}
+                                        {selectedSport.trackingFields.includes('bpmMax') && (
+                                            <InputField
+                                                label={t('settings.sports.fields.bpmMax')}
+                                                placeholder="180"
+                                                value={customBpmMax}
+                                                onChangeText={setCustomBpmMax}
+                                                keyboardType="number-pad"
+                                                containerStyle={selectedSport.trackingFields.includes('bpmAvg') ? styles.halfInput : undefined}
+                                            />
+                                        )}
+                                    </View>
+
+                                    <View style={styles.row}>
+                                        {selectedSport.trackingFields.includes('cardiacLoad') && (
+                                            <InputField
+                                                label={t('settings.sports.fields.cardiacLoad')}
+                                                placeholder="120"
+                                                value={customCardiacLoad}
+                                                onChangeText={setCustomCardiacLoad}
+                                                keyboardType="number-pad"
+                                                containerStyle={selectedSport.trackingFields.includes('calories') ? styles.halfInput : undefined}
+                                            />
+                                        )}
+                                        {selectedSport.trackingFields.includes('calories') && (
+                                            <InputField
+                                                label={t('settings.sports.fields.calories')}
+                                                placeholder="350"
+                                                value={customCalories}
+                                                onChangeText={setCustomCalories}
+                                                keyboardType="number-pad"
+                                                containerStyle={selectedSport.trackingFields.includes('cardiacLoad') ? styles.halfInput : undefined}
+                                            />
+                                        )}
+                                    </View>
+
+                                    {selectedSport.trackingFields.includes('totalReps') && (
+                                        <InputField
+                                            label={t('settings.sports.fields.totalReps')}
+                                            placeholder="100"
+                                            value={customTotalReps}
+                                            onChangeText={setCustomTotalReps}
+                                            keyboardType="number-pad"
+                                        />
+                                    )}
+
+                                    {selectedSport.trackingFields.includes('exercises') && (
+                                        <TextArea
+                                            label={t('settings.sports.fields.exercises')}
+                                            placeholder={t('addEntry.exercisesPlaceholder', { defaultValue: 'Liste tes exercices...' })}
+                                            value={customExercises}
+                                            onChangeText={setCustomExercises}
+                                            rows={4}
+                                        />
+                                    )}
+                                </>
+                            );
+                        })()}
+                    </View>
+                )}
+
                 <Button
                     title={isEditMode ? t('addEntry.update') : t('addEntry.save')}
                     variant="primary"
@@ -1486,5 +1719,31 @@ const styles = StyleSheet.create({
     },
     timeInput: {
         flex: 1,
+    },
+    // Custom sport styles
+    customSportHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        marginBottom: Spacing.lg,
+        padding: Spacing.md,
+        backgroundColor: Colors.overlay,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        borderColor: Colors.stroke,
+    },
+    customSportIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: BorderRadius.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    customSportEmoji: {
+        fontSize: 24,
+    },
+    customSportName: {
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.bold,
     },
 });

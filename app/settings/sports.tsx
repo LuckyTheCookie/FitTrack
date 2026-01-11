@@ -241,7 +241,7 @@ const AddSportSheet = React.forwardRef<AddSportSheetRef, { onSave: (sport: Omit<
         return (
             <TrueSheet
                 ref={sheetRef}
-                detents={['large']}
+                detents={['auto']}
                 cornerRadius={32}
                 backgroundColor={Colors.bg}
                 grabber={false}

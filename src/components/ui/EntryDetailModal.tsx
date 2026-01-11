@@ -14,8 +14,9 @@ import {
   Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry } from '../../types';
+import type { Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry, CustomSportEntry, SportConfig } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
+import { useSportsConfig } from '../../stores';
 
 interface EntryDetailModalProps {
   entry: Entry | null;
@@ -54,12 +55,16 @@ function HomeWorkoutDetails({ entry }: { entry: HomeWorkoutEntry }) {
       {entry.name && (
         <Text style={styles.entryName}>{entry.name}</Text>
       )}
-      <Text style={styles.detailLabel}>Exercices :</Text>
-      <View style={styles.exercisesList}>
-        {entry.exercises.split('\n').map((line, i) => (
-          <Text key={i} style={styles.exerciseLine}>• {line}</Text>
-        ))}
-      </View>
+      {entry.exercises && (
+        <>
+          <Text style={styles.detailLabel}>Exercices :</Text>
+          <View style={styles.exercisesList}>
+            {entry.exercises.split('\n').map((line, i) => (
+              <Text key={i} style={styles.exerciseLine}>• {line}</Text>
+            ))}
+          </View>
+        </>
+      )}
       {entry.absBlock && (
         <>
           <Text style={styles.detailLabel}>Bloc abdos :</Text>
@@ -179,6 +184,78 @@ function MeasureDetails({ entry }: { entry: MeasureEntry }) {
   );
 }
 
+function CustomSportDetails({ entry, sportConfig }: { entry: CustomSportEntry; sportConfig?: SportConfig }) {
+  return (
+    <View style={styles.details}>
+      {entry.name && (
+        <Text style={styles.entryName}>{entry.name}</Text>
+      )}
+      
+      {/* Show available fields dynamically */}
+      <View style={styles.statsRow}>
+        {entry.durationMinutes !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.durationMinutes}</Text>
+            <Text style={styles.statLabel}>min</Text>
+          </View>
+        )}
+        {entry.distanceKm !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.distanceKm}</Text>
+            <Text style={styles.statLabel}>km</Text>
+          </View>
+        )}
+        {entry.totalReps !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.totalReps}</Text>
+            <Text style={styles.statLabel}>reps</Text>
+          </View>
+        )}
+        {entry.calories !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.calories}</Text>
+            <Text style={styles.statLabel}>kcal</Text>
+          </View>
+        )}
+        {entry.cardiacLoad !== undefined && (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{entry.cardiacLoad}</Text>
+            <Text style={styles.statLabel}>charge</Text>
+          </View>
+        )}
+      </View>
+
+      {(entry.bpmAvg || entry.bpmMax) && (
+        <View style={styles.bpmRow}>
+          {entry.bpmAvg && (
+            <View style={styles.bpmItem}>
+              <Text style={styles.bpmLabel}>BPM moy.</Text>
+              <Text style={styles.bpmValue}>{entry.bpmAvg}</Text>
+            </View>
+          )}
+          {entry.bpmMax && (
+            <View style={styles.bpmItem}>
+              <Text style={styles.bpmLabel}>BPM max</Text>
+              <Text style={styles.bpmValue}>{entry.bpmMax}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {entry.exercises && (
+        <>
+          <Text style={styles.detailLabel}>Exercices :</Text>
+          <View style={styles.exercisesList}>
+            {entry.exercises.split('\n').map((line, i) => (
+              <Text key={i} style={styles.exerciseLine}>• {line}</Text>
+            ))}
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
 export function EntryDetailModal({ 
   entry, 
   visible, 
@@ -187,13 +264,28 @@ export function EntryDetailModal({
   onDelete 
 }: EntryDetailModalProps) {
   const { t } = useTranslation();
+  const sportsConfig = useSportsConfig();
   
   if (!entry) return null;
 
-  const typeConfig = typeConfigs[entry.type];
+  // Get sport config for custom sports
+  let typeConfig;
+  let sportConfig: SportConfig | undefined;
+  
+  if (entry.type === 'custom') {
+    sportConfig = sportsConfig.find((s: SportConfig) => s.id === entry.sportId);
+    typeConfig = {
+      icon: sportConfig?.emoji || '💪',
+      labelKey: sportConfig?.name || 'Sport personnalisé',
+      color: sportConfig?.color ? sportConfig.color + '33' : 'rgba(139, 92, 246, 0.20)',
+    };
+  } else {
+    typeConfig = typeConfigs[entry.type];
+  }
+
   const typeInfo = {
-    icon: typeConfig.icon,
-    label: t(typeConfig.labelKey),
+    icon: entry.type === 'custom' ? typeConfig.icon : typeConfig.icon,
+    label: entry.type === 'custom' ? typeConfig.labelKey : t(typeConfig.labelKey),
     color: typeConfig.color,
   };
 
@@ -240,6 +332,7 @@ export function EntryDetailModal({
             {entry.type === 'beatsaber' && <BeatSaberDetails entry={entry as BeatSaberEntry} />}
             {entry.type === 'meal' && <MealDetails entry={entry} />}
             {entry.type === 'measure' && <MeasureDetails entry={entry} />}
+            {entry.type === 'custom' && <CustomSportDetails entry={entry as CustomSportEntry} sportConfig={sportConfig} />}
           </ScrollView>
 
           {/* Actions */}
