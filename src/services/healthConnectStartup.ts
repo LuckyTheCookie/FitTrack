@@ -2,7 +2,7 @@
 // HEALTH CONNECT STARTUP CHECK - Handles sync mode behavior on app launch
 // ============================================================================
 
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import * as healthConnect from './healthConnect';
 import { useAppStore } from '../stores';
@@ -12,8 +12,19 @@ import i18n from '../i18n';
 // Store for tracking if startup check has been done this session
 let hasCheckedThisSession = false;
 
+// Callback for showing the custom modal
+let showHealthConnectModalCallback: ((count: number) => void) | null = null;
+
 export const resetStartupCheck = () => {
     hasCheckedThisSession = false;
+};
+
+export const setHealthConnectModalCallback = (callback: ((count: number) => void) | null) => {
+    showHealthConnectModalCallback = callback;
+};
+
+export const navigateToHealthConnect = () => {
+    router.push('/health-connect');
 };
 
 export const checkHealthConnectOnStartup = async (): Promise<void> => {
@@ -60,23 +71,15 @@ export const checkHealthConnectOnStartup = async (): Promise<void> => {
         if (newWorkouts.length === 0) return;
 
         if (syncMode === 'notify') {
-            // Show notification modal and let user go to Health Connect screen
-            Alert.alert(
-                i18n.t('healthConnect.newActivitiesTitle'),
-                i18n.t('healthConnect.newActivitiesMessage', { count: newWorkouts.length }),
-                [
-                    {
-                        text: i18n.t('common.skip'),
-                        style: 'cancel',
-                    },
-                    {
-                        text: i18n.t('healthConnect.viewActivities'),
-                        onPress: () => router.push('/health-connect'),
-                    },
-                ]
-            );
+            // Show custom modal via callback
+            if (showHealthConnectModalCallback) {
+                showHealthConnectModalCallback(newWorkouts.length);
+            } else {
+                // Fallback: navigate directly if no callback set
+                router.push('/health-connect');
+            }
         } else if (syncMode === 'auto') {
-            // Auto-import workouts
+            // Auto-import workouts with distance fetching for runs
             let importCount = 0;
             
             for (const workout of newWorkouts) {
@@ -96,7 +99,19 @@ export const checkHealthConnectOnStartup = async (): Promise<void> => {
                         importCount++;
                         break;
                     case 'run':
-                        const distanceKm = workout.distance ? workout.distance / 1000 : 5;
+                        // Try to get real distance from Health Connect
+                        let distanceKm = 5; // Default fallback
+                        try {
+                            const distance = await healthConnect.getDistanceForWorkout(
+                                workout.startTime,
+                                workout.endTime
+                            );
+                            if (distance > 0) {
+                                distanceKm = distance / 1000;
+                            }
+                        } catch (e) {
+                            console.warn('Could not fetch distance for workout:', e);
+                        }
                         addRun({
                             distanceKm,
                             durationMinutes: workout.durationMinutes,

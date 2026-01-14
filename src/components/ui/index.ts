@@ -18,3 +18,4 @@ export { EntryDetailModal } from './EntryDetailModal';
 export { TabBar } from './TabBar';
 export { ExportModal } from './ExportModal';
 export { PoseCameraView } from './PoseCameraView';
+export { HealthConnectPromptModal } from './HealthConnectPromptModal';

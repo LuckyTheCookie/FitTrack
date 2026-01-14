@@ -25,12 +25,13 @@ import {
     SectionHeader,
     EmptyState,
     EntryDetailModal,
+    HealthConnectPromptModal,
 } from '../src/components/ui';
 import { AddEntryBottomSheet, AddEntryBottomSheetRef } from '../src/components/sheets';
 import { useAppStore, useGamificationStore, useEditorStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Gradients } from '../src/constants';
 import { getWeekDaysInfo } from '../src/utils/date';
-import { checkHealthConnectOnStartup } from '../src/services/healthConnectStartup';
+import { checkHealthConnectOnStartup, setHealthConnectModalCallback, navigateToHealthConnect } from '../src/services/healthConnectStartup';
 import type { Entry, HomeWorkoutEntry, RunEntry } from '../src/types';
 
 // Helper pour obtenir la salutation selon l'heure
@@ -55,6 +56,10 @@ export default function TodayScreen() {
     const bottomSheetRef = useRef<AddEntryBottomSheetRef>(null);
     const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
     const [detailModalVisible, setDetailModalVisible] = useState(false);
+    
+    // Health Connect modal state
+    const [healthConnectModalVisible, setHealthConnectModalVisible] = useState(false);
+    const [healthConnectWorkoutCount, setHealthConnectWorkoutCount] = useState(0);
 
     const {
         entries,
@@ -69,12 +74,31 @@ export default function TodayScreen() {
     const { checkAndRefreshQuests } = useGamificationStore();
     const { entryToEdit, setEntryToEdit } = useEditorStore();
 
-    // Health Connect startup check
+    // Health Connect startup check with custom modal
     useEffect(() => {
+        // Set up the callback for showing the modal
+        setHealthConnectModalCallback((count: number) => {
+            setHealthConnectWorkoutCount(count);
+            setHealthConnectModalVisible(true);
+        });
+
         const timer = setTimeout(() => {
             checkHealthConnectOnStartup();
         }, 1000);
-        return () => clearTimeout(timer);
+        
+        return () => {
+            clearTimeout(timer);
+            setHealthConnectModalCallback(null);
+        };
+    }, []);
+
+    const handleHealthConnectViewActivities = useCallback(() => {
+        setHealthConnectModalVisible(false);
+        navigateToHealthConnect();
+    }, []);
+
+    const handleHealthConnectSkip = useCallback(() => {
+        setHealthConnectModalVisible(false);
     }, []);
 
     // Listen for entry edits from other screens
@@ -267,6 +291,14 @@ export default function TodayScreen() {
                 onClose={() => setDetailModalVisible(false)}
                 onEdit={handleEditEntry}
                 onDelete={handleDeleteEntry}
+            />
+
+            {/* HEALTH CONNECT PROMPT MODAL */}
+            <HealthConnectPromptModal
+                visible={healthConnectModalVisible}
+                workoutCount={healthConnectWorkoutCount}
+                onViewActivities={handleHealthConnectViewActivities}
+                onSkip={handleHealthConnectSkip}
             />
 
             {/* BOTTOM SHEET D'AJOUT */}
