@@ -228,7 +228,7 @@ async function buildFlavor(rootDir, flavor, version) {
   // 2. Expo Prebuild (Clean)
   try {
       console.log("📦 Running Expo Prebuild...");
-      execSync(`${flavorConfig.envVar} npx expo prebuild --clean --platform android`, { 
+      execSync(`${flavorConfig.envVar} bunx expo prebuild --clean --platform android`, { 
         stdio: 'inherit', cwd: rootDir,
         env: { ...process.env, EXPO_PUBLIC_BUILD_FLAVOR: flavor }
       });
