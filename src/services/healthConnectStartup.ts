@@ -100,18 +100,19 @@ export const checkHealthConnectOnStartup = async (): Promise<void> => {
                         break;
                     case 'run':
                         // Try to get real distance from Health Connect
-                        let distanceKm = 5; // Default fallback
+                        let rawDistanceKm = 5; // Default fallback
                         try {
                             const distance = await healthConnect.getDistanceForWorkout(
                                 workout.startTime,
                                 workout.endTime
                             );
                             if (distance > 0) {
-                                distanceKm = distance / 1000;
+                                rawDistanceKm = distance / 1000;
                             }
                         } catch (e) {
                             console.warn('Could not fetch distance for workout:', e);
                         }
+                        const distanceKm = Math.round(rawDistanceKm * 100) / 100;
                         addRun({
                             distanceKm,
                             durationMinutes: workout.durationMinutes,

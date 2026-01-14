@@ -588,8 +588,9 @@ export default function HealthConnectScreen() {
                         workoutsAdded++;
                         totalDuration += workout.durationMinutes;
                         break;
-                    case 'run':
-                        const distanceKm = workout.distance ? workout.distance / 1000 : 5;
+                    case 'run': {
+                        const rawDistanceKm = workout.distance ? workout.distance / 1000 : 5;
+                        const distanceKm = Math.round(rawDistanceKm * 100) / 100;
                         addRun({ 
                             distanceKm, 
                             durationMinutes: workout.durationMinutes,
@@ -599,6 +600,7 @@ export default function HealthConnectScreen() {
                         totalDistance += distanceKm;
                         totalDuration += workout.durationMinutes;
                         break;
+                    }
                     case 'beatsaber':
                         addBeatSaber({ 
                             durationMinutes: workout.durationMinutes,
@@ -615,8 +617,8 @@ export default function HealthConnectScreen() {
                                 sportId: workout.customSportId,
                                 name: workout.title || workout.exerciseTypeName,
                                 durationMinutes: workout.durationMinutes,
-                                distanceKm: sportConfig?.trackingFields.includes('distance') && workout.distance 
-                                    ? workout.distance / 1000 
+                                distanceKm: sportConfig?.trackingFields.includes('distance') && workout.distance
+                                    ? Math.round((workout.distance / 1000) * 100) / 100
                                     : undefined,
                                 healthConnectId: workout.id,
                             }, date, createdAt);
@@ -631,9 +633,11 @@ export default function HealthConnectScreen() {
             for (const weight of weightsToImport) {
                 const date = format(weight.time, 'yyyy-MM-dd');
                 const createdAt = weight.time.toISOString();
+                const roundedWeight = Math.round(weight.weightKg * 100) / 100;
+                const roundedBodyFat = weight.bodyFatPercent !== undefined ? Math.round(weight.bodyFatPercent * 100) / 100 : undefined;
                 addMeasure({
-                    weight: weight.weightKg,
-                    bodyFatPercent: weight.bodyFatPercent,
+                    weight: roundedWeight,
+                    bodyFatPercent: roundedBodyFat,
                     healthConnectId: weight.id,
                 }, date, createdAt);
                 weightsAdded++;
