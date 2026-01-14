@@ -288,9 +288,10 @@ export async function getRecentWorkouts(daysBack: number = 7): Promise<HealthCon
              healthConnectLogger.debug(`- ${EXERCISE_TYPE_NAMES[r.exerciseType as number] || r.exerciseType} | Date: ${new Date(r.startTime).toLocaleDateString()} ${new Date(r.startTime).toLocaleTimeString()}`);
         });
 
-        return result.records
-            .slice(0, MAX_HEALTH_CONNECT_WORKOUTS) // Apply pagination limit
-            .map((record) => {
+        // Process records and fetch distance for each
+        const workouts: HealthConnectWorkout[] = [];
+        
+        for (const record of result.records.slice(0, MAX_HEALTH_CONNECT_WORKOUTS)) {
             const start = new Date(record.startTime);
             const end = new Date(record.endTime);
             const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
@@ -302,7 +303,18 @@ export async function getRecentWorkouts(daysBack: number = 7): Promise<HealthCon
             // Si c'est null ou "null" string, on prend le typeName
             const displayTitle = (record.title && record.title !== "null") ? record.title : typeName;
 
-            return {
+            // Fetch distance for this workout session
+            let distance: number | undefined;
+            try {
+                const distanceMeters = await getDistanceForWorkoutInternal(hc, start, end);
+                if (distanceMeters > 0) {
+                    distance = distanceMeters;
+                }
+            } catch (e) {
+                // Distance fetch failed, continue without it
+            }
+
+            workouts.push({
                 id: record.metadata?.id || `hc-${start.getTime()}`,
                 startTime: start,
                 endTime: end,
@@ -311,11 +323,75 @@ export async function getRecentWorkouts(daysBack: number = 7): Promise<HealthCon
                 title: displayTitle,
                 notes: record.notes,
                 durationMinutes,
-            };
-        });
+                distance,
+            });
+        }
+        
+        return workouts;
     } catch (error) {
         errorLogger.error('Error reading workouts:', error);
         return [];
+    }
+}
+
+// ============================================================================
+// DISTANCE RECORDS - Get distance for a specific workout time range
+// ============================================================================
+
+/**
+ * Internal function to get distance using already loaded HC module
+ */
+async function getDistanceForWorkoutInternal(
+    hc: typeof import('react-native-health-connect'),
+    startTime: Date,
+    endTime: Date
+): Promise<number> {
+    try {
+        const result = await hc.readRecords('Distance', {
+            timeRangeFilter: {
+                operator: 'between',
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+            },
+        });
+
+        if (!result.records || result.records.length === 0) {
+            return 0;
+        }
+
+        // Sum all distance records in the time range
+        let totalDistanceMeters = 0;
+        for (const record of result.records) {
+            if (record.distance?.inMeters) {
+                totalDistanceMeters += record.distance.inMeters;
+            }
+        }
+
+        return totalDistanceMeters;
+    } catch (error) {
+        return 0;
+    }
+}
+
+/**
+ * Get the total distance in meters for a specific time range (workout session)
+ * @param startTime - Start of the workout
+ * @param endTime - End of the workout
+ * @returns Distance in meters, or 0 if not available
+ */
+export async function getDistanceForWorkout(startTime: Date, endTime: Date): Promise<number> {
+    if (Platform.OS !== 'android') return 0;
+
+    try {
+        const hc = await getHealthConnectModule();
+        if (!hc) return 0;
+
+        const distance = await getDistanceForWorkoutInternal(hc, startTime, endTime);
+        healthConnectLogger.debug(`Total distance for workout: ${distance}m`);
+        return distance;
+    } catch (error) {
+        errorLogger.error('Error reading distance records:', error);
+        return 0;
     }
 }
 
