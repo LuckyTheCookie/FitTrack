@@ -1,0 +1,82 @@
+name: 🚀 Android Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Quel build générer ?'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - standard
+          - foss
+          - both
+      override_version:
+        description: 'Override Version (ex: 1.2.0). Laisser vide pour garder package.json'
+        required: false
+        type: string
+
+permissions:
+  contents: write # Nécessaire pour créer la release et uploader les fichiers
+
+jobs:
+  build-and-release:
+    name: 🏗 Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17' # Recommandé pour React Native >= 0.7x
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🔐 Decode Secrets
+        run: |
+          # On décode le Keystore vers un fichier temporaire à la racine
+          # Le script JS se chargera de le copier dans android/app au bon moment
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > fittrack.p12.tmp
+          
+          # On décode le Google Services JSON à la racine
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > google-services.json
+
+      - name: 🔨 Run Build Script
+        id: build_script
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          TARGET_FLAVOR: ${{ inputs.flavor }}
+          OVERRIDE_VERSION: ${{ inputs.override_version }}
+        run: node scripts/ci-build.js
+
+      - name: 📤 Upload Artifacts (GitHub Actions Storage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: releases/*.apk
+          retention-days: 5
+
+      - name: ✨ Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: success()
+        with:
+          # On utilise la version sortie par le script JS (steps.build_script.outputs.final_version)
+          tag_name: v${{ steps.build_script.outputs.final_version }}
+          name: FitTrack v${{ steps.build_script.outputs.final_version }}
+          files: releases/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
