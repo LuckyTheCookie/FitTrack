@@ -2,7 +2,7 @@
 // WORKOUT SCREEN - Historique complet des séances (Optimisé)
 // ============================================================================
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -35,7 +35,8 @@ import {
   EmptyState,
   EntryDetailModal,
 } from '../src/components/ui';
-import { useAppStore, useEditorStore, useSportsConfig } from '../src/stores';
+import { AddEntryBottomSheet, AddEntryBottomSheetRef } from '../src/components/sheets';
+import { useAppStore, useSportsConfig } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { formatDisplayDate, getRelativeTime } from '../src/utils/date';
 import type { Entry, HomeWorkoutEntry, RunEntry, MealEntry, MeasureEntry, BeatSaberEntry, CustomSportEntry, SportConfig } from '../src/types';
@@ -336,8 +337,8 @@ const EntryCard = React.memo(({ entry, onDelete, onPress, index }: { entry: Entr
 
 export default function WorkoutScreen() {
   const { entries, deleteEntry } = useAppStore();
-  const { setEntryToEdit } = useEditorStore();
   const { t } = useTranslation();
+  const bottomSheetRef = useRef<AddEntryBottomSheetRef>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -475,18 +476,16 @@ export default function WorkoutScreen() {
         onClose={() => setDetailModalVisible(false)}
         onEdit={(entry) => {
           setDetailModalVisible(false);
-          // Set the entry to edit in the global store
-          // The home screen will pick it up and open the bottom sheet
+          // Open the bottom sheet directly without navigation
           setTimeout(() => {
-            setEntryToEdit(entry);
-            // Navigate to home to show the edit form
-            import('expo-router').then(({ router }) => {
-              router.push('/');
-            });
+            bottomSheetRef.current?.edit(entry);
           }, 300);
         }}
         onDelete={handleDeleteEntry}
       />
+
+      {/* Bottom Sheet for editing entries directly */}
+      <AddEntryBottomSheet ref={bottomSheetRef} />
     </SafeAreaView>
   );
 }
