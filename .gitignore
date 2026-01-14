@@ -41,7 +41,6 @@ yarn-error.*
 /ios
 /android
 .env
-supabase/
 google-services.json
 pushgithub.js
 scripts/release.js
@@ -49,3 +48,4 @@ scripts/release.js
 TODO.md
 /releases
 /docs
+/supabase
