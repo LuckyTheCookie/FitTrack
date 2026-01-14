@@ -19,7 +19,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "$(PRODUCT_NAME) a besoin de la caméra pour détecter vos mouvements"
       },
-      "buildNumber": "7.0.0"
+      "buildNumber": "7.1.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -39,7 +39,7 @@
         "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_BODY_FAT"
       ],
-      "versionCode": 70000,
+      "versionCode": 70100,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
