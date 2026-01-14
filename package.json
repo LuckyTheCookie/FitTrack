@@ -19,6 +19,7 @@
     "@lodev09/react-native-true-sheet": "^3.7.1",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.9.0",
+    "@supabase/supabase-js": "^2.90.1",
     "date-fns": "^4.1.0",
     "expo": "~54.0.31",
     "expo-audio": "^1.1.1",
