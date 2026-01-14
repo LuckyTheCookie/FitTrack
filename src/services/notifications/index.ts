@@ -268,6 +268,103 @@ export async function cancelAllMealReminders(): Promise<void> {
 }
 
 /**
+ * Planifie un rappel de pesée quotidien
+ */
+export async function scheduleWeightReminderDaily(
+    hour: number,
+    minute: number
+): Promise<string> {
+    // Annuler les rappels de poids précédents
+    await cancelWeightReminder();
+
+    const identifier = await Notifications.scheduleNotificationAsync({
+        content: {
+            title: i18n.t('notifications.weightReminder.title'),
+            body: i18n.t('notifications.weightReminder.body'),
+            sound: 'default',
+            data: { type: 'weight_reminder' },
+        },
+        trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour,
+            minute,
+        },
+    });
+
+    return identifier;
+}
+
+/**
+ * Planifie un rappel de pesée hebdomadaire
+ */
+export async function scheduleWeightReminderWeekly(
+    hour: number,
+    minute: number,
+    weekday: number // 1-7, 1=Sunday, 7=Saturday
+): Promise<string> {
+    // Annuler les rappels de poids précédents
+    await cancelWeightReminder();
+
+    const identifier = await Notifications.scheduleNotificationAsync({
+        content: {
+            title: i18n.t('notifications.weightReminder.title'),
+            body: i18n.t('notifications.weightReminder.body'),
+            sound: 'default',
+            data: { type: 'weight_reminder' },
+        },
+        trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            hour,
+            minute,
+            weekday,
+        },
+    });
+
+    return identifier;
+}
+
+/**
+ * Planifie un rappel de pesée mensuel
+ */
+export async function scheduleWeightReminderMonthly(
+    hour: number,
+    minute: number,
+    day: number // 1-31
+): Promise<string> {
+    // Annuler les rappels de poids précédents
+    await cancelWeightReminder();
+
+    const identifier = await Notifications.scheduleNotificationAsync({
+        content: {
+            title: i18n.t('notifications.weightReminder.title'),
+            body: i18n.t('notifications.weightReminder.body'),
+            sound: 'default',
+            data: { type: 'weight_reminder' },
+        },
+        trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.MONTHLY,
+            hour,
+            minute,
+            day,
+        },
+    });
+
+    return identifier;
+}
+
+/**
+ * Annule le rappel de pesée
+ */
+export async function cancelWeightReminder(): Promise<void> {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notif of scheduled) {
+        if (notif.content.data?.type === 'weight_reminder') {
+            await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+        }
+    }
+}
+
+/**
  * Écoute les notifications reçues
  */
 export function addNotificationReceivedListener(

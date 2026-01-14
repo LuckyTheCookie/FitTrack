@@ -169,6 +169,9 @@ export interface GeneratedWorkout {
 // Health Connect sync modes
 export type HealthConnectSyncMode = 'manual' | 'notify' | 'auto';
 
+// Weight reminder frequency
+export type WeightReminderFrequency = 'daily' | 'weekly' | 'monthly';
+
 // Onboarding responses
 export type FitnessGoal = 'loseWeight' | 'buildMuscle' | 'improveCardio' | 'stayHealthy';
 export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
@@ -198,6 +201,13 @@ export interface UserSettings {
     hour: number;
     minute: number;
   }>;
+  // Weight reminder
+  weightReminderEnabled?: boolean;
+  weightReminderFrequency?: WeightReminderFrequency; // 'daily' | 'weekly' | 'monthly'
+  weightReminderHour?: number; // Hour of the reminder (0-23)
+  weightReminderMinute?: number; // Minute of the reminder (0-59)
+  weightReminderDayOfWeek?: number; // Day of week (0-6, 0=Sunday) for weekly
+  weightReminderDayOfMonth?: number; // Day of month (1-31) for monthly
   // Navigation bar opacity
   fullOpacityNavbar?: boolean; // Navbar avec opacité complète (sans glassmorphism)
   // Health Connect sync settings

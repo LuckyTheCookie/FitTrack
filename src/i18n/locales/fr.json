@@ -39,7 +39,14 @@
     "kg": "kg",
     "skip": "Ignorer",
     "minShort": "min",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "sunday": "Dimanche",
+    "monday": "Lundi",
+    "tuesday": "Mardi",
+    "wednesday": "Mercredi",
+    "thursday": "Jeudi",
+    "friday": "Vendredi",
+    "saturday": "Samedi"
   },
   "tabs": {
     "home": "Accueil",
@@ -689,6 +696,20 @@
     "addMealReminder": "Ajouter un rappel",
     "mealReminderTime": "Heure du rappel",
     "mealReminderTimeDesc": "Choisis l'heure du rappel de repas",
+    "weightReminder": "Rappel de pesée",
+    "weightReminderTitle": "Rappel de pesée",
+    "weightReminderSettings": "Configurer le rappel",
+    "weightReminderTime": "Rappel de pesée",
+    "weightReminderTimeDesc": "Choisis quand te rappeler de te peser",
+    "weightReminderEnabled": "Rappel de pesée activé à {{time}}",
+    "weightReminderDaily": "Tous les jours à {{time}}",
+    "weightReminderWeekly": "Chaque {{day}} à {{time}}",
+    "weightReminderMonthly": "Le {{day}} de chaque mois à {{time}}",
+    "frequencyDaily": "Quotidien",
+    "frequencyWeekly": "Hebdomadaire",
+    "frequencyMonthly": "Mensuel",
+    "dayOfWeek": "Jour de la semaine",
+    "dayOfMonth": "Jour du mois",
     "chooseFile": "Choisir un fichier",
     "futureFeatures": {
       "notifications": "Notifications intelligentes",
@@ -1058,6 +1079,10 @@
     "mealReminder": {
       "title": "🍽️ C'est l'heure du repas !",
       "body": "Bon appétit ! N'oublie pas d'enregistrer ton repas."
+    },
+    "weightReminder": {
+      "title": "⚖️ C'est l'heure de te peser !",
+      "body": "Pense à noter ton poids pour suivre ta progression."
     },
     "encouragement": {
       "title": "Encouragement reçu ! 💪",

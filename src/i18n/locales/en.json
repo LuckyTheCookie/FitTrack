@@ -39,7 +39,14 @@
     "kg": "kg",
     "skip": "Skip",
     "minShort": "min",
-    "continue": "Continue"
+    "continue": "Continue",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
   },
   "tabs": {
     "home": "Home",
@@ -694,6 +701,20 @@
     "addMealReminder": "Add a reminder",
     "mealReminderTime": "Reminder time",
     "mealReminderTimeDesc": "Choose the meal reminder time",
+    "weightReminder": "Weight Reminder",
+    "weightReminderTitle": "Weight Reminder",
+    "weightReminderSettings": "Configure reminder",
+    "weightReminderTime": "Weight Reminder",
+    "weightReminderTimeDesc": "Choose when to remind you to weigh yourself",
+    "weightReminderEnabled": "Weight reminder set at {{time}}",
+    "weightReminderDaily": "Every day at {{time}}",
+    "weightReminderWeekly": "Every {{day}} at {{time}}",
+    "weightReminderMonthly": "On the {{day}}th of each month at {{time}}",
+    "frequencyDaily": "Daily",
+    "frequencyWeekly": "Weekly",
+    "frequencyMonthly": "Monthly",
+    "dayOfWeek": "Day of week",
+    "dayOfMonth": "Day of month",
     "chooseFile": "Choose a file",
     "futureFeatures": {
       "notifications": "Smart notifications",
@@ -1063,6 +1084,10 @@
     "mealReminder": {
       "title": "🍽️ Time to eat!",
       "body": "Bon appétit! Don't forget to log your meal."
+    },
+    "weightReminder": {
+      "title": "⚖️ Time to weigh yourself!",
+      "body": "Remember to log your weight to track your progress."
     },
     "encouragement": {
       "title": "Encouragement received! 💪",

@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Bell, Clock, UtensilsCrossed, Plus, X } from 'lucide-react-native';
+import { ArrowLeft, Bell, Clock, UtensilsCrossed, Plus, X, Scale } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
@@ -154,6 +154,107 @@ export default function NotificationsScreen() {
     
     updateSettings({ mealReminders: currentReminders });
   }, [settings.mealReminders, updateSettings]);
+
+  // Weight reminder states
+  const [weightTimePickerVisible, setWeightTimePickerVisible] = useState(false);
+  const [weightTimePickerHour, setWeightTimePickerHour] = useState(String(settings.weightReminderHour ?? 8));
+  const [weightTimePickerMinute, setWeightTimePickerMinute] = useState(String(settings.weightReminderMinute ?? 0).padStart(2, '0'));
+  const [weightFrequency, setWeightFrequency] = useState<'daily' | 'weekly' | 'monthly'>(settings.weightReminderFrequency ?? 'weekly');
+  const [weightDayOfWeek, setWeightDayOfWeek] = useState(settings.weightReminderDayOfWeek ?? 1); // 1 = Monday
+  const [weightDayOfMonth, setWeightDayOfMonth] = useState(settings.weightReminderDayOfMonth ?? 1);
+
+  const weekDayLabels = [
+    t('common.sunday', { defaultValue: 'Dimanche' }),
+    t('common.monday', { defaultValue: 'Lundi' }),
+    t('common.tuesday', { defaultValue: 'Mardi' }),
+    t('common.wednesday', { defaultValue: 'Mercredi' }),
+    t('common.thursday', { defaultValue: 'Jeudi' }),
+    t('common.friday', { defaultValue: 'Vendredi' }),
+    t('common.saturday', { defaultValue: 'Samedi' }),
+  ];
+
+  const handleToggleWeightReminder = useCallback(async (value: boolean) => {
+    if (value) {
+      const hour = settings.weightReminderHour ?? 8;
+      const minute = settings.weightReminderMinute ?? 0;
+      const frequency = settings.weightReminderFrequency ?? 'weekly';
+      const dayOfWeek = settings.weightReminderDayOfWeek ?? 1;
+      const dayOfMonth = settings.weightReminderDayOfMonth ?? 1;
+      
+      if (frequency === 'daily') {
+        await NotificationService.scheduleWeightReminderDaily(hour, minute);
+      } else if (frequency === 'weekly') {
+        // Convert 0-6 (Sunday-Saturday) to 1-7 (Sunday-Saturday) for expo notifications
+        await NotificationService.scheduleWeightReminderWeekly(hour, minute, dayOfWeek + 1);
+      } else {
+        await NotificationService.scheduleWeightReminderMonthly(hour, minute, dayOfMonth);
+      }
+      
+      updateSettings({ 
+        weightReminderEnabled: true,
+        weightReminderHour: hour,
+        weightReminderMinute: minute,
+        weightReminderFrequency: frequency,
+        weightReminderDayOfWeek: dayOfWeek,
+        weightReminderDayOfMonth: dayOfMonth,
+      });
+      
+      const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      Alert.alert(t('common.success'), t('settings.weightReminderEnabled', { time: timeStr, defaultValue: `Rappel de pesée activé à ${timeStr}` }));
+    } else {
+      await NotificationService.cancelWeightReminder();
+      updateSettings({ weightReminderEnabled: false });
+    }
+  }, [settings, updateSettings, t]);
+
+  const handleSaveWeightReminder = useCallback(async () => {
+    const hour = parseInt(weightTimePickerHour, 10);
+    const minute = parseInt(weightTimePickerMinute, 10);
+    
+    if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      Alert.alert(t('common.error'), t('settings.reminderInvalid'));
+      return;
+    }
+    
+    if (weightFrequency === 'daily') {
+      await NotificationService.scheduleWeightReminderDaily(hour, minute);
+    } else if (weightFrequency === 'weekly') {
+      await NotificationService.scheduleWeightReminderWeekly(hour, minute, weightDayOfWeek + 1);
+    } else {
+      await NotificationService.scheduleWeightReminderMonthly(hour, minute, weightDayOfMonth);
+    }
+    
+    updateSettings({ 
+      weightReminderHour: hour,
+      weightReminderMinute: minute,
+      weightReminderFrequency: weightFrequency,
+      weightReminderDayOfWeek: weightDayOfWeek,
+      weightReminderDayOfMonth: weightDayOfMonth,
+    });
+    
+    setWeightTimePickerVisible(false);
+    
+    const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    Alert.alert(t('common.success'), t('settings.reminderSet', { time: timeStr }));
+  }, [weightTimePickerHour, weightTimePickerMinute, weightFrequency, weightDayOfWeek, weightDayOfMonth, updateSettings, t]);
+
+  const getWeightReminderDescription = useCallback(() => {
+    if (!settings.weightReminderEnabled) return t('settings.socialDisabled');
+    const hour = settings.weightReminderHour ?? 8;
+    const minute = settings.weightReminderMinute ?? 0;
+    const frequency = settings.weightReminderFrequency ?? 'weekly';
+    const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    
+    if (frequency === 'daily') {
+      return t('settings.weightReminderDaily', { time: timeStr, defaultValue: `Tous les jours à ${timeStr}` });
+    } else if (frequency === 'weekly') {
+      const day = weekDayLabels[settings.weightReminderDayOfWeek ?? 1];
+      return t('settings.weightReminderWeekly', { day, time: timeStr, defaultValue: `Chaque ${day} à ${timeStr}` });
+    } else {
+      const dayOfMonth = settings.weightReminderDayOfMonth ?? 1;
+      return t('settings.weightReminderMonthly', { day: dayOfMonth, time: timeStr, defaultValue: `Le ${dayOfMonth} de chaque mois à ${timeStr}` });
+    }
+  }, [settings, weekDayLabels, t]);
 
   const handleToggleReminder = useCallback(async (value: boolean) => {
     if (value) {
@@ -317,6 +418,48 @@ export default function NotificationsScreen() {
           )}
         </GlassCard>
 
+        {/* Weight Reminders */}
+        <Animated.View entering={FadeIn.delay(350)}>
+          <Text style={styles.sectionTitle}>{t('settings.weightReminder', { defaultValue: 'Rappel de pesée' })}</Text>
+        </Animated.View>
+        
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Scale size={20} color="#a78bfa" />}
+            iconColor="#a78bfa"
+            title={t('settings.weightReminderTitle', { defaultValue: 'Rappel de pesée' })}
+            subtitle={getWeightReminderDescription()}
+            rightElement={
+              <Switch
+                value={settings.weightReminderEnabled ?? false}
+                onValueChange={handleToggleWeightReminder}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            }
+            delay={400}
+          />
+          
+          {/* Time and frequency settings (only if enabled) */}
+          {settings.weightReminderEnabled && (
+            <SettingItem
+              icon={<Clock size={20} color="#60a5fa" />}
+              iconColor="#60a5fa"
+              title={t('settings.weightReminderSettings', { defaultValue: 'Configurer' })}
+              subtitle={getWeightReminderDescription()}
+              onPress={() => {
+                setWeightTimePickerHour(String(settings.weightReminderHour ?? 8));
+                setWeightTimePickerMinute(String(settings.weightReminderMinute ?? 0).padStart(2, '0'));
+                setWeightFrequency(settings.weightReminderFrequency ?? 'weekly');
+                setWeightDayOfWeek(settings.weightReminderDayOfWeek ?? 1);
+                setWeightDayOfMonth(settings.weightReminderDayOfMonth ?? 1);
+                setWeightTimePickerVisible(true);
+              }}
+              delay={450}
+            />
+          )}
+        </GlassCard>
+
         {/* Spacer */}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -429,6 +572,141 @@ export default function NotificationsScreen() {
               <TouchableOpacity 
                 style={styles.timePickerConfirmButton}
                 onPress={handleSaveMealReminder}
+              >
+                <Text style={styles.timePickerConfirmText}>{t('common.validate')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Weight Time Picker Modal */}
+      <Modal
+        visible={weightTimePickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWeightTimePickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.timePickerModal}>
+            <Text style={styles.timePickerTitle}>{t('settings.weightReminderTime', { defaultValue: 'Rappel de pesée' })}</Text>
+            <Text style={styles.timePickerSubtitle}>{t('settings.weightReminderTimeDesc', { defaultValue: 'Choisis quand te rappeler de te peser' })}</Text>
+            
+            {/* Frequency selector */}
+            <View style={styles.frequencySelector}>
+              {(['daily', 'weekly', 'monthly'] as const).map((freq) => (
+                <TouchableOpacity
+                  key={freq}
+                  style={[
+                    styles.frequencyButton,
+                    weightFrequency === freq && styles.frequencyButtonActive
+                  ]}
+                  onPress={() => setWeightFrequency(freq)}
+                >
+                  <Text style={[
+                    styles.frequencyButtonText,
+                    weightFrequency === freq && styles.frequencyButtonTextActive
+                  ]}>
+                    {freq === 'daily' && t('settings.frequencyDaily', { defaultValue: 'Quotidien' })}
+                    {freq === 'weekly' && t('settings.frequencyWeekly', { defaultValue: 'Hebdomadaire' })}
+                    {freq === 'monthly' && t('settings.frequencyMonthly', { defaultValue: 'Mensuel' })}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Day of week selector (for weekly) */}
+            {weightFrequency === 'weekly' && (
+              <View style={styles.daySelector}>
+                <Text style={styles.daySelectorLabel}>{t('settings.dayOfWeek', { defaultValue: 'Jour de la semaine' })}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScrollView}>
+                  <View style={styles.dayButtons}>
+                    {weekDayLabels.map((day, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.dayButton,
+                          weightDayOfWeek === index && styles.dayButtonActive
+                        ]}
+                        onPress={() => setWeightDayOfWeek(index)}
+                      >
+                        <Text style={[
+                          styles.dayButtonText,
+                          weightDayOfWeek === index && styles.dayButtonTextActive
+                        ]}>
+                          {day.slice(0, 3)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Day of month selector (for monthly) */}
+            {weightFrequency === 'monthly' && (
+              <View style={styles.daySelector}>
+                <Text style={styles.daySelectorLabel}>{t('settings.dayOfMonth', { defaultValue: 'Jour du mois' })}</Text>
+                <View style={styles.dayOfMonthInput}>
+                  <TextInput
+                    style={styles.dayOfMonthTextInput}
+                    value={String(weightDayOfMonth)}
+                    onChangeText={(text) => {
+                      const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                      if (!isNaN(num) && num >= 1 && num <= 31) {
+                        setWeightDayOfMonth(num);
+                      } else if (text === '') {
+                        setWeightDayOfMonth(1);
+                      }
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    placeholder="1"
+                    placeholderTextColor={Colors.muted}
+                  />
+                </View>
+              </View>
+            )}
+            
+            {/* Time selector */}
+            <View style={styles.timePickerInputs}>
+              <TextInput
+                style={styles.timePickerInput}
+                value={weightTimePickerHour}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, '');
+                  if (num.length <= 2) setWeightTimePickerHour(num);
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="HH"
+                placeholderTextColor={Colors.muted}
+              />
+              <Text style={styles.timePickerSeparator}>:</Text>
+              <TextInput
+                style={styles.timePickerInput}
+                value={weightTimePickerMinute}
+                onChangeText={(text) => {
+                  const num = text.replace(/[^0-9]/g, '');
+                  if (num.length <= 2) setWeightTimePickerMinute(num);
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="MM"
+                placeholderTextColor={Colors.muted}
+              />
+            </View>
+
+            <View style={styles.timePickerButtons}>
+              <TouchableOpacity 
+                style={styles.timePickerCancelButton}
+                onPress={() => setWeightTimePickerVisible(false)}
+              >
+                <Text style={styles.timePickerCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.timePickerConfirmButton}
+                onPress={handleSaveWeightReminder}
               >
                 <Text style={styles.timePickerConfirmText}>{t('common.validate')}</Text>
               </TouchableOpacity>
@@ -640,5 +918,87 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
     color: Colors.cta,
+  },
+  // Weight reminder styles
+  frequencySelector: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  frequencyButton: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.overlay,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.stroke,
+  },
+  frequencyButtonActive: {
+    backgroundColor: 'rgba(167, 139, 250, 0.2)',
+    borderColor: '#a78bfa',
+  },
+  frequencyButtonText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    color: Colors.muted,
+  },
+  frequencyButtonTextActive: {
+    color: '#a78bfa',
+    fontWeight: FontWeight.bold,
+  },
+  daySelector: {
+    marginBottom: Spacing.lg,
+  },
+  daySelectorLabel: {
+    fontSize: FontSize.sm,
+    color: Colors.muted,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  dayScrollView: {
+    maxHeight: 50,
+  },
+  dayButtons: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  dayButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.overlay,
+    borderWidth: 1,
+    borderColor: Colors.stroke,
+  },
+  dayButtonActive: {
+    backgroundColor: 'rgba(167, 139, 250, 0.2)',
+    borderColor: '#a78bfa',
+  },
+  dayButtonText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    color: Colors.muted,
+  },
+  dayButtonTextActive: {
+    color: '#a78bfa',
+    fontWeight: FontWeight.bold,
+  },
+  dayOfMonthInput: {
+    alignItems: 'center',
+  },
+  dayOfMonthTextInput: {
+    backgroundColor: Colors.overlay,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    textAlign: 'center',
+    width: 80,
+    borderWidth: 1,
+    borderColor: Colors.stroke,
   },
 });
