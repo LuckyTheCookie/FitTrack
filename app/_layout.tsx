@@ -104,6 +104,7 @@ function CustomNavBar() {
     const visibleScreens = SCREEN_CONFIG.filter(screen => {
         if (screen.name === 'workout' && settings.hiddenTabs?.workout) return false;
         if (screen.name === 'tools' && settings.hiddenTabs?.tools) return false;
+        if (screen.name === 'gamification' && settings.hiddenTabs?.gamification) return false;
         if (screen.name === 'social' && !socialEnabled) return false;
         return true;
     });

@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Eye } from 'lucide-react-native';
+import { ArrowLeft, Eye, Trophy } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores';
 import { Colors, Spacing, FontSize, FontWeight } from '../../src/constants';
@@ -91,6 +91,30 @@ export default function AppearanceScreen() {
               />
             }
             delay={100}
+          />
+        </GlassCard>
+
+        {/* Gamification Tab */}
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<Trophy size={20} color="#FFD700" />}
+            iconColor="#FFD700"
+            title={t('settings.showGamificationTab')}
+            subtitle={t('settings.showGamificationTabDesc')}
+            rightElement={
+              <Switch
+                value={!(settings.hiddenTabs?.gamification ?? false)}
+                onValueChange={(value) => updateSettings({ 
+                  hiddenTabs: { 
+                    ...settings.hiddenTabs, 
+                    gamification: !value 
+                  } 
+                })}
+                trackColor={{ false: Colors.card, true: Colors.teal }}
+                thumbColor="#fff"
+              />
+            }
+            delay={150}
           />
         </GlassCard>
 

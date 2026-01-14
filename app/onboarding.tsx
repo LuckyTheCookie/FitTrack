@@ -27,10 +27,11 @@ import Animated, {
   ZoomIn,
   Layout,
 } from 'react-native-reanimated';
-import { useAppStore } from '../src/stores';
+import { useAppStore, useSocialStore } from '../src/stores';
 // Assurez-vous que vos constantes sont bien importées
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Gradients } from '../src/constants';
 import type { FitnessGoal, FitnessLevel } from '../src/types';
+import { Users, Trophy, Sparkles, CheckCircle2 } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -96,24 +97,37 @@ export default function OnboardingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateSettings, updateWeeklyGoal } = useAppStore();
+  const { setSocialEnabled } = useSocialStore();
 
-  // Steps: 0:Welcome, 1:Goal, 2:Level, 3:Frequency, 4:Ready
+  // Steps: 0:Welcome, 1:Goal, 2:Level, 3:Frequency, 4:Social, 5:Gamification, 6:Ready
   const [currentStep, setCurrentStep] = useState(0);
   
   // Selection State
   const [selectedGoal, setSelectedGoal] = useState<FitnessGoal | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<FitnessLevel | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState(3);
+  const [wantsSocial, setWantsSocial] = useState(true);
+  const [wantsGamification, setWantsGamification] = useState(true);
 
   const handleComplete = useCallback(() => {
+    // Update settings with all choices
     updateSettings({
       onboardingCompleted: true,
       fitnessGoal: selectedGoal || undefined,
       fitnessLevel: selectedLevel || undefined,
+      hiddenTabs: {
+        tools: true,
+        workout: false,
+        gamification: !wantsGamification,
+      },
     });
     updateWeeklyGoal(weeklyGoal);
+    
+    // Enable/disable social features
+    setSocialEnabled(wantsSocial);
+    
     router.replace('/');
-  }, [selectedGoal, selectedLevel, weeklyGoal, updateSettings, updateWeeklyGoal, router]);
+  }, [selectedGoal, selectedLevel, weeklyGoal, wantsSocial, wantsGamification, updateSettings, updateWeeklyGoal, setSocialEnabled, router]);
 
   const handleSkip = useCallback(() => {
     updateSettings({ onboardingCompleted: true });
@@ -123,6 +137,9 @@ export default function OnboardingScreen() {
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => Math.max(0, p - 1));
 
+  // Total steps for progress bar (excluding Welcome and Ready)
+  const PROGRESS_STEPS = 5; // Goal, Level, Frequency, Social, Gamification
+
   // RENDER STEPS
   const renderStepContent = () => {
     switch (currentStep) {
@@ -130,7 +147,9 @@ export default function OnboardingScreen() {
       case 1: return <GoalStep selected={selectedGoal} onSelect={setSelectedGoal} />;
       case 2: return <LevelStep selected={selectedLevel} onSelect={setSelectedLevel} />;
       case 3: return <FrequencyStep value={weeklyGoal} onChange={setWeeklyGoal} />;
-      case 4: return <ReadyStep onComplete={handleComplete} />;
+      case 4: return <SocialStep enabled={wantsSocial} onToggle={setWantsSocial} />;
+      case 5: return <GamificationStep enabled={wantsGamification} onToggle={setWantsGamification} />;
+      case 6: return <ReadyStep onComplete={handleComplete} wantsSocial={wantsSocial} wantsGamification={wantsGamification} />;
       default: return null;
     }
   };
@@ -146,12 +165,12 @@ export default function OnboardingScreen() {
       />
 
       {/* Header (sauf sur Welcome & Ready) */}
-      {currentStep > 0 && currentStep < 4 && (
+      {currentStep > 0 && currentStep < 6 && (
         <SafeAreaView edges={['top']} style={styles.header}>
           <TouchableOpacity onPress={prevStep} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <ProgressBar current={currentStep - 1} total={3} />
+          <ProgressBar current={currentStep - 1} total={PROGRESS_STEPS} />
           <TouchableOpacity onPress={handleSkip}>
             <Text style={styles.skipText}>{t('common.skip') || 'Passer'}</Text>
           </TouchableOpacity>
@@ -164,7 +183,7 @@ export default function OnboardingScreen() {
       </View>
 
       {/* Footer avec bouton (sauf Welcome & Ready qui ont leurs propres boutons) */}
-      {currentStep > 0 && currentStep < 4 && (
+      {currentStep > 0 && currentStep < 6 && (
         <SafeAreaView edges={['bottom']} style={styles.footer}>
           <PrimaryButton 
             title={t('common.continue') || "Continuer"} 
@@ -309,8 +328,104 @@ const FrequencyStep = ({ value, onChange }: { value: number, onChange: (v: numbe
   </View>
 );
 
-// --- STEP 5: READY ---
-const ReadyStep = ({ onComplete }: { onComplete: () => void }) => (
+// --- STEP 5: SOCIAL ---
+const SocialStep = ({ enabled, onToggle }: { enabled: boolean, onToggle: (v: boolean) => void }) => (
+  <View style={styles.centerContent}>
+    <Animated.View entering={ZoomIn.delay(200).springify()} style={styles.featureIconContainer}>
+      <Users size={60} color={enabled ? Colors.cta : Colors.muted} strokeWidth={1.5} />
+    </Animated.View>
+    
+    <Animated.View entering={FadeInDown.delay(300)}>
+      <Text style={styles.stepTitleCenter}>Envie de partager{'\n'}tes exploits ?</Text>
+      <Text style={styles.stepSubtitleCenter}>
+        Connecte-toi avec tes amis, compare vos progressions et encouragez-vous mutuellement !
+      </Text>
+    </Animated.View>
+
+    <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.toggleContainer}>
+      <Pressable
+        onPress={() => onToggle(true)}
+        style={[styles.toggleOption, enabled && styles.toggleOptionActive]}
+      >
+        <View style={[styles.toggleIconBg, enabled && styles.toggleIconBgActive]}>
+          <Text style={{ fontSize: 24 }}>👥</Text>
+        </View>
+        <Text style={[styles.toggleTitle, enabled && styles.toggleTitleActive]}>Activer le Social</Text>
+        <Text style={styles.toggleDesc}>Classements, amis, encouragements</Text>
+        {enabled && <View style={styles.toggleCheck}><Text style={{ fontSize: 12 }}>✓</Text></View>}
+      </Pressable>
+      
+      <Pressable
+        onPress={() => onToggle(false)}
+        style={[styles.toggleOption, !enabled && styles.toggleOptionActive]}
+      >
+        <View style={[styles.toggleIconBg, !enabled && styles.toggleIconBgActive]}>
+          <Text style={{ fontSize: 24 }}>🔒</Text>
+        </View>
+        <Text style={[styles.toggleTitle, !enabled && styles.toggleTitleActive]}>Mode Solo</Text>
+        <Text style={styles.toggleDesc}>100% privé, sans connexion</Text>
+        {!enabled && <View style={styles.toggleCheck}><Text style={{ fontSize: 12 }}>✓</Text></View>}
+      </Pressable>
+    </Animated.View>
+
+    <Animated.View entering={FadeInDown.delay(500)} style={styles.featureNote}>
+      <Text style={styles.featureNoteText}>
+        💡 Tu pourras activer cette option plus tard dans les paramètres
+      </Text>
+    </Animated.View>
+  </View>
+);
+
+// --- STEP 6: GAMIFICATION ---
+const GamificationStep = ({ enabled, onToggle }: { enabled: boolean, onToggle: (v: boolean) => void }) => (
+  <View style={styles.centerContent}>
+    <Animated.View entering={ZoomIn.delay(200).springify()} style={styles.featureIconContainer}>
+      <Trophy size={60} color={enabled ? '#FFD700' : Colors.muted} strokeWidth={1.5} />
+    </Animated.View>
+    
+    <Animated.View entering={FadeInDown.delay(300)}>
+      <Text style={styles.stepTitleCenter}>Un petit coup{'\n'}de boost ?</Text>
+      <Text style={styles.stepSubtitleCenter}>
+        Gagne de l'XP, monte de niveau et accomplis des quêtes pour rester motivé au quotidien !
+      </Text>
+    </Animated.View>
+
+    <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.toggleContainer}>
+      <Pressable
+        onPress={() => onToggle(true)}
+        style={[styles.toggleOption, enabled && styles.toggleOptionActive]}
+      >
+        <View style={[styles.toggleIconBg, enabled && { backgroundColor: 'rgba(255, 215, 0, 0.2)' }]}>
+          <Text style={{ fontSize: 24 }}>⭐</Text>
+        </View>
+        <Text style={[styles.toggleTitle, enabled && styles.toggleTitleActive]}>Avec progression</Text>
+        <Text style={styles.toggleDesc}>XP, niveaux, quêtes & badges</Text>
+        {enabled && <View style={[styles.toggleCheck, { backgroundColor: '#FFD700' }]}><Text style={{ fontSize: 12, color: '#000' }}>✓</Text></View>}
+      </Pressable>
+      
+      <Pressable
+        onPress={() => onToggle(false)}
+        style={[styles.toggleOption, !enabled && styles.toggleOptionActive]}
+      >
+        <View style={[styles.toggleIconBg, !enabled && styles.toggleIconBgActive]}>
+          <Text style={{ fontSize: 24 }}>📋</Text>
+        </View>
+        <Text style={[styles.toggleTitle, !enabled && styles.toggleTitleActive]}>Tracking simple</Text>
+        <Text style={styles.toggleDesc}>Juste tes séances, sans fioritures</Text>
+        {!enabled && <View style={styles.toggleCheck}><Text style={{ fontSize: 12 }}>✓</Text></View>}
+      </Pressable>
+    </Animated.View>
+
+    <Animated.View entering={FadeInDown.delay(500)} style={styles.featureNote}>
+      <Text style={styles.featureNoteText}>
+        💡 Tu pourras modifier cela dans Paramètres → Apparence
+      </Text>
+    </Animated.View>
+  </View>
+);
+
+// --- STEP 7: READY ---
+const ReadyStep = ({ onComplete, wantsSocial, wantsGamification }: { onComplete: () => void, wantsSocial: boolean, wantsGamification: boolean }) => (
   <SafeAreaView style={styles.readyContainer}>
     <View style={styles.readyContent}>
       <Animated.View entering={ZoomIn.delay(200).springify()} style={styles.successIcon}>
@@ -318,29 +433,35 @@ const ReadyStep = ({ onComplete }: { onComplete: () => void }) => (
       </Animated.View>
       
       <Animated.View entering={FadeInDown.delay(400)}>
-        <Text style={styles.readyTitle}>Tout est prêt !</Text>
+        <Text style={styles.readyTitle}>C'est parti !</Text>
         <Text style={styles.readyDesc}>
-          Ton programme est configuré. Il est temps de passer à l'action et de créer ta légende.
+          Ton espace fitness personnalisé est prêt. Commence dès maintenant à tracker tes progrès.
         </Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(600)} style={styles.statsPreview}>
-        {/* Fake Mini Card pour montrer l'UI */}
-        <View style={styles.miniStatCard}>
-          <Text style={styles.miniStatEmoji}>🔥</Text>
-          <Text style={styles.miniStatLabel}>Streak</Text>
-          <Text style={styles.miniStatValue}>0 Jours</Text>
+      <Animated.View entering={FadeInDown.delay(600)} style={styles.readySummary}>
+        <View style={styles.readySummaryItem}>
+          <View style={[styles.readySummaryIcon, wantsGamification && { backgroundColor: 'rgba(255, 215, 0, 0.2)' }]}>
+            {wantsGamification ? <Trophy size={20} color="#FFD700" /> : <CheckCircle2 size={20} color={Colors.muted} />}
+          </View>
+          <Text style={styles.readySummaryText}>
+            {wantsGamification ? 'Progression activée' : 'Mode tracking simple'}
+          </Text>
         </View>
-        <View style={styles.miniStatCard}>
-          <Text style={styles.miniStatEmoji}>🏆</Text>
-          <Text style={styles.miniStatLabel}>Objectif</Text>
-          <Text style={styles.miniStatValue}>En cours</Text>
+        
+        <View style={styles.readySummaryItem}>
+          <View style={[styles.readySummaryIcon, wantsSocial && { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
+            {wantsSocial ? <Users size={20} color="#22C55E" /> : <CheckCircle2 size={20} color={Colors.muted} />}
+          </View>
+          <Text style={styles.readySummaryText}>
+            {wantsSocial ? 'Social activé' : 'Mode solo privé'}
+          </Text>
         </View>
       </Animated.View>
     </View>
 
     <Animated.View entering={FadeInDown.delay(800)} style={styles.readyFooter}>
-      <PrimaryButton title="Let's Go !" onPress={onComplete} />
+      <PrimaryButton title="Commencer 💪" onPress={onComplete} />
     </Animated.View>
   </SafeAreaView>
 );
@@ -506,6 +627,56 @@ const styles = StyleSheet.create({
   freqBtnTextSelected: { color: '#1b0f0c' },
   frequencyHint: { color: Colors.cta, fontSize: FontSize.sm, fontWeight: FontWeight.medium },
 
+  // Feature Steps (Social & Gamification)
+  featureIconContainer: {
+    width: 120, height: 120, borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: Spacing.xl,
+    alignSelf: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+  },
+  toggleContainer: { gap: 12, marginTop: Spacing.md },
+  toggleOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    gap: Spacing.md,
+  },
+  toggleOptionActive: {
+    borderColor: Colors.cta,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  toggleIconBg: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  toggleIconBgActive: {
+    backgroundColor: 'rgba(227, 160, 144, 0.2)',
+  },
+  toggleTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.text },
+  toggleTitleActive: { color: Colors.cta },
+  toggleDesc: { fontSize: FontSize.xs, color: Colors.muted, position: 'absolute', bottom: 16, left: 84 },
+  toggleCheck: {
+    position: 'absolute', top: 12, right: 12,
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: Colors.cta, justifyContent: 'center', alignItems: 'center',
+  },
+  featureNote: {
+    marginTop: Spacing.xl,
+    padding: Spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  featureNoteText: { fontSize: FontSize.sm, color: Colors.muted, textAlign: 'center' },
+
   // Ready Step
   readyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xxl },
   readyContent: { alignItems: 'center', width: '100%', flex: 1, justifyContent: 'center' },
@@ -517,15 +688,22 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
   },
   readyTitle: { fontSize: 36, fontWeight: 'bold', color: Colors.text, marginBottom: Spacing.md, textAlign: 'center' },
-  readyDesc: { fontSize: FontSize.md, color: Colors.muted, textAlign: 'center', lineHeight: 24, marginBottom: Spacing.xxl },
-  statsPreview: { flexDirection: 'row', gap: 12 },
-  miniStatCard: { 
-    backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 16, 
-    alignItems: 'center', width: 100 
+  readyDesc: { fontSize: FontSize.md, color: Colors.muted, textAlign: 'center', lineHeight: 24, marginBottom: Spacing.xl },
+  readySummary: { gap: 12, width: '100%' },
+  readySummaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
   },
-  miniStatEmoji: { fontSize: 24, marginBottom: 4 },
-  miniStatLabel: { fontSize: 10, color: Colors.muted, textTransform: 'uppercase' },
-  miniStatValue: { fontSize: 14, fontWeight: 'bold', color: Colors.text },
+  readySummaryIcon: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  readySummaryText: { fontSize: FontSize.md, color: Colors.text, fontWeight: FontWeight.medium },
   readyFooter: { width: '100%', paddingBottom: Spacing.xl },
 
   // Footer Actions

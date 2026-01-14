@@ -579,6 +579,8 @@
     "appearance": "Appearance",
     "fullOpacityNavbar": "Opaque navigation bar",
     "fullOpacityNavbarDesc": "Disable glassmorphism effect",
+    "showGamificationTab": "Show progression tab",
+    "showGamificationTabDesc": "XP, levels and quests in navigation",
     "onboarding": "View intro again",
     "onboardingDesc": "Show the welcome tutorial again",
     "notifications": "Notifications",

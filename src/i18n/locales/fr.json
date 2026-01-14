@@ -574,6 +574,8 @@
     "appearance": "Apparence",
     "fullOpacityNavbar": "Barre de navigation opaque",
     "fullOpacityNavbarDesc": "Désactiver l'effet glassmorphism",
+    "showGamificationTab": "Afficher l'onglet progression",
+    "showGamificationTabDesc": "XP, niveaux et quêtes dans la navigation",
     "onboarding": "Revoir l'introduction",
     "onboardingDesc": "Réafficher le tutoriel de bienvenue",
     "notifications": "Notifications",

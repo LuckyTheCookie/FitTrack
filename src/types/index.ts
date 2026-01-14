@@ -182,6 +182,7 @@ export interface UserSettings {
   hiddenTabs: {
     tools: boolean;
     workout: boolean;
+    gamification: boolean;
   };
   // Labs settings
   debugCamera?: boolean; // Afficher les points de pose sur la caméra

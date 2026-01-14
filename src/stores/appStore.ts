@@ -111,6 +111,7 @@ const defaultSettings: UserSettings = {
     hiddenTabs: {
         tools: true, // Tools hidden by default
         workout: false,
+        gamification: false,
     },
     debugCamera: false,
     preferCameraDetection: false,
