@@ -22,6 +22,7 @@ export interface FullBackup {
             hiddenTabs: {
                 workout: boolean;
                 tools: boolean;
+                gamification: boolean;
             };
             preferCameraDetection?: boolean;
             debugCamera?: boolean;
@@ -66,7 +67,8 @@ export function generateFullBackup(
                 weeklyGoal: appState.settings?.weeklyGoal ?? 4,
                 hiddenTabs: {
                     workout: appState.settings?.hiddenTabs?.workout ?? false,
-                    tools: appState.settings?.hiddenTabs?.tools ?? false,
+                    tools: appState.settings?.hiddenTabs?.tools ?? true,
+                    gamification: appState.settings?.hiddenTabs?.gamification ?? false,
                 },
                 preferCameraDetection: appState.settings?.preferCameraDetection,
                 debugCamera: appState.settings?.debugCamera,

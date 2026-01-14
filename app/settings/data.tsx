@@ -175,6 +175,7 @@ export default function DataScreen() {
                   hiddenTabs: {
                     workout: backup.app.settings.hiddenTabs?.workout ?? false,
                     tools: backup.app.settings.hiddenTabs?.tools ?? true, // Tools hidden by default
+                    gamification: backup.app.settings.hiddenTabs?.gamification ?? false,
                   },
                   debugCamera: backup.app.settings.debugCamera,
                   preferCameraDetection: backup.app.settings.preferCameraDetection,
