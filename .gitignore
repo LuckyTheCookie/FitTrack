@@ -43,7 +43,7 @@ yarn-error.*
 .env
 google-services.json
 pushgithub.js
-scripts/release.js
+scripts
 .vscode/settings.json
 TODO.md
 /releases
