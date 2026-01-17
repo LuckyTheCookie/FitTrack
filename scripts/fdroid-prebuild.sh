@@ -124,3 +124,20 @@ fi
 rm -f "android/app/google-services.json"
 
 echo "✅ F-Droid prebuild phase complete."
+
+# --- PATCH CRITIQUE POUR F-DROID CLEANER ---
+
+echo "🔧 Patching root directory for Gradle detection..."
+
+cat > settings.gradle <<EOF
+rootProject.name = 'FitTrack-Root'
+include ':android'
+include ':android:app'
+EOF
+
+rm -f settings.gradle # nettoyage au cas où
+touch settings.gradle
+echo "✅ Created empty settings.gradle to satisfy F-Droid cleaner"
+
+touch build.gradle
+
