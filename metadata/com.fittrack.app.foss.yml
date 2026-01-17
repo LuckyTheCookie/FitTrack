@@ -1,0 +1,83 @@
+Categories:
+  - Sports & Health
+License: AGPL-3.0-or-later
+AuthorName: LuckyTheCookie - Lucas THIEBAUT
+AuthorWebSite: https://github.com/LuckyTheCookie
+WebSite: https://fittrack.luckythecookie.dev
+SourceCode: https://github.com/LuckyTheCookie/FitTrack
+IssueTracker: https://github.com/LuckyTheCookie/FitTrack/issues
+Changelog: https://github.com/LuckyTheCookie/FitTrack/releases
+
+Name: FitTrack
+AutoName: FitTrack
+Summary: Privacy-first offline fitness tracker
+
+Description: |-
+  FitTrack is your elegant, privacy-first fitness companion that works 100% offline.
+  
+  <b>PRIVACY & PHILOSOPHY</b>
+  Because your health data belongs to YOU, FitTrack was designed to be completely transparent:
+  * 100% Local & Offline: Works without internet. Your data stays on your device.
+  * Secure Camera: Used only for real-time movement detection in Rep Counter. No images are saved or sent.
+  * Accelerometer Alternative: Privacy-conscious? Use sensor-only mode to count reps without the camera.
+  * Optional Social Features: Social features are completely optional. You stay in control.
+  * Complete Deletion: One-click account deletion removes all your data instantly.
+  * No Data Selling: Never. This is a passion project, not a commercial product.
+  
+  <b>MAIN FEATURES</b>
+  
+  Dashboard & Tracking:
+  * Today Screen: Synthetic view with weekly progress ring and calendar
+  * Complete Tracking: 4 dedicated modes (Home Workout, Running, Meals, Measurements)
+  * History: Full journal with filters and quick deletion
+  * Health Connect (Android): Smart automatic import of your workouts from other apps
+  
+  Intelligent Rep Counter:
+  Put down your phone and let AI work for you:
+  * Detection: Analysis via Camera (local Pose Detection) or Accelerometer
+  * Exercises: Support for Push-ups, Squats, Sit-ups, Jumping Jacks
+  * Feedback: Smooth animations and visual coaching
+  
+  Tools & Gamification:
+  * Workout Generator: Create custom workouts (Duration, Focus, Intensity)
+  * Streak System: Maintain your streak to unlock visual rewards
+  * Badges: 10+ trophies to unlock (From "First Step" to "Legend")
+  * Statistics: Interactive charts to visualize your progress (Weight, Activity)
+  
+  <b>TECH STACK</b>
+  Built with React Native, Expo SDK 54, TypeScript, and local-first architecture using Zustand + MMKV for blazing-fast offline performance.
+  
+  <b>NOTE</b>
+  This is the F-Droid build variant with Firebase removed. The package name used is `com.fittrack.app.foss` to avoid conflicts with the standard version. Social features depending on Supabase are disabled.
+
+
+RepoType: git
+Repo: https://github.com/LuckyTheCookie/FitTrack.git
+# For the binary download URL, please don't remove "foss" tag to avoid downloading standard version!
+Binaries: https://github.com/LuckyTheCookie/FitTrack/releases/download/v%v/FitTrack-%v-foss.apk
+
+Builds:
+  - versionName: '7.2.1'
+    versionCode: 70201
+    commit: v7.2.1
+    subdir: .
+    sudo:
+      - apt-get update
+      - apt-get install -y nodejs npm
+      - npm install -g n
+      - n 20
+      - npm install -g bun
+    prebuild: scripts/fdroid-prebuild.sh
+    gradle: yes
+    output: android/app/build/outputs/apk/release/app-release-unsigned.apk
+    scandelete:
+      - android
+      - node_modules
+    scanignore:
+      - android/build.gradle
+    ndk: r26d
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '7.2.1'
+CurrentVersionCode: 70201
