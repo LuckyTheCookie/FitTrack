@@ -150,40 +150,25 @@ echo "☢️  F-Droid Clean-up : Suppression TOTALE de Google GMS & Firebase..."
 
 cat >> android/build.gradle <<EOF
 
-// Ce bloc s'applique à TOUS les modules (app, vision-camera, expo-notifications, etc.)
 allprojects {
     configurations.all {
-        // Exclusion impitoyable de tout ce qui est Google proprio
         exclude group: 'com.google.firebase'
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
         exclude group: 'com.google.mlkit'
-        
-        // On force aussi la résolution vers des versions vides si jamais ils reviennent
-        resolutionStrategy {
-            eachDependency { DependencyResolveDetails details ->
-                if (details.requested.group == 'com.google.firebase' ||
-                    details.requested.group == 'com.google.android.gms' ||
-                    details.requested.group == 'com.android.installreferrer' ||
-                    details.requested.group == 'com.google.mlkit') {
-                        // On remplace par une dépendance bidon vide ou on rejette
-                        details.useTarget("com.google.guava:guava:99.9-jre") // Hack: remplacer par un truc safe (mais risqué)
-                        // Mieux : Juste laisser l'exclude faire son travail, mais ici on s'assure que subprojects l'ont.
-                }
-            }
-        }
-    }
-    
-    // Désactiver les métadonnées pour tous les sous-projets qui appliquent le plugin android
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                dependenciesInfo {
-                    includeInApk = false
-                    includeInBundle = false
-                }
-            }
-        }
     }
 }
 EOF
+
+cat >> android/app/build.gradle <<EOF
+
+// Désactiver les métadonnées de dépendance (fix 'extra signing block')
+android {
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+}
+EOF
+
+echo "✅ Gradle patched for F-Droid."
