@@ -148,30 +148,42 @@ echo "✅ Created dummy build.gradle with clean task"
 
 echo "☢️  F-Droid Clean-up : Suppression TOTALE de Google GMS & Firebase..."
 
-cat >> android/app/build.gradle <<EOF
+cat >> android/build.gradle <<EOF
 
-// 1. Désactiver les métadonnées (fixe l'erreur 'extra signing block')
-android {
-    dependenciesInfo {
-        includeInApk = false
-        includeInBundle = false
-    }
-}
-
-// 2. Exclusion Radicale des services propriétaires
-configurations {
-    all {
-        // Bye-bye Firebase (Notifications, Analytics, etc.)
+// Ce bloc s'applique à TOUS les modules (app, vision-camera, expo-notifications, etc.)
+allprojects {
+    configurations.all {
+        // Exclusion impitoyable de tout ce qui est Google proprio
         exclude group: 'com.google.firebase'
-        
-        // Bye-bye Google Play Services (Maps, Location, GMS base, ML Kit...)
         exclude group: 'com.google.android.gms'
-        
-        // Bye-bye le tracking d'installation
         exclude group: 'com.android.installreferrer'
+        exclude group: 'com.google.mlkit'
         
-        // Bye-bye les publicités (au cas où)
-        exclude group: 'com.google.android.gms', module: 'play-services-ads-identifier'
+        // On force aussi la résolution vers des versions vides si jamais ils reviennent
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'com.google.firebase' ||
+                    details.requested.group == 'com.google.android.gms' ||
+                    details.requested.group == 'com.android.installreferrer' ||
+                    details.requested.group == 'com.google.mlkit') {
+                        // On remplace par une dépendance bidon vide ou on rejette
+                        details.useTarget("com.google.guava:guava:99.9-jre") // Hack: remplacer par un truc safe (mais risqué)
+                        // Mieux : Juste laisser l'exclude faire son travail, mais ici on s'assure que subprojects l'ont.
+                }
+            }
+        }
+    }
+    
+    // Désactiver les métadonnées pour tous les sous-projets qui appliquent le plugin android
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                dependenciesInfo {
+                    includeInApk = false
+                    includeInBundle = false
+                }
+            }
+        }
     }
 }
 EOF
