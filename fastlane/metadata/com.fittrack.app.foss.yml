@@ -1,0 +1,42 @@
+Categories:
+  - Sports & Health
+License: AGPL-3.0-or-later
+AuthorName: LuckyTheCookie - Lucas THIEBAUT
+AuthorWebSite: https://github.com/LuckyTheCookie
+WebSite: https://fittrack.luckythecookie.dev
+SourceCode: https://github.com/LuckyTheCookie/FitTrack
+IssueTracker: https://github.com/LuckyTheCookie/FitTrack/issues
+Changelog: https://github.com/LuckyTheCookie/FitTrack/releases
+
+Name: FitTrack
+AutoName: FitTrack
+RepoType: git
+Repo: https://github.com/LuckyTheCookie/FitTrack.git
+
+Builds:
+  - versionName: '7.2.2'
+    versionCode: 70202
+    commit: v7.2.2
+    subdir: .
+    sudo:
+      - apt-get update
+      - apt-get install -y nodejs npm
+      - npm install -g n
+      - n 20
+      - npm install -g bun
+    prebuild: scripts/fdroid-prebuild.sh
+    gradle: no
+    build: cd android && ./gradlew assembleRelease
+    
+    output: android/app/build/outputs/apk/release/app-release-unsigned.apk
+    scandelete:
+      - android
+      - node_modules
+    scanignore:
+      - android/build.gradle
+    ndk: r26d
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '7.2.2'
+CurrentVersionCode: 70202

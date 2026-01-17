@@ -1,0 +1,36 @@
+FitTrack est votre compagnon fitness élégant et respectueux de votre vie privée qui fonctionne 100% hors ligne.
+
+VIE PRIVÉE & PHILOSOPHIE
+Parce que vos données de santé vous appartiennent, FitTrack a été pensé pour être totalement transparent :
+• 100% Local & Offline : Fonctionne sans internet. Vos données restent sur votre appareil.
+• Caméra Sécurisée : Utilisée uniquement pour la détection de mouvement en temps réel dans le Rep Counter. Aucune image n'est enregistrée ni envoyée.
+• Alternative Accéléromètre : Soucieux de votre vie privée ? Utilisez le mode "Capteurs uniquement" pour compter vos répétitions sans jamais activer la caméra.
+• Fonctionnalités Sociales Optionnelles : Les fonctionnalités sociales sont complètement facultatives. Vous gardez le contrôle.
+• Suppression Totale : Un bouton supprime instantanément votre compte et toutes vos données associées.
+• Pas de Vente de Données : Jamais. C'est un projet passion, pas un produit commercial.
+
+FONCTIONNALITÉS PRINCIPALES
+
+Tableau de Bord & Suivi
+• Today Screen : Vue synthétique avec anneau de progression hebdo et calendrier
+• Suivi Complet : 4 modes dédiés (Maison, Course, Repas, Mensurations)
+• Historique : Journal complet avec filtres et suppression rapide
+• Health Connect (Android) : Importation automatique et intelligente de vos séances depuis d'autres apps
+
+Rep Counter Intelligent
+Posez votre téléphone et laissez l'IA travailler pour vous :
+• Détection : Analyse via Caméra (Pose Detection locale) ou Accéléromètre
+• Exercices : Support des Pompes, Squats, Abdos, Jumping Jacks
+• Feedback : Animations fluides et coaching visuel
+
+Outils & Gamification
+• Générateur de Séances : Créez des entraînements sur mesure (Durée, Focus, Intensité)
+• Streak System : Maintenez votre série pour débloquer des récompenses visuelles
+• Badges : Plus de 10 trophées à décrocher (Du "Premier Pas" à la "Légende")
+• Statistiques : Graphiques interactifs pour visualiser votre évolution (Poids, Activité)
+
+STACK TECHNIQUE
+Construit avec React Native, Expo SDK 54, TypeScript, et une architecture local-first utilisant Zustand + MMKV pour des performances hors ligne ultra-rapides.
+
+OPEN SOURCE
+FitTrack est open source sous licence AGPL-3.0. Contributions bienvenues !
