@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-# FitTrack F-Droid Prebuild Script
+# ==================================================
+# 🔨 FitTrack F-Droid Prebuild Script
 # Flavor: FOSS (com.fittrack.app.foss)
+# ==================================================
 
 echo "=================================================="
-echo "🔨 FitTrack F-Droid Prebuild Script (FOSS)"
+echo "🚀 Starting F-Droid Prebuild Process"
 echo "=================================================="
 
 # 1. Environment Setup
@@ -17,7 +19,6 @@ ROOT_DIR="$(pwd)"
 
 # 2. Configure app.json for FOSS Package
 echo "📝 Configuring app.json for F-Droid build..."
-# On utilise node pour injecter proprement le package .foss
 node -e "
 const fs = require('fs');
 const appJsonPath = '$ROOT_DIR/app.json';
@@ -32,10 +33,9 @@ if (appJson.expo.android && appJson.expo.android.googleServicesFile) {
   delete appJson.expo.android.googleServicesFile;
 }
 
-// DEFINIR LE PACKAGE NAME FOSS ICI
+// Define FOSS package name
 const fossPackage = 'com.fittrack.app.foss';
 appJson.expo.android.package = fossPackage;
-// On garde le bundle iOS standard (pas pertinent pour F-Droid mais propre)
 appJson.expo.ios.bundleIdentifier = 'com.fittrack.app';
 
 fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
@@ -45,47 +45,29 @@ console.log('✅ app.json updated with package: ' + fossPackage);
 # 3. Install dependencies & Generate Native Code
 echo ""
 echo "📦 Installing dependencies..."
-# NOTE: Sur les serveurs officiels F-Droid, ceci échouera si l'accès réseau est bloqué.
-# Assure-toi que les dépendances sont gérées (vendoring) ou que le serveur autorise le réseau.
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
 bun install --frozen-lockfile
 
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
-# --clean est crucial pour regénérer le dossier android avec le NOUVEAU package name
 bunx expo prebuild --clean --platform android
 
 # 4. Patching Native Files (Dynamic Path Finding)
 echo ""
 echo "🏥 Patching Health Connect configuration..."
-
 ANDROID_MAIN_DIR="android/app/src/main"
 PATCHES_DIR="scripts/android-patches"
 
-# ASTUCE : Puisqu'on a changé le package name en .foss, Expo a probablement 
-# déplacé MainActivity.kt dans un dossier .../foss/. On le cherche dynamiquement.
 MAIN_ACTIVITY_PATH=$(find "$ANDROID_MAIN_DIR/java" -name "MainActivity.kt" | head -n 1)
 
 if [ -f "$MAIN_ACTIVITY_PATH" ]; then
   echo "  📍 Found MainActivity at: $MAIN_ACTIVITY_PATH"
+  CURRENT_PACKAGE_LINE=$(grep "^package " "$MAIN_ACTIVITY_PATH")
   
-  # Copie du patch si disponible
   if [ -f "$PATCHES_DIR/MainActivity.kt.patch" ]; then
-    # Attention: le patch doit avoir le bon "package com.fittrack.app.foss" en haut
-    # Ou alors on copie le contenu. Si ton patch est un fichier complet, 
-    # assure-toi qu'il a la bonne ligne 'package'.
-    # Ici, on assume que ton patch est intelligent ou qu'on écrase.
-    
-    # Sécurité : on lit le package du fichier généré pour le remettre dans le patch si besoin
-    CURRENT_PACKAGE_LINE=$(grep "^package " "$MAIN_ACTIVITY_PATH")
-    
     cp "$PATCHES_DIR/MainActivity.kt.patch" "$MAIN_ACTIVITY_PATH"
-    
-    # On s'assure que la ligne package est correcte dans le fichier final
-    # (Au cas où ton patch aurait l'ancien package 'com.fittrack.app' en dur)
     sed -i "s/^package .*/$CURRENT_PACKAGE_LINE/" "$MAIN_ACTIVITY_PATH"
-    
     echo "  ✅ MainActivity.kt patched successfully"
   fi
 else
@@ -93,28 +75,24 @@ else
   exit 1
 fi
 
-# Copie des autres fichiers (PermissionsRationaleActivity)
-# On les met dans le même dossier que le MainActivity trouvé
 DEST_DIR=$(dirname "$MAIN_ACTIVITY_PATH")
 if [ -f "$PATCHES_DIR/PermissionsRationaleActivity.kt" ]; then
   cp "$PATCHES_DIR/PermissionsRationaleActivity.kt" "$DEST_DIR/PermissionsRationaleActivity.kt"
-  # Fixer le package name dans ce fichier aussi
   CURRENT_PACKAGE_NAME=$(echo "$CURRENT_PACKAGE_LINE" | sed 's/package //;s/;//')
   sed -i "s/^package .*/package $CURRENT_PACKAGE_NAME/" "$DEST_DIR/PermissionsRationaleActivity.kt"
   echo "  ✅ PermissionsRationaleActivity.kt copied and package updated"
 fi
 
-# 5. Patch AndroidManifest (Health Connect)
-# On utilise le script JS s'il existe, sinon fallback
+# 5. Patch AndroidManifest
 MANIFEST_PATH="$ANDROID_MAIN_DIR/AndroidManifest.xml"
 if [ -f "scripts/patch-health-connect.js" ]; then
   node "scripts/patch-health-connect.js" "$MANIFEST_PATH"
   echo "  ✅ AndroidManifest.xml patched via script"
 fi
 
-# 6. Cleanup Google Services
+# 6. Cleanup Google Services from Gradle
 echo ""
-echo "🧹 Ensuring Google Services are gone..."
+echo "🧹 Cleaning up Google Services references..."
 if [ -f "android/build.gradle" ]; then
   sed -i "/com\.google\.gms:google-services/d" "android/build.gradle"
 fi
@@ -123,46 +101,36 @@ if [ -f "android/app/build.gradle" ]; then
 fi
 rm -f "android/app/google-services.json"
 
-echo "✅ F-Droid prebuild phase complete."
+# ==================================================
+# ☢️  SECTION CRITIQUE : PATCHING F-DROID / GOOGLE
+# ==================================================
 
-# --- PATCH CRITIQUE POUR F-DROID CLEANER ---
+echo "--------------------------------------------------"
+echo "🔧 Patching Gradle for F-Droid Compliance"
+echo "--------------------------------------------------"
 
-
-echo "🔧 Patching root directory for Gradle detection..."
-
-# Création du settings.gradle (déjà fait, on garde)
-rm -f settings.gradle
-touch settings.gradle
-
-# CRITIQUE : Création d'un build.gradle avec une tâche clean fictive
-cat > build.gradle <<EOF
-// Fichier généré pour satisfaire le cleaner F-Droid
-task clean {
-    doLast {
-        println "Clean dummy task executed"
-    }
-}
-EOF
-
-echo "✅ Created dummy build.gradle with clean task"
-
-echo "☢️  F-Droid Clean-up : Suppression TOTALE de Google GMS & Firebase..."
-
+# 7. Patching Gradle Exclusion (Suppression TOTALE de Google)
+# On écrit dans le fichier RACINE pour affecter TOUS les modules
 cat >> android/build.gradle <<EOF
 
+// F-Droid Patch: Global Exclusion of Proprietary Libraries
 allprojects {
     configurations.all {
         exclude group: 'com.google.firebase'
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
+        // On exclut ML Kit globalement
         exclude group: 'com.google.mlkit'
     }
 }
 EOF
+echo "  ✅ Added Global Excludes to android/build.gradle"
 
+# 8. Patching App Gradle (Metadata)
+# On écrit dans le fichier APP pour les options Android
 cat >> android/app/build.gradle <<EOF
 
-// Désactiver les métadonnées de dépendance (fix 'extra signing block')
+// F-Droid Patch: Disable dependency metadata (extra signing block error)
 android {
     dependenciesInfo {
         includeInApk = false
@@ -170,5 +138,56 @@ android {
     }
 }
 EOF
+echo "  ✅ Disabled dependenciesInfo in android/app/build.gradle"
 
-echo "✅ Gradle patched for F-Droid."
+# 9. SABOTAGE de Vision Camera (Fix Compilation Error)
+echo "--------------------------------------------------"
+echo "🔪 Patching Vision Camera Source Code (Removing ML Kit)"
+echo "--------------------------------------------------"
+
+VC_PATH="node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera"
+
+# A. Suppression des fichiers qui ne servent qu'au scanner
+rm -f "$VC_PATH/core/CodeScannerPipeline.kt"
+rm -f "$VC_PATH/core/types/CodeType.kt"
+
+# B. Nettoyage de CameraSession.kt
+if [ -f "$VC_PATH/core/CameraSession.kt" ]; then
+    sed -i 's/import com.mrousavy.camera.core.CodeScannerPipeline/\/\/ import com.mrousavy.camera.core.CodeScannerPipeline/' "$VC_PATH/core/CameraSession.kt"
+    sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit.vision.barcode.common.Barcode/' "$VC_PATH/core/CameraSession.kt"
+    sed -i 's/private var codeScannerPipeline: CodeScannerPipeline? = null/private var codeScannerPipeline: Any? = null/' "$VC_PATH/core/CameraSession.kt"
+    sed -i 's/codeScannerPipeline = CodeScannerPipeline/codeScannerPipeline = null \/\/ CodeScannerPipeline/' "$VC_PATH/core/CameraSession.kt"
+    sed -i 's/codeScannerPipeline?.close()/ \/\/ codeScannerPipeline?.close()/' "$VC_PATH/core/CameraSession.kt"
+fi
+
+# C. Nettoyage de CameraView+Events.kt
+if [ -f "$VC_PATH/react/CameraView+Events.kt" ]; then
+    sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit.vision.barcode.common.Barcode/' "$VC_PATH/react/CameraView+Events.kt"
+    sed -i 's/import com.mrousavy.camera.core.types.CodeType/\/\/ import com.mrousavy.camera.core.types.CodeType/' "$VC_PATH/react/CameraView+Events.kt"
+    # Désactivation de la signature de méthode (tricky regex)
+    sed -i 's/fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView+Events.kt"
+    # On commente le corps de la méthode si possible, ou on laisse planter à l'exécution (pas grave on l'appelle pas)
+fi
+
+# D. Nettoyage de CameraView.kt
+if [ -f "$VC_PATH/react/CameraView.kt" ]; then
+    sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit.vision.barcode.common.Barcode/' "$VC_PATH/react/CameraView.kt"
+    sed -i 's/, CodeScannerPipeline.OutputListener//' "$VC_PATH/react/CameraView.kt"
+    sed -i 's/override fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView.kt"
+fi
+
+echo "  ✅ Vision Camera source patched (CodeScanner neutered)"
+
+# 10. Dummy build.gradle for F-Droid Cleaner
+rm -f settings.gradle
+touch settings.gradle
+cat > build.gradle <<EOF
+task clean {
+    doLast {
+        println "Clean dummy task executed"
+    }
+}
+EOF
+
+echo ""
+echo "✅✅ F-Droid prebuild phase COMPLETED successfully."
