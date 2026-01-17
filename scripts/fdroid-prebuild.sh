@@ -146,10 +146,11 @@ EOF
 
 echo "✅ Created dummy build.gradle with clean task"
 
-echo "✂️  Nettoyage F-Droid : Suppression des binaires Google et métadonnées..."
+echo "☢️  F-Droid Clean-up : Suppression TOTALE de Google GMS & Firebase..."
 
 cat >> android/app/build.gradle <<EOF
 
+// 1. Désactiver les métadonnées (fixe l'erreur 'extra signing block')
 android {
     dependenciesInfo {
         includeInApk = false
@@ -157,12 +158,20 @@ android {
     }
 }
 
+// 2. Exclusion Radicale des services propriétaires
 configurations {
     all {
-        // On retire le scanner de code-barres Google qui est inclus par défaut par Vision Camera
-        exclude group: 'com.google.mlkit', module: 'barcode-scanning'
-        exclude group: 'com.google.android.gms', module: 'play-services-mlkit-barcode-scanning'
-        exclude group: 'com.google.android.gms', module: 'play-services-code-scanner'
+        // Bye-bye Firebase (Notifications, Analytics, etc.)
+        exclude group: 'com.google.firebase'
+        
+        // Bye-bye Google Play Services (Maps, Location, GMS base, ML Kit...)
+        exclude group: 'com.google.android.gms'
+        
+        // Bye-bye le tracking d'installation
+        exclude group: 'com.android.installreferrer'
+        
+        // Bye-bye les publicités (au cas où)
+        exclude group: 'com.google.android.gms', module: 'play-services-ads-identifier'
     }
 }
 EOF
