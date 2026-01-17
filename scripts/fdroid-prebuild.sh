@@ -145,3 +145,24 @@ task clean {
 EOF
 
 echo "✅ Created dummy build.gradle with clean task"
+
+echo "✂️  Nettoyage F-Droid : Suppression des binaires Google et métadonnées..."
+
+cat >> android/app/build.gradle <<EOF
+
+android {
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+}
+
+configurations {
+    all {
+        // On retire le scanner de code-barres Google qui est inclus par défaut par Vision Camera
+        exclude group: 'com.google.mlkit', module: 'barcode-scanning'
+        exclude group: 'com.google.android.gms', module: 'play-services-mlkit-barcode-scanning'
+        exclude group: 'com.google.android.gms', module: 'play-services-code-scanner'
+    }
+}
+EOF
