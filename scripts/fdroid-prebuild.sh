@@ -127,17 +127,21 @@ echo "✅ F-Droid prebuild phase complete."
 
 # --- PATCH CRITIQUE POUR F-DROID CLEANER ---
 
+
 echo "🔧 Patching root directory for Gradle detection..."
 
-cat > settings.gradle <<EOF
-rootProject.name = 'FitTrack-Root'
-include ':android'
-include ':android:app'
+# Création du settings.gradle (déjà fait, on garde)
+rm -f settings.gradle
+touch settings.gradle
+
+# CRITIQUE : Création d'un build.gradle avec une tâche clean fictive
+cat > build.gradle <<EOF
+// Fichier généré pour satisfaire le cleaner F-Droid
+task clean {
+    doLast {
+        println "Clean dummy task executed"
+    }
+}
 EOF
 
-rm -f settings.gradle # nettoyage au cas où
-touch settings.gradle
-echo "✅ Created empty settings.gradle to satisfy F-Droid cleaner"
-
-touch build.gradle
-
+echo "✅ Created dummy build.gradle with clean task"
