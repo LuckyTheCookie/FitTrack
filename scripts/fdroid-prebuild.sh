@@ -109,74 +109,68 @@ echo "--------------------------------------------------"
 echo "🔧 Patching Gradle for F-Droid Compliance"
 echo "--------------------------------------------------"
 
-# 7. Patching Gradle Exclusion (Suppression TOTALE de Google)
-# On écrit dans le fichier RACINE pour affecter TOUS les modules
-cat >> android/build.gradle <<EOF
-
-// F-Droid Patch: Global Exclusion of Proprietary Libraries
-allprojects {
-    configurations.all {
-        exclude group: 'com.google.firebase'
-        exclude group: 'com.google.android.gms'
-        exclude group: 'com.android.installreferrer'
-        // On exclut ML Kit globalement
-        exclude group: 'com.google.mlkit'
-    }
-}
-EOF
-echo "  ✅ Added Global Excludes to android/build.gradle"
-
-# 8. Patching App Gradle (Metadata)
-# On écrit dans le fichier APP pour les options Android
-cat >> android/app/build.gradle <<EOF
-
-// F-Droid Patch: Disable dependency metadata (extra signing block error)
-android {
-    dependenciesInfo {
-        includeInApk = false
-        includeInBundle = false
-    }
-}
-EOF
-echo "  ✅ Disabled dependenciesInfo in android/app/build.gradle"
-
-# 9. SABOTAGE de Vision Camera (Fix Compilation Error)
-echo "--------------------------------------------------"
-echo "🔪 Patching Vision Camera Source Code (Removing ML Kit)"
-echo "--------------------------------------------------"
 
 VC_PATH="node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera"
 
-# A. Suppression des fichiers qui ne servent qu'au scanner
-rm -f "$VC_PATH/core/CodeScannerPipeline.kt"
-rm -f "$VC_PATH/core/types/CodeType.kt"
+# A. On réécrit CodeScannerPipeline.kt avec une coquille vide
+cat > "$VC_PATH/core/CodeScannerPipeline.kt" <<EOF
+package com.mrousavy.camera.core
+import android.util.Size
+import com.mrousavy.camera.core.types.CodeScannerOptions
 
-# B. Nettoyage de CameraSession.kt
-if [ -f "$VC_PATH/core/CameraSession.kt" ]; then
-    sed -i 's/import com.mrousavy.camera.core.CodeScannerPipeline/\/\/ import com.mrousavy.camera.core.CodeScannerPipeline/' "$VC_PATH/core/CameraSession.kt"
-    sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit.vision.barcode.common.Barcode/' "$VC_PATH/core/CameraSession.kt"
-    sed -i 's/private var codeScannerPipeline: CodeScannerPipeline? = null/private var codeScannerPipeline: Any? = null/' "$VC_PATH/core/CameraSession.kt"
-    sed -i 's/codeScannerPipeline = CodeScannerPipeline/codeScannerPipeline = null \/\/ CodeScannerPipeline/' "$VC_PATH/core/CameraSession.kt"
-    sed -i 's/codeScannerPipeline?.close()/ \/\/ codeScannerPipeline?.close()/' "$VC_PATH/core/CameraSession.kt"
-fi
+class CodeScannerPipeline(val options: CodeScannerOptions, val outputListener: OutputListener) {
+    interface OutputListener {
+        fun onCodeScanned(codes: List<Any>, scannerFrame: Any)
+    }
+    fun close() {}
+}
+EOF
 
-# C. Nettoyage de CameraView+Events.kt
-if [ -f "$VC_PATH/react/CameraView+Events.kt" ]; then
-    sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit.vision.barcode.common.Barcode/' "$VC_PATH/react/CameraView+Events.kt"
-    sed -i 's/import com.mrousavy.camera.core.types.CodeType/\/\/ import com.mrousavy.camera.core.types.CodeType/' "$VC_PATH/react/CameraView+Events.kt"
-    # Désactivation de la signature de méthode (tricky regex)
-    sed -i 's/fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView+Events.kt"
-    # On commente le corps de la méthode si possible, ou on laisse planter à l'exécution (pas grave on l'appelle pas)
-fi
+# B. On réécrit CodeType.kt pour retirer les références ML Kit mais garder l'enum
+cat > "$VC_PATH/core/types/CodeType.kt" <<EOF
+package com.mrousavy.camera.core.types
+enum class CodeType(override val unionValue: String): JSUnionValue {
+    CODE_128("code-128"),
+    CODE_39("code-39"),
+    CODE_93("code-93"),
+    CODABAR("codabar"),
+    EAN_13("ean-13"),
+    EAN_8("ean-8"),
+    ITF("itf"),
+    UPC_E("upc-e"),
+    QR_CODE("qr"),
+    PDF_417("pdf-417"),
+    AZTEC("aztec"),
+    DATA_MATRIX("data-matrix");
 
-# D. Nettoyage de CameraView.kt
-if [ -f "$VC_PATH/react/CameraView.kt" ]; then
-    sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit.vision.barcode.common.Barcode/' "$VC_PATH/react/CameraView.kt"
-    sed -i 's/, CodeScannerPipeline.OutputListener//' "$VC_PATH/react/CameraView.kt"
-    sed -i 's/override fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView.kt"
-fi
+    fun toBarcodeType(): Int = 0 
+    
+    companion object {
+        fun fromBarcodeType(barcodeType: Int): CodeType = QR_CODE
+    }
+}
+interface JSUnionValue {
+    val unionValue: String
+}
+EOF
 
-echo "  ✅ Vision Camera source patched (CodeScanner neutered)"
+# C. Patch de CameraSession.kt
+# On commente l'import réel de Barcode s'il existe
+sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit/' "$VC_PATH/core/CameraSession.kt"
+# On remplace l'usage réel par du code mort
+sed -i 's/codeScannerPipeline = CodeScannerPipeline.*/codeScannerPipeline = null \/\/ Disabled for FOSS/' "$VC_PATH/core/CameraSession.kt"
+
+# D. Patch de CameraView+Events.kt
+# On remplace les types List<Barcode> par List<Any> pour calmer le compilateur
+sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit/' "$VC_PATH/react/CameraView+Events.kt"
+sed -i 's/fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView+Events.kt"
+
+# E. Patch de CameraView.kt
+# Idem, on change la signature pour matcher notre interface modifiée dans CodeScannerPipeline
+sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit/' "$VC_PATH/react/CameraView.kt"
+sed -i 's/override fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/override fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView.kt"
+
+echo "  ✅ Vision Camera source patched (CodeScanner stubbed)"
 
 # 10. Dummy build.gradle for F-Droid Cleaner
 rm -f settings.gradle
