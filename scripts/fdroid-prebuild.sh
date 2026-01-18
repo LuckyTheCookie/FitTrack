@@ -36,8 +36,29 @@ const fossPackage = 'com.fittrack.app.foss';
 appJson.expo.android.package = fossPackage;
 appJson.expo.ios.bundleIdentifier = 'com.fittrack.app';
 
+// CRITICAL: Remove expo-notifications and expo-application plugins
+if (appJson.expo.plugins) {
+  const originalPlugins = appJson.expo.plugins.length;
+  appJson.expo.plugins = appJson.expo.plugins.filter(plugin => {
+    // Handle string plugins
+    if (typeof plugin === 'string') {
+      return plugin !== 'expo-notifications' && plugin !== 'expo-application';
+    }
+    // Handle array plugins [pluginName, options]
+    if (Array.isArray(plugin)) {
+      return plugin[0] !== 'expo-notifications' && plugin[0] !== 'expo-application';
+    }
+    return true;
+  });
+  
+  const removed = originalPlugins - appJson.expo.plugins.length;
+  if (removed > 0) {
+    console.log('✅ Removed ' + removed + ' Firebase-related plugin(s) from app.json');
+  }
+}
+
 fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
-console.log('✅ app.json updated with package: ' + fossPackage);
+console.log('✅ app.json configured for FOSS build (package: ' + fossPackage + ')');
 "
 
 # ==================================================
@@ -228,7 +249,6 @@ echo "🔧 Fixing MediaPipe to work with Vision Camera V4 TurboModules..."
 MEDIAPIPE_BUILD="node_modules/react-native-mediapipe-posedetection/android/build.gradle"
 
 if [ -f "$MEDIAPIPE_BUILD" ]; then
-    # Backup original
     cp "$MEDIAPIPE_BUILD" "$MEDIAPIPE_BUILD.backup"
     
     echo "  🔧 Adding Vision Camera + Worklets dependencies to MediaPipe..."
@@ -240,22 +260,17 @@ if [ -f "$MEDIAPIPE_BUILD" ]; then
 // ==================================================
 
 dependencies {
-    // Vision Camera V4 classes are generated via TurboModules
     implementation project(':react-native-vision-camera')
-    // Frame processor classes come from Worklets
     implementation project(':react-native-worklets-core')
 }
 
-// Force MediaPipe to compile AFTER Vision Camera classes are generated
 tasks.configureEach { task ->
     if (task.name.contains("compileKotlin")) {
-        // Wait for Vision Camera codegen to finish
         def visionCameraCodegen = tasks.findByPath(":react-native-vision-camera:generateCodegenArtifactsFromSchema")
         if (visionCameraCodegen != null) {
             task.dependsOn(visionCameraCodegen)
         }
         
-        // Wait for Vision Camera to compile first
         def visionCameraCompile = tasks.findByPath(":react-native-vision-camera:compileReleaseKotlin")
         if (visionCameraCompile != null) {
             task.dependsOn(visionCameraCompile)
@@ -267,7 +282,6 @@ GRADLE_PATCH
     
     echo "  ✅ MediaPipe build.gradle patched"
     
-    # S'assurer que Vision Camera est enregistré dans settings.gradle
     SETTINGS_GRADLE="android/settings.gradle"
     if [ -f "$SETTINGS_GRADLE" ]; then
         if ! grep -q "react-native-vision-camera" "$SETTINGS_GRADLE"; then
@@ -280,8 +294,6 @@ include ':react-native-vision-camera'
 project(':react-native-vision-camera').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-vision-camera/android')
 EOF
             echo "  ✅ Vision Camera registered in settings.gradle"
-        else
-            echo "  ℹ️  Vision Camera already in settings.gradle"
         fi
     fi
 else
@@ -310,19 +322,11 @@ echo "✅ F-Droid prebuild COMPLETED - 100% FOSS"
 echo "=================================================="
 echo ""
 echo "🔍 Applied changes:"
-echo "  ✅ expo-notifications REMOVED (no push notifications)"
-echo "  ✅ expo-application REMOVED (no install referrer)"
+echo "  ✅ expo-notifications plugin removed from app.json"
+echo "  ✅ expo-notifications package removed from dependencies"
+echo "  ✅ expo-application package removed from dependencies"
 echo "  ✅ NO STUBS created (nothing to detect)"
 echo "  ✅ Gradle exclusions configured"
 echo "  ✅ Vision Camera FOSS fork integrated"
 echo ""
-echo "⚠️  F-Droid build will NOT have:"
-echo "  ❌ Push notifications (Firebase)"
-echo "  ❌ Application info APIs (InstallReferrer)"
-echo ""
-echo "✅ F-Droid build WILL have:"
-echo "  ✅ Camera (FOSS fork)"
-echo "  ✅ Health Connect"
-echo "  ✅ All other features"
-echo ""
-echo "🚀 Ready for F-Droid build!"
+echo "🚀 Ready for F-Droid build - 0 Firebase code!"
