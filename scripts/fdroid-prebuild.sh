@@ -4,7 +4,7 @@ set -e
 # ==================================================
 # 🔨 Spix F-Droid Prebuild Script
 # Flavor: FOSS (com.spix.app.foss)
-# Method: LOCAL FILE STUBS (Robust)
+# Fix: Exclude Encoders & Proto (F-Droid compliance)
 # ==================================================
 
 echo "=================================================="
@@ -32,7 +32,6 @@ if (appJson.expo.android && appJson.expo.android.googleServicesFile) {
   delete appJson.expo.android.googleServicesFile;
 }
 
-// ✅ Correct Package Name
 const fossPackage = 'com.spix.app.foss';
 appJson.expo.android.package = fossPackage;
 appJson.expo.ios.bundleIdentifier = 'com.spix.app';
@@ -100,7 +99,7 @@ export function addNotificationResponseReceivedListener(listener: any): { remove
 export function removeNotificationSubscription(subscription: any): void;
 EOF
 
-# Stub: expo-application (✅ Correct Package Name)
+# Stub: expo-application
 cat > stubs/expo-application/package.json <<'EOF'
 {
   "name": "expo-application",
@@ -168,7 +167,7 @@ echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 bunx expo prebuild --clean --platform android
 
 # ==================================================
-# 🔥 CLEANUP: Ensure no native modules linked for stubs
+# 🔥 CLEANUP: Native modules
 # ==================================================
 echo ""
 echo "🔥 Verifying native cleanup..."
@@ -220,18 +219,26 @@ if [ -f "android/app/build.gradle" ]; then
 fi
 rm -f "android/app/google-services.json"
 
-# 7. Patching Gradle for F-Droid Compliance
+# 7. Patching Gradle (AGGRESSIVE MODE)
 echo ""
-echo "🔧 Patching Gradle (Simplified Exclusions)..."
+echo "🔧 Patching Gradle (Aggressive Exclusions + PickFirst)..."
 
 cat >> android/build.gradle <<'EOF'
 allprojects {
     configurations.all {
+        // GLOBAL BLOCKLIST
         exclude group: 'com.google.firebase'
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
         exclude group: 'com.google.mlkit'
-        // Simplified exclusions to avoid packaging errors
+        
+        // AGGRESSIVE: Remove Transport & Encoders (source of the 9 problems)
+        exclude group: 'com.google.android.datatransport'
+        exclude module: 'firebase-encoders-proto'
+        exclude module: 'firebase-encoders'
+        exclude module: 'firebase-encoders-json'
+        exclude module: 'transport-runtime'
+        exclude module: 'transport-api'
     }
 }
 EOF
@@ -243,21 +250,35 @@ android {
         includeInBundle = false
     }
     packagingOptions {
-        // Fix for duplicates/conflicts (libc++_shared.so)
+        // FIX: Prevent 'IncrementalSplitterRunnable' crash
         pickFirst 'lib/x86/libc++_shared.so'
         pickFirst 'lib/x86_64/libc++_shared.so'
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        
+        // FIX: Prevent Duplicate Class errors if stubs conflict
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
     }
 }
 configurations.all {
+    // REPEAT EXCLUSIONS FOR APP CONFIGURATION
     exclude group: 'com.google.firebase'
     exclude group: 'com.google.android.gms'
     exclude group: 'com.android.installreferrer'
+    exclude group: 'com.google.android.datatransport'
+    exclude module: 'firebase-encoders-proto'
+    exclude module: 'firebase-encoders'
 }
 EOF
 
-echo "  ✅ Gradle patched"
+echo "  ✅ Gradle patched (Encoders aggressively removed)"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -300,10 +321,10 @@ EOF
 fi
 
 # ==================================================
-# 🧹 FINAL CLEANUP before build
+# 🧹 FINAL CLEANUP
 # ==================================================
 echo ""
-echo "🧹 Final cleanup to prevent packaging errors..."
+echo "🧹 Final cleanup..."
 rm -rf android/app/build/intermediates
 rm -rf android/app/build/generated/res/google-services
 rm -rf android/app/src/main/assets/index.android.bundle
@@ -326,4 +347,6 @@ echo ""
 echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
+echo "  ✅ Aggressive Exclusions: firebase-encoders-proto, transport-runtime"
+echo "  ✅ Crash Fix: pickFirst libc++_shared.so"
 echo "🚀 Ready for F-Droid build!"
