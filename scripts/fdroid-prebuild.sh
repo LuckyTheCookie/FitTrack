@@ -8,7 +8,7 @@ set -e
 # ==================================================
 
 echo "=================================================="
-echo "🚀 Starting F-Droid Prebuild Process"
+echo "🚀 Starting F-Droid Prebuild Process (Spix)"
 echo "=================================================="
 
 # 1. Environment Setup
@@ -32,6 +32,7 @@ if (appJson.expo.android && appJson.expo.android.googleServicesFile) {
   delete appJson.expo.android.googleServicesFile;
 }
 
+// ✅ Correct Package Name
 const fossPackage = 'com.spix.app.foss';
 appJson.expo.android.package = fossPackage;
 appJson.expo.ios.bundleIdentifier = 'com.spix.app';
@@ -99,7 +100,7 @@ export function addNotificationResponseReceivedListener(listener: any): { remove
 export function removeNotificationSubscription(subscription: any): void;
 EOF
 
-# Stub: expo-application
+# Stub: expo-application (✅ Correct Package Name)
 cat > stubs/expo-application/package.json <<'EOF'
 {
   "name": "expo-application",
@@ -147,7 +148,6 @@ if (packageJson.dependencies['react-native-vision-camera']) {
 }
 
 // 2. Use Local Stubs
-// IMPORTANT: bun/npm will install from these folders
 packageJson.dependencies['expo-notifications'] = 'file:./stubs/expo-notifications';
 packageJson.dependencies['expo-application'] = 'file:./stubs/expo-application';
 console.log('✅ expo-notifications -> file:./stubs/expo-notifications');
@@ -172,8 +172,6 @@ bunx expo prebuild --clean --platform android
 # ==================================================
 echo ""
 echo "🔥 Verifying native cleanup..."
-# Autolinking should skip stubs because they have no android/ folder
-# But we double check:
 rm -rf android/app/src/main/java/expo/modules/notifications
 rm -rf android/app/src/main/java/expo/modules/application
 echo "  ✅ Native code verification complete"
@@ -224,7 +222,7 @@ rm -f "android/app/google-services.json"
 
 # 7. Patching Gradle for F-Droid Compliance
 echo ""
-echo "🔧 Patching Gradle (Aggressive Exclusions)..."
+echo "🔧 Patching Gradle (Simplified Exclusions)..."
 
 cat >> android/build.gradle <<'EOF'
 allprojects {
@@ -233,9 +231,7 @@ allprojects {
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
         exclude group: 'com.google.mlkit'
-        exclude group: 'com.google.android.datatransport'
-        exclude module: 'firebase-encoders-proto'
-        exclude module: 'firebase-encoders'
+        // Simplified exclusions to avoid packaging errors
     }
 }
 EOF
@@ -246,16 +242,22 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+    packagingOptions {
+        // Fix for duplicates/conflicts (libc++_shared.so)
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    }
 }
 configurations.all {
     exclude group: 'com.google.firebase'
     exclude group: 'com.google.android.gms'
     exclude group: 'com.android.installreferrer'
-    exclude group: 'com.google.android.datatransport'
 }
 EOF
 
-echo "  ✅ Gradle patched (Transport & Encoders excluded)"
+echo "  ✅ Gradle patched"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -297,6 +299,16 @@ EOF
     fi
 fi
 
+# ==================================================
+# 🧹 FINAL CLEANUP before build
+# ==================================================
+echo ""
+echo "🧹 Final cleanup to prevent packaging errors..."
+rm -rf android/app/build/intermediates
+rm -rf android/app/build/generated/res/google-services
+rm -rf android/app/src/main/assets/index.android.bundle
+echo "  ✅ Intermediates cleaned"
+
 # 8. Dummy build.gradle
 echo ""
 echo "🧹 Creating dummy Gradle files..."
@@ -312,10 +324,6 @@ EOF
 
 echo ""
 echo "=================================================="
-echo "✅ F-Droid prebuild COMPLETED"
+echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
-echo "  ✅ Modules replaced by local stubs (expo-notifications, expo-application)"
-echo "  ✅ Dependencies installed from ./stubs/"
-echo "  ✅ Source code imports preserved (Metro resolves to stubs)"
-echo "  ✅ Gradle configured to exclude Transport & Encoders"
 echo "🚀 Ready for F-Droid build!"
