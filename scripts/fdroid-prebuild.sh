@@ -42,13 +42,39 @@ fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
 console.log('✅ app.json updated with package: ' + fossPackage);
 "
 
+# ==================================================
+# 📦 FOSS DEPENDENCIES: Use FOSS Vision Camera Fork
+# ==================================================
+echo ""
+echo "📦 Patching package.json to use FOSS Vision Camera fork..."
+node -e "
+const fs = require('fs');
+const packageJsonPath = '$ROOT_DIR/package.json';
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+// Replace react-native-vision-camera with FOSS fork
+// The FOSS fork has Google ML Kit removed for F-Droid compliance
+const fossVisionCamera = 'github:LuckyTheCookie/react-native-vision-camera-foss';
+if (packageJson.dependencies && packageJson.dependencies['react-native-vision-camera']) {
+  const originalVersion = packageJson.dependencies['react-native-vision-camera'];
+  packageJson.dependencies['react-native-vision-camera'] = fossVisionCamera;
+  console.log('✅ react-native-vision-camera: ' + originalVersion + ' → ' + fossVisionCamera);
+} else {
+  console.log('⚠️  react-native-vision-camera not found in dependencies');
+}
+
+fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
+"
+
 # 3. Install dependencies & Generate Native Code
 echo ""
-echo "📦 Installing dependencies..."
+echo "📦 Installing dependencies (with FOSS Vision Camera)..."
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
-bun install --frozen-lockfile
+# Remove lockfile to allow GitHub dependency resolution
+rm -f bun.lockb
+bun install
 
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 bunx expo prebuild --clean --platform android
@@ -101,78 +127,43 @@ if [ -f "android/app/build.gradle" ]; then
 fi
 rm -f "android/app/google-services.json"
 
-# ==================================================
-# ☢️  SECTION CRITIQUE : PATCHING F-DROID / GOOGLE
-# ==================================================
-
 echo "--------------------------------------------------"
 echo "🔧 Patching Gradle for F-Droid Compliance"
 echo "--------------------------------------------------"
 
+# Exclusion globale des dépendances propriétaires
+cat >> android/build.gradle <<EOF
 
-VC_PATH="node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera"
-
-# A. On réécrit CodeScannerPipeline.kt avec une coquille vide
-cat > "$VC_PATH/core/CodeScannerPipeline.kt" <<EOF
-package com.mrousavy.camera.core
-import android.util.Size
-import com.mrousavy.camera.core.types.CodeScannerOptions
-
-class CodeScannerPipeline(val options: CodeScannerOptions, val outputListener: OutputListener) {
-    interface OutputListener {
-        fun onCodeScanned(codes: List<Any>, scannerFrame: Any)
+// F-Droid Patch: Global Exclusion of Proprietary Libraries
+allprojects {
+    configurations.all {
+        exclude group: 'com.google.firebase'
+        exclude group: 'com.google.android.gms'
+        exclude group: 'com.android.installreferrer'
+        exclude group: 'com.google.mlkit'
     }
-    fun close() {}
 }
 EOF
 
-# B. On réécrit CodeType.kt pour retirer les références ML Kit mais garder l'enum
-cat > "$VC_PATH/core/types/CodeType.kt" <<EOF
-package com.mrousavy.camera.core.types
-enum class CodeType(override val unionValue: String): JSUnionValue {
-    CODE_128("code-128"),
-    CODE_39("code-39"),
-    CODE_93("code-93"),
-    CODABAR("codabar"),
-    EAN_13("ean-13"),
-    EAN_8("ean-8"),
-    ITF("itf"),
-    UPC_E("upc-e"),
-    QR_CODE("qr"),
-    PDF_417("pdf-417"),
-    AZTEC("aztec"),
-    DATA_MATRIX("data-matrix");
+# Désactivation des métadonnées
+cat >> android/app/build.gradle <<EOF
 
-    fun toBarcodeType(): Int = 0 
-    
-    companion object {
-        fun fromBarcodeType(barcodeType: Int): CodeType = QR_CODE
+// F-Droid Patch: Disable dependency metadata
+android {
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
-}
-interface JSUnionValue {
-    val unionValue: String
 }
 EOF
 
-# C. Patch de CameraSession.kt
-# On commente l'import réel de Barcode s'il existe
-sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit/' "$VC_PATH/core/CameraSession.kt"
-# On remplace l'usage réel par du code mort
-sed -i 's/codeScannerPipeline = CodeScannerPipeline.*/codeScannerPipeline = null \/\/ Disabled for FOSS/' "$VC_PATH/core/CameraSession.kt"
+echo "  ✅ Gradle patched for F-Droid compliance"
 
-# D. Patch de CameraView+Events.kt
-# On remplace les types List<Barcode> par List<Any> pour calmer le compilateur
-sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit/' "$VC_PATH/react/CameraView+Events.kt"
-sed -i 's/fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView+Events.kt"
 
-# E. Patch de CameraView.kt
-# Idem, on change la signature pour matcher notre interface modifiée dans CodeScannerPipeline
-sed -i 's/import com.google.mlkit.vision.barcode.common.Barcode/\/\/ import com.google.mlkit/' "$VC_PATH/react/CameraView.kt"
-sed -i 's/override fun onCodeScanned(codes: List<Barcode>, scannerFrame: CodeScannerFrame)/override fun onCodeScanned(codes: List<Any>, scannerFrame: Any)/' "$VC_PATH/react/CameraView.kt"
+echo ""
+echo "📸 Vision Camera FOSS: Using pre-patched fork (no runtime patches needed)"
 
-echo "  ✅ Vision Camera source patched (CodeScanner stubbed)"
-
-# 10. Dummy build.gradle for F-Droid Cleaner
+# 7. Dummy build.gradle for F-Droid Cleaner
 rm -f settings.gradle
 touch settings.gradle
 cat > build.gradle <<EOF
