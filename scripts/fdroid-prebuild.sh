@@ -358,8 +358,7 @@ configurations.all {
     exclude group: 'com.android.installreferrer'
 }
 
-// Force exclude from runtime classpath
-configurations.runtimeClasspath {
+configurations.configureEach {
     exclude group: 'com.google.firebase'
     exclude group: 'com.google.android.gms'
     exclude group: 'com.android.installreferrer'
