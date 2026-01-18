@@ -17,6 +17,9 @@ import { useTranslation } from 'react-i18next';
 import type { Entry, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry, CustomSportEntry, SportConfig } from '../../types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants';
 import { useSportsConfig } from '../../stores';
+import { GlassCard } from './GlassCard';
+import { Sparkles, Check } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface EntryDetailModalProps {
   entry: Entry | null;
@@ -156,10 +159,32 @@ function BeatSaberDetails({ entry }: { entry: BeatSaberEntry }) {
 }
 
 function MealDetails({ entry }: { entry: MealEntry }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.details}>
-      <Text style={styles.mealName}>{entry.mealName}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={styles.mealName}>{entry.mealName}</Text>
+      </View>
       <Text style={styles.mealDescription}>{entry.description}</Text>
+      {entry.suggestions && entry.suggestions.length > 0 && (
+        <GlassCard style={styles.suggestionsCard}>
+          <View style={styles.suggestionsHeader}>
+            <View style={styles.suggestionsIconWrap}>
+              <Sparkles size={16} color={Colors.cta} />
+            </View>
+            <Text style={styles.suggestionsTitle}>{t('enhancedMeal.suggestions')}</Text>
+          </View>
+
+          {entry.suggestions.map((s, i) => (
+            <View key={i} style={styles.suggestionItem}>
+              <View style={styles.suggestionBullet}>
+                <Check size={12} color="#fff" />
+              </View>
+              <Text style={styles.suggestionText}>{s}</Text>
+            </View>
+          ))}
+        </GlassCard>
+      )}
     </View>
   );
 }
@@ -307,6 +332,15 @@ export function EntryDetailModal({
     );
   };
 
+  // Gradient helper for score (matches EnhancedMeal colors)
+  const getScoreGradient = (score: number): [string, string] => {
+    if (score >= 85) return ['#22c55e', '#16a34a'];
+    if (score >= 70) return ['#84cc16', '#65a30d'];
+    if (score >= 50) return ['#eab308', '#ca8a04'];
+    if (score >= 30) return ['#f97316', '#ea580c'];
+    return ['#ef4444', '#dc2626'];
+  };
+
   return (
     <Modal
       visible={visible}
@@ -324,8 +358,23 @@ export function EntryDetailModal({
 
           {/* Content */}
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <Text style={styles.date}>{formatDate(entry.date)}</Text>
-            <Text style={styles.time}>à {formatTime(entry.createdAt)}</Text>
+            <View style={styles.metaRow}>
+              <View>
+                <Text style={styles.date}>{formatDate(entry.date)}</Text>
+                <Text style={styles.time}>à {formatTime(entry.createdAt)}</Text>
+              </View>
+
+              {entry.type === 'meal' && (entry as MealEntry).score !== undefined && (
+                <LinearGradient
+                  colors={getScoreGradient((entry as MealEntry).score!)}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.detailScoreGradient}
+                >
+                  <Text style={styles.detailScoreText}>{(entry as MealEntry).score}/100</Text>
+                </LinearGradient>
+              )}
+            </View>
 
             {entry.type === 'home' && <HomeWorkoutDetails entry={entry} />}
             {entry.type === 'run' && <RunDetails entry={entry} />}
@@ -497,7 +546,83 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.overlay,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
+    marginTop: Spacing.sm,
   },
+
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+
+  // Score badge inside modal
+  detailScoreGradient: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.xl,
+    minWidth: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  detailScoreText: {
+    color: '#fff',
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.md,
+  },
+
+  // Suggestions card
+  suggestionsCard: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  suggestionsIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(139,92,246,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  suggestionsTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  suggestionBullet: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.cta,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.muted,
+    lineHeight: 20,
+  },
+
   measureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

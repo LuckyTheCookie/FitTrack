@@ -737,7 +737,39 @@
     "skipSensorSelection": "Afficher le mode capteur dans le tracking",
     "skipSensorSelectionDesc": "Désactiver pour passer directement à l'écran de positionnement",
     "enableToolsScreen": "Activer le screen de création de séance (bêta)",
-    "enableToolsScreenDesc": "Très expérimental ! Affiche l'icône Outils dans la barre de navigation."
+    "enableToolsScreenDesc": "Très expérimental ! Affiche l'icône Outils dans la barre de navigation.",
+    "pollination": {
+      "sectionTitle": "ANALYSE IA",
+      "title": "Pollination AI",
+      "connected": "Connecté",
+      "notConnected": "Non connecté",
+      "connect": "Connecter",
+      "disconnect": "Déconnecter",
+      "disconnectTitle": "Se déconnecter de Pollination ?",
+      "disconnectMessage": "Tu ne pourras plus utiliser les fonctionnalités d'analyse IA des repas.",
+      "warningTitle": "⚠️ Fonctionnalité Beta",
+      "warningMessage": "Cette fonctionnalité utilise l'API Pollination.ai pour analyser tes photos de repas. En te connectant, tu acceptes que tes images de repas soient traitées par les services Pollination. Cette fonctionnalité est expérimentale et peut collecter des données d'utilisation.",
+      "continue": "Se connecter quand même",
+      "betaWarning": "Fonctionnalité beta - Pollination peut collecter des données pour améliorer le service",
+      "successTitle": "Connecté !",
+      "successMessage": "Tu peux maintenant utiliser l'analyse IA des repas avec Ploppy.",
+      "errorMessage": "La connexion a échoué. Réessaie."
+    },
+    "pollinationCallback": {
+      "processing": "Connexion en cours...",
+      "processingMessage": "Patiente pendant que nous connectons ton compte.",
+      "success": "Connecté !",
+      "successMessage": "Tu peux maintenant utiliser l'analyse IA des repas avec Ploppy.",
+      "plopReady": "Ploppy est prêt à t'aider !",
+      "error": "Échec de la connexion",
+      "errorMessage": "Une erreur s'est produite. Réessaie depuis les Paramètres."
+    },
+    "enhancedMeal": {
+      "sectionTitle": "FONCTIONNALITÉS REPAS",
+      "title": "Nouvelle page repas",
+      "description": "Belle nouvelle page repas avec analyse IA par Ploppy",
+      "enabledInfo": "Quand tu ajoutes un repas depuis l'accueil, la nouvelle page améliorée s'ouvrira à la place du formulaire classique."
+    }
   },
   "addEntry": {
     "title": "Que veux-tu ajouter ?",
@@ -975,6 +1007,18 @@
       "opposition": "Opposition : Désactiver les fonctionnalités sociales",
       "highlight": "💡 Pour supprimer tes données en ligne, désactive les fonctionnalités sociales dans Paramètres → Social."
     },
+    "pollination": {
+      "title": "Analyse IA des repas (Beta)",
+      "description": "Spix peut optionnellement analyser tes photos de repas via l'API Pollination.ai. Cette fonctionnalité est opt-in et nécessite une connexion explicite.",
+      "dataTitle": "Données traitées :",
+      "data": {
+        "images": "Photos de repas (uploadées temporairement pour l'analyse)",
+        "temporary": "Les images sont uploadées sur tmpfiles.org et automatiquement supprimées après 1 heure",
+        "apiKey": "Clé API Pollination (stockée localement, jamais envoyée à nos serveurs)"
+      },
+      "warning": "⚠️ C'est une fonctionnalité beta. En l'utilisant, tu acceptes que Pollination.ai puisse traiter tes images de repas pour fournir une analyse nutritionnelle. Pollination peut collecter des données d'utilisation anonymisées pour améliorer le service.",
+      "optOut": "Tu peux te déconnecter de Pollination à tout moment dans Paramètres → Labs."
+    },
     "contact": {
       "title": "Contact",
       "text": "Pour toute question concernant tes données personnelles, contacte-nous via les paramètres de l'application."
@@ -1152,6 +1196,37 @@
     "notes": "Notes",
     "date": "Date",
     "time": "Heure"
+  },
+  "enhancedMeal": {
+    "title": "Ajouter un repas",
+    "mealTime": "MOMENT DU REPAS",
+    "photo": "PHOTO (OPTIONNEL)",
+    "description": "DESCRIPTION",
+    "descriptionPlaceholder": "Qu'as-tu mangé ?",
+    "camera": "Appareil photo",
+    "gallery": "Galerie",
+    "askPloppy": "Demander à Ploppy 🐦",
+    "uploading": "Upload en cours...",
+    "analyzing": "Analyse en cours...",
+    "suggestions": "Suggestions",
+    "save": "Enregistrer le repas",
+    "saved": "Repas enregistré !",
+    "savedMessage": "Ton repas a été ajouté à ton historique.",
+    "saveError": "Impossible d'enregistrer le repas",
+    "noImage": "Pas d'image",
+    "selectImageFirst": "Sélectionne d'abord une image",
+    "notConnected": "Non connecté",
+    "connectPollinationFirst": "Tu dois te connecter à Pollination dans Paramètres > Labs pour utiliser cette fonctionnalité.",
+    "analysisError": "Erreur d'analyse",
+    "analysisErrorMessage": "Impossible d'analyser l'image. Réessaie.",
+    "noDescription": "Pas de description",
+    "addDescriptionFirst": "Ajoute une description de ton repas.",
+    "betaWarning": "Fonctionnalité beta - Ton image est temporairement uploadée pour l'analyse",
+    "permissionRequired": "Permission requise",
+    "cameraPermissionMessage": "Autorise l'accès à l'appareil photo pour prendre une photo.",
+    "galleryPermissionMessage": "Autorise l'accès à la galerie pour sélectionner une photo.",
+    "chooseSource": "Choisir la source",
+    "chooseSourceMessage": "D'où veux-tu récupérer l'image ?"
   },
   "errors": {
     "generic": "Une erreur s'est produite",

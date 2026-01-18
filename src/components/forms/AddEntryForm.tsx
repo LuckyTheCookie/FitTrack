@@ -626,9 +626,19 @@ export function AddEntryForm({
         setSelectedCategory(null);
     };
 
+    // Get settings for enhanced meal redirect
+    const settings = useAppStore.getState().settings;
+
     const handleSelectCategory = (category: CategoryType) => {
         if (category === 'meal') {
-            handleStartActivity('meal');
+            // Check if enhanced meal page is enabled
+            if (settings.enhancedMealEnabled && !isEditMode) {
+                // Dismiss sheet and navigate to enhanced meal page
+                onDismiss?.();
+                router.push('/enhanced-meal');
+            } else {
+                handleStartActivity('meal');
+            }
         } else if (category === 'measure') {
             handleStartActivity('measure');
         } else {

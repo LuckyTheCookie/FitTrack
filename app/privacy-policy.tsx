@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Shield, Lock, Server, Bell, Trash2, Heart, Leaf } from 'lucide-react-native';
+import { ArrowLeft, Shield, Lock, Server, Bell, Trash2, Heart, Leaf, Sparkles } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { GlassCard } from '../src/components/ui';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
@@ -249,8 +249,29 @@ export default function PrivacyPolicyScreen() {
                     </Text>
                 </PolicySection> 
 
+                {/* Pollination AI Section */}
+                <PolicySection 
+                    title={t('privacyPolicy.pollination.title')} 
+                    icon={<Sparkles size={20} color="#8B5CF6" />}
+                    iconColor="#8B5CF6"
+                    delay={600}
+                >
+                    <Text style={styles.paragraph}>{t('privacyPolicy.pollination.description')}</Text>
+                    
+                    <Text style={styles.subheading}>{t('privacyPolicy.pollination.dataTitle')}</Text>
+                    <BulletPoint>{t('privacyPolicy.pollination.data.images')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.pollination.data.temporary')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.pollination.data.apiKey')}</BulletPoint>
+                    
+                    <Text style={[styles.paragraph, styles.warning]}>
+                        {t('privacyPolicy.pollination.warning')}
+                    </Text>
+                    
+                    <Text style={styles.paragraph}>{t('privacyPolicy.pollination.optOut')}</Text>
+                </PolicySection>
+
                 {/* Contact */}
-                <Animated.View entering={FadeInDown.delay(650).springify()}>
+                <Animated.View entering={FadeInDown.delay(700).springify()}>
                     <GlassCard style={styles.contactCard}>
                         <Text style={styles.contactTitle}>{t('privacyPolicy.contact.title')}</Text>
                         <Text style={styles.contactText}>{t('privacyPolicy.contact.text')}</Text>

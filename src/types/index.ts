@@ -83,6 +83,8 @@ export interface MealEntry extends BaseEntry {
   type: 'meal';
   mealName: string;
   description: string; // Texte libre
+  score?: number; // 0-100 - évaluation IA
+  suggestions?: string[]; // Suggestions IA
 }
 
 // Mensurations
@@ -222,6 +224,10 @@ export interface UserSettings {
   developerMode?: boolean;
   // Skip sensor/camera selection screen in rep counter (go directly to position screen)
   skipSensorSelection?: boolean;
+  // Labs: Enhanced meal page with AI analysis
+  enhancedMealEnabled?: boolean;
+  // Labs: Pollination API connected
+  pollinationConnected?: boolean;
 }
 
 // ============================================================================

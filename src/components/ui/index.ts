@@ -20,3 +20,5 @@ export { ExportModal } from './ExportModal';
 export { PoseCameraView } from './PoseCameraView';
 export { HealthConnectPromptModal } from './HealthConnectPromptModal';
 export { SessionRecoveryModal } from './SessionRecoveryModal';
+export { CustomAlertModal } from './CustomAlertModal';
+export type { AlertType, AlertButton, CustomAlertModalProps } from './CustomAlertModal';

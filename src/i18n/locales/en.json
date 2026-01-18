@@ -742,7 +742,39 @@
     "skipSensorSelection": "Show sensor mode in tracking",
     "skipSensorSelectionDesc": "Disable to skip directly to positioning screen",
     "enableToolsScreen": "Enable workout creation screen (beta)",
-    "enableToolsScreenDesc": "Very experimental! Shows the Tools icon in the nav bar."
+    "enableToolsScreenDesc": "Very experimental! Shows the Tools icon in the nav bar.",
+    "pollination": {
+      "sectionTitle": "AI ANALYSIS",
+      "title": "Pollination AI",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "disconnectTitle": "Disconnect from Pollination?",
+      "disconnectMessage": "You will no longer be able to use AI meal analysis features.",
+      "warningTitle": "⚠️ Beta Feature",
+      "warningMessage": "This feature uses Pollination.ai API to analyze your meal photos. By connecting, you agree that your meal images may be processed by Pollination services. This feature is experimental and may collect usage data.",
+      "continue": "Connect anyway",
+      "betaWarning": "Beta feature - Pollination may collect data for service improvement",
+      "successTitle": "Connected!",
+      "successMessage": "You can now use AI meal analysis with Ploppy.",
+      "errorMessage": "Connection failed. Please try again."
+    },
+    "pollinationCallback": {
+      "processing": "Connecting...",
+      "processingMessage": "Please wait while we connect your account.",
+      "success": "Connected!",
+      "successMessage": "You can now use AI meal analysis with Ploppy.",
+      "plopReady": "Ploppy is ready to help!",
+      "error": "Connection Failed",
+      "errorMessage": "Something went wrong. Please try again from Settings."
+    },
+    "enhancedMeal": {
+      "sectionTitle": "MEAL FEATURES",
+      "title": "Enhanced Meal Page",
+      "description": "Beautiful new meal page with AI analysis by Ploppy",
+      "enabledInfo": "When you add a meal from the home screen, the new enhanced page will open instead of the classic form."
+    }
   },
   "addEntry": {
     "title": "What do you want to add?",
@@ -980,6 +1012,18 @@
       "opposition": "Objection: Disable social features",
       "highlight": "💡 To delete your online data, disable social features in Settings → Social."
     },
+    "pollination": {
+      "title": "AI Meal Analysis (Beta)",
+      "description": "Spix can optionally analyze your meal photos using Pollination.ai API. This feature is opt-in and requires explicit connection.",
+      "dataTitle": "Data processed:",
+      "data": {
+        "images": "Meal photos (uploaded temporarily for analysis)",
+        "temporary": "Images are uploaded to tmpfiles.org and automatically deleted after 1 hour",
+        "apiKey": "Pollination API key (stored locally, never sent to our servers)"
+      },
+      "warning": "⚠️ This is a beta feature. By using it, you agree that Pollination.ai may process your meal images to provide nutritional analysis. Pollination may collect anonymized usage data for service improvement.",
+      "optOut": "You can disconnect from Pollination at any time in Settings → Labs."
+    },
     "contact": {
       "title": "Contact",
       "text": "For questions regarding your personal data, contact us via the app settings."
@@ -1157,6 +1201,37 @@
     "notes": "Notes",
     "date": "Date",
     "time": "Time"
+  },
+  "enhancedMeal": {
+    "title": "Add a Meal",
+    "mealTime": "MEAL TIME",
+    "photo": "PHOTO (OPTIONAL)",
+    "description": "DESCRIPTION",
+    "descriptionPlaceholder": "What did you eat?",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "askPloppy": "Ask Ploppy 🐦",
+    "uploading": "Uploading...",
+    "analyzing": "Analyzing...",
+    "suggestions": "Suggestions",
+    "save": "Save Meal",
+    "saved": "Meal saved!",
+    "savedMessage": "Your meal has been added to your history.",
+    "saveError": "Unable to save meal",
+    "noImage": "No image",
+    "selectImageFirst": "Please select an image first",
+    "notConnected": "Not connected",
+    "connectPollinationFirst": "You need to connect to Pollination in Settings > Labs to use this feature.",
+    "analysisError": "Analysis error",
+    "analysisErrorMessage": "Unable to analyze the image. Please try again.",
+    "noDescription": "No description",
+    "addDescriptionFirst": "Please add a description of your meal.",
+    "betaWarning": "Beta feature - Your image is temporarily uploaded for analysis",
+    "permissionRequired": "Permission required",
+    "cameraPermissionMessage": "Please allow camera access to take a photo.",
+    "galleryPermissionMessage": "Please allow gallery access to select a photo.",
+    "chooseSource": "Choose source",
+    "chooseSourceMessage": "Where do you want to get the image from?"
   },
   "errors": {
     "generic": "An error occurred",

@@ -375,9 +375,10 @@ export const useAppStore = create<AppState>()(
                 
                 // Merge sports config: keep default sports, add custom ones from backup
                 let mergedSportsConfig = defaultSportsConfig;
-                if (validData.sportsConfig && Array.isArray(validData.sportsConfig)) {
+                const backupSportsConfig = (validData as any).sportsConfig;
+                if (backupSportsConfig && Array.isArray(backupSportsConfig)) {
                     // Get custom sports from backup (non-default ones)
-                    const customSports = validData.sportsConfig.filter((s: SportConfig) => !s.isDefault);
+                    const customSports = backupSportsConfig.filter((s: SportConfig) => !s.isDefault);
                     mergedSportsConfig = [...defaultSportsConfig, ...customSports];
                 }
                 

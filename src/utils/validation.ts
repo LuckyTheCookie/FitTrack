@@ -47,6 +47,8 @@ const MealEntrySchema = BaseEntrySchema.extend({
     type: z.literal('meal'),
     mealName: z.string(),
     description: z.string(),
+    score: z.number().int().min(0).max(100).optional(),
+    suggestions: z.array(z.string()).optional(),
 });
 
 const MeasureEntrySchema = BaseEntrySchema.extend({
