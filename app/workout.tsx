@@ -351,10 +351,17 @@ export default function WorkoutScreen() {
     color: def.color,
   } as FilterOption)), [t]);
 
+  // Filter and sort entries by date (most recent first)
   const filteredEntries = useMemo(() => {
-    if (filter === 'all') return entries;
-    return entries.filter(e => e.type === filter);
+    const filtered = filter === 'all' ? entries : entries.filter(e => e.type === filter);
+    // Sort by createdAt descending (newest first)
+    return [...filtered].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }, [entries, filter]);
+
+  // Force re-render key for LegendList when entries change
+  const listKey = useMemo(() => entries.map(e => `${e.id}-${e.createdAt}`).join(',').slice(0, 100), [entries]);
 
   const quickStats = useMemo(() => {
     const sportEntries = entries.filter(e => ['home', 'run', 'beatsaber'].includes(e.type));
@@ -451,6 +458,7 @@ export default function WorkoutScreen() {
       </Animated.View>
 
       <LegendList
+        key={listKey}
         data={filteredEntries}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
@@ -458,6 +466,7 @@ export default function WorkoutScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         recycleItems
+        extraData={listKey}
         ListEmptyComponent={
           <EmptyState 
             icon="📋" 

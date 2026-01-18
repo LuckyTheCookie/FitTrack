@@ -349,6 +349,7 @@ export const resetPlankState = (): void => {
 const ELLIPTICAL_SAMPLE_SIZE = 200; // ~6-7 seconds of samples at 30fps for accurate calibration
 const ELLIPTICAL_VARIANCE_WINDOW = 60; // Calculate variance over 2s window for better accuracy during detection
 const ELLIPTICAL_CALIBRATION_WINDOW = 150; // Use more samples during calibration phase for precision
+const ELLIPTICAL_MAX_SAMPLES = 300; // Maximum samples to keep in memory to prevent memory leaks
 
 /**
  * Calculate variance of an array of numbers
@@ -382,14 +383,15 @@ export const addEllipticalHeadSample = (landmarks: PoseLandmarks): boolean => {
     currentEllipticalCalibration.samples.push(nose.y);
     currentEllipticalCalibration.lastUpdateTime = Date.now();
     
-    // Log every 10th sample for debugging
-    if (currentEllipticalCalibration.samples.length % 10 === 0) {
+    // Log every 50th sample for debugging (reduced frequency)
+    if (currentEllipticalCalibration.samples.length % 50 === 0) {
         console.log(`[Elliptical] Samples collected: ${currentEllipticalCalibration.samples.length}`);
     }
     
-    // Keep only recent samples
-    if (currentEllipticalCalibration.samples.length > ELLIPTICAL_SAMPLE_SIZE * 2) {
-        currentEllipticalCalibration.samples = currentEllipticalCalibration.samples.slice(-ELLIPTICAL_SAMPLE_SIZE);
+    // Keep only recent samples - more aggressive cleanup to prevent memory issues
+    if (currentEllipticalCalibration.samples.length > ELLIPTICAL_MAX_SAMPLES) {
+        // Use splice for better performance than slice+reassign
+        currentEllipticalCalibration.samples.splice(0, currentEllipticalCalibration.samples.length - ELLIPTICAL_SAMPLE_SIZE);
     }
     
     return true;

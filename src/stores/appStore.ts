@@ -79,7 +79,7 @@ interface AppState {
 
     // Actions - Data management
     resetAllData: () => void;
-    restoreFromBackup: (data: { entries: Entry[]; settings: Partial<UserSettings>; unlockedBadges: BadgeId[] }) => void;
+    restoreFromBackup: (data: { entries: Entry[]; settings: Partial<UserSettings>; unlockedBadges: BadgeId[]; sportsConfig?: SportConfig[] }) => void;
     
     // Actions - Archivage
     getArchiveAnalysis: () => ArchiveAnalysis;
@@ -373,6 +373,14 @@ export const useAppStore = create<AppState>()(
                 
                 const validData = validation.data || data;
                 
+                // Merge sports config: keep default sports, add custom ones from backup
+                let mergedSportsConfig = defaultSportsConfig;
+                if (validData.sportsConfig && Array.isArray(validData.sportsConfig)) {
+                    // Get custom sports from backup (non-default ones)
+                    const customSports = validData.sportsConfig.filter((s: SportConfig) => !s.isDefault);
+                    mergedSportsConfig = [...defaultSportsConfig, ...customSports];
+                }
+                
                 set({
                     entries: (validData.entries || []) as Entry[],
                     settings: {
@@ -380,9 +388,10 @@ export const useAppStore = create<AppState>()(
                         ...validData.settings,
                     } as UserSettings,
                     unlockedBadges: (validData.unlockedBadges || []) as BadgeId[],
+                    sportsConfig: mergedSportsConfig,
                 });
                 
-                storeLogger.info('[Backup] Restored successfully');
+                storeLogger.info('[Backup] Restored successfully with sportsConfig');
             },
 
             // ========================================

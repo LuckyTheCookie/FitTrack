@@ -19,3 +19,4 @@ export { TabBar } from './TabBar';
 export { ExportModal } from './ExportModal';
 export { PoseCameraView } from './PoseCameraView';
 export { HealthConnectPromptModal } from './HealthConnectPromptModal';
+export { SessionRecoveryModal } from './SessionRecoveryModal';

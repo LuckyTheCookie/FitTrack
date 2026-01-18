@@ -1,5 +1,5 @@
 // ============================================================================
-// CARD GLASS - Composant de base avec effet glassmorphism
+// CARD GLASS - Composant de base avec effet glassmorphism (Optimisé)
 // ============================================================================
 
 import React from 'react';
@@ -12,7 +12,7 @@ interface GlassCardProps {
   variant?: 'default' | 'teal' | 'solid';
 }
 
-export function GlassCard({ children, style, variant = 'default' }: GlassCardProps) {
+export const GlassCard = React.memo(function GlassCard({ children, style, variant = 'default' }: GlassCardProps) {
   return (
     <View style={[
       styles.card,
@@ -23,7 +23,7 @@ export function GlassCard({ children, style, variant = 'default' }: GlassCardPro
       {children}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

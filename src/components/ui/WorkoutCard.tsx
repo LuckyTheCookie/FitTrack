@@ -1,8 +1,8 @@
 // ============================================================================
-// WORKOUT CARD - Carte d'entraînement récent
+// WORKOUT CARD - Carte d'entraînement récent (Optimisé avec React.memo)
 // ============================================================================
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import type { HomeWorkoutEntry, RunEntry, BeatSaberEntry, CustomSportEntry, SportConfig } from '../../types';
@@ -16,35 +16,39 @@ interface WorkoutCardProps {
     onPress?: () => void;
 }
 
-export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
+export const WorkoutCard = React.memo(function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
     const { t } = useTranslation();
     const sportsConfig = useSportsConfig();
     
-    // Déterminer le sport config
-    let sportConfig: SportConfig | undefined;
-    let icon: string;
-    let title: string;
-    
-    if (entry.type === 'custom') {
-        const customEntry = entry as CustomSportEntry;
-        sportConfig = sportsConfig.find((s: SportConfig) => s.id === customEntry.sportId);
-        icon = sportConfig?.emoji || '💪';
-        title = customEntry.name || sportConfig?.name || t('entries.custom');
-    } else if (entry.type === 'run') {
-        sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'run');
-        icon = sportConfig?.emoji || '🏃';
-        title = t('entries.run');
-    } else if (entry.type === 'beatsaber') {
-        sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'beatsaber');
-        icon = sportConfig?.emoji || '🕹️';
-        title = t('entries.beatsaber');
-    } else {
-        sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'home');
-        icon = sportConfig?.emoji || '💪';
-        title = entry.name || t('workout.defaultHomeName');
-    }
+    // Memoize sport config lookup and derived values
+    const { icon, title, color, sportConfig } = useMemo(() => {
+        let sportConfig: SportConfig | undefined;
+        let icon: string;
+        let title: string;
+        
+        if (entry.type === 'custom') {
+            const customEntry = entry as CustomSportEntry;
+            sportConfig = sportsConfig.find((s: SportConfig) => s.id === customEntry.sportId);
+            icon = sportConfig?.emoji || '💪';
+            title = customEntry.name || sportConfig?.name || t('entries.custom');
+        } else if (entry.type === 'run') {
+            sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'run');
+            icon = sportConfig?.emoji || '🏃';
+            title = t('entries.run');
+        } else if (entry.type === 'beatsaber') {
+            sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'beatsaber');
+            icon = sportConfig?.emoji || '🕹️';
+            title = t('entries.beatsaber');
+        } else {
+            sportConfig = sportsConfig.find((s: SportConfig) => s.id === 'home');
+            icon = sportConfig?.emoji || '💪';
+            title = entry.name || t('workout.defaultHomeName');
+        }
+        
+        return { icon, title, color: sportConfig?.color || Colors.cta, sportConfig };
+    }, [entry, sportsConfig, t]);
 
-    const getDescription = () => {
+    const description = useMemo(() => {
         if (entry.type === 'run') {
             const parts = [`${entry.distanceKm} km`, `${entry.durationMinutes} min`];
             if (entry.avgSpeed) parts.push(`${entry.avgSpeed} km/h`);
@@ -74,9 +78,10 @@ export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
             return lines.join(', ') + (entry.exercises.split('\n').length > 2 ? '...' : '');
         }
         return t('entries.noData');
-    };
+    }, [entry, t]);
 
-    const color = sportConfig?.color || Colors.cta;
+    // Memoize relative time (updates on entry change)
+    const relativeTime = useMemo(() => getRelativeTime(entry.createdAt), [entry.createdAt]);
 
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -88,12 +93,12 @@ export function WorkoutCard({ entry, onPress }: WorkoutCardProps) {
                     <Text style={styles.tagText}>{sportConfig?.name || title}</Text>
                 </View>
                 <Text style={styles.title}>{title}</Text>
-                <Text style={styles.when}>{getRelativeTime(entry.createdAt)}</Text>
-                <Text style={styles.desc} numberOfLines={2}>{getDescription()}</Text>
+                <Text style={styles.when}>{relativeTime}</Text>
+                <Text style={styles.desc} numberOfLines={2}>{description}</Text>
             </GlassCard>
         </TouchableOpacity>
     );
-}
+});
 
 const styles = StyleSheet.create({
     card: {

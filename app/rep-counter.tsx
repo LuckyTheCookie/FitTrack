@@ -23,6 +23,7 @@ import { BlurView } from 'expo-blur';
 import { router, useFocusEffect } from 'expo-router';
 import { Accelerometer, AccelerometerMeasurement } from 'expo-sensors';
 import { useAudioPlayer } from 'expo-audio';
+import { useKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
 import Animated, {
     useSharedValue,
@@ -58,7 +59,7 @@ import {
     Video,
     Volume2,
 } from 'lucide-react-native';
-import { GlassCard, PoseCameraView } from '../src/components/ui';
+import { GlassCard, PoseCameraView, SessionRecoveryModal } from '../src/components/ui';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import type { PlankDebugInfo, EllipticalState } from '../src/utils/poseDetection';
 import {
@@ -72,6 +73,14 @@ import {
     hasEllipticalMovementStarted,
     resetEllipticalSamples,
 } from '../src/utils/poseDetection';
+import {
+    startSessionTracking,
+    updateSessionData,
+    stopSessionTracking,
+    getUnfinishedSession,
+    getRoundedSessionData,
+    type ActiveSession,
+} from '../src/services/sessionRecovery';
 import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 
@@ -376,6 +385,9 @@ const PositionScreen = ({
 export default function RepCounterScreen() {
     const { settings, addHomeWorkout, entries } = useAppStore();
     
+    // Keep screen awake during workout tracking
+    useKeepAwake();
+    
     // Backward compatibility: debugCamera only works if developerMode is enabled
     const showDebugOverlay = (settings.developerMode ?? false) && (settings.debugCamera ?? false);
     // Camera preview is shown if preferCameraDetection is enabled (can work without debug)
@@ -397,6 +409,10 @@ export default function RepCounterScreen() {
     const [plankDebugInfo, setPlankDebugInfo] = useState<PlankDebugInfo | null>(null); // Debug info for plank
     const [showNewRecord, setShowNewRecord] = useState(false); // Affichage du message de nouveau record
     const [personalBest, setPersonalBest] = useState(0); // Record personnel pour cet exercice
+
+    // Session recovery states
+    const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+    const [recoverySession, setRecoverySession] = useState<ActiveSession | null>(null);
 
     // Elliptical specific states
     const [ellipticalCalibrationPhase, setEllipticalCalibrationPhase] = useState<EllipticalCalibrationPhase>('none');
@@ -439,6 +455,69 @@ export default function RepCounterScreen() {
     const [showExitModal, setShowExitModal] = useState(false);
     const [workoutSaved, setWorkoutSaved] = useState(false);
 
+    // Check for unfinished session on mount
+    useEffect(() => {
+        const checkUnfinishedSession = async () => {
+            const session = await getUnfinishedSession();
+            if (session) {
+                setRecoverySession(session);
+                setShowRecoveryModal(true);
+            }
+        };
+        checkUnfinishedSession();
+    }, []);
+
+    // Handle session recovery
+    const handleResumeSession = useCallback(() => {
+        if (!recoverySession) return;
+        
+        // Find the exercise config
+        const exercise = EXERCISES.find(e => e.id === recoverySession.exerciseId);
+        if (!exercise) {
+            setShowRecoveryModal(false);
+            stopSessionTracking();
+            return;
+        }
+        
+        // Get rounded data
+        const { roundedTime, roundedReps, roundedPlankSeconds, roundedEllipticalSeconds } = getRoundedSessionData(recoverySession);
+        
+        // Restore state
+        setSelectedExercise(exercise);
+        setDetectionMode(recoverySession.detectionMode);
+        setRepCount(roundedReps);
+        setElapsedTime(roundedTime);
+        setPlankSeconds(roundedPlankSeconds);
+        setEllipticalSeconds(roundedEllipticalSeconds);
+        
+        // Go to counting step (paused)
+        setStep('counting');
+        setIsTracking(false); // Start paused so user can resume
+        setShowRecoveryModal(false);
+        setRecoverySession(null);
+        
+        // Clear the saved session
+        stopSessionTracking();
+    }, [recoverySession]);
+
+    const handleDiscardSession = useCallback(() => {
+        setShowRecoveryModal(false);
+        setRecoverySession(null);
+        stopSessionTracking();
+    }, []);
+
+    // Update session data periodically when tracking
+    useEffect(() => {
+        if (isTracking && selectedExercise) {
+            updateSessionData({
+                repCount,
+                plankSeconds,
+                ellipticalSeconds,
+                elapsedTime,
+            });
+        }
+    }, [isTracking, repCount, plankSeconds, ellipticalSeconds, elapsedTime, selectedExercise]);
+
     // Gérer le bouton retour Android et reset quand on arrive sur l'écran
     useFocusEffect(
         useCallback(() => {
@@ -467,7 +546,7 @@ export default function RepCounterScreen() {
     );
 
     // Fonction pour quitter avec confirmation
-    const handleExitConfirm = useCallback(() => {
+    const handleExitConfirm = useCallback(async () => {
         // Arrêter le tracking manuellement
         setIsTracking(false);
         if (subscriptionRef.current) {
@@ -478,6 +557,8 @@ export default function RepCounterScreen() {
             clearInterval(timerRef.current);
             timerRef.current = null;
         }
+        // Clear session recovery data when user explicitly exits
+        await stopSessionTracking();
         // Reset de l'état
         setShowExitModal(false);
         setStep('select');
@@ -1034,6 +1115,20 @@ export default function RepCounterScreen() {
 
         const isResuming = repCount > 0 || plankSeconds > 0 || ellipticalSeconds > 0 || elapsedTime > 0;
         setIsTracking(true);
+        
+        // Start session tracking for crash recovery
+        startSessionTracking({
+            exerciseId: selectedExercise.id,
+            exerciseName: t(`repCounter.exercises.${selectedExercise.id}`),
+            exerciseEmoji: selectedExercise.icon,
+            detectionMode,
+            repCount: isResuming ? repCount : 0,
+            plankSeconds: isResuming ? plankSeconds : 0,
+            ellipticalSeconds: isResuming ? ellipticalSeconds : 0,
+            elapsedTime: isResuming ? elapsedTime : 0,
+            isTimeBased: selectedExercise.isTimeBased ?? false,
+        });
+        
         // If we're starting fresh (not resuming a paused session), reset counters and state
         if (!isResuming) {
             setRepCount(0);
@@ -1171,6 +1266,9 @@ export default function RepCounterScreen() {
         
         if (!selectedExercise || valueToCheck === 0) return;
 
+        // Stop session tracking (workout completed successfully)
+        await stopSessionTracking();
+
         // Jouer le son finished
         playFinishedSound();
 
@@ -1273,13 +1371,15 @@ export default function RepCounterScreen() {
         setEllipticalCalibrationPhase('none');
         
         // Skip to position screen if setting is enabled and exercise is not elliptical or time-based
+        // skipSensorSelection = true means we SKIP the sensor selection screen and go directly to position
         if (settings.skipSensorSelection && !exercise.isTimeBased && exercise.id !== 'elliptical') {
-            // Set sensor mode as default
-            setDetectionMode('sensor');
+            // Use camera mode if preferCameraDetection is enabled, otherwise sensor
+            const preferredMode = settings.preferCameraDetection ? 'camera' : 'sensor';
+            setDetectionMode(preferredMode);
             // Go directly to position screen
             setTimeout(() => setStep('position'), 100);
         }
-    }, [settings.skipSensorSelection]);
+    }, [settings.skipSensorSelection, settings.preferCameraDetection]);
 
     // Passer à l'étape suivante
     const handleNext = useCallback(() => {
@@ -2051,6 +2151,14 @@ export default function RepCounterScreen() {
                     </View>
                 </View>
             </Modal>
+
+            {/* Modal de récupération de session */}
+            <SessionRecoveryModal
+                visible={showRecoveryModal}
+                session={recoverySession}
+                onResume={handleResumeSession}
+                onDiscard={handleDiscardSession}
+            />
         </View>
     );
 }

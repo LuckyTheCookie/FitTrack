@@ -1,5 +1,5 @@
 // ============================================================================
-// DAY BADGE - Jour de la semaine avec état
+// DAY BADGE - Jour de la semaine avec état (Optimisé avec React.memo)
 // ============================================================================
 
 import React from 'react';
@@ -14,7 +14,7 @@ interface DayBadgeProps {
     onPress?: () => void;
 }
 
-export function DayBadge({
+export const DayBadge = React.memo(function DayBadge({
     dayOfWeek,
     dayNumber,
     isToday,
@@ -43,7 +43,7 @@ export function DayBadge({
             )}
         </Container>
     );
-}
+});
 
 const styles = StyleSheet.create({
     day: {

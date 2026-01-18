@@ -89,6 +89,7 @@ export default function DataScreen() {
     entries, 
     settings, 
     unlockedBadges,
+    sportsConfig,
     getStreak,
     resetAllData,
     restoreFromBackup: restoreAppFromBackup,
@@ -104,7 +105,7 @@ export default function DataScreen() {
   const handleFullBackup = useCallback(async () => {
     try {
       const backup = generateFullBackup(
-        { entries, settings, unlockedBadges },
+        { entries, settings, unlockedBadges, sportsConfig },
         {
           xp: gamificationState.xp,
           level: gamificationState.level,
@@ -182,6 +183,7 @@ export default function DataScreen() {
                   units: backup.app.settings.units,
                 },
                 unlockedBadges: backup.app.unlockedBadges,
+                sportsConfig: backup.app.sportsConfig,
               });
               
               // Restore gamification state

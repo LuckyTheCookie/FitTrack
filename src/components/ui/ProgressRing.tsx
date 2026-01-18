@@ -1,8 +1,8 @@
 // ============================================================================
-// PROGRESS RING - Anneau de progression circulaire
+// PROGRESS RING - Anneau de progression circulaire (Optimisé avec React.memo)
 // ============================================================================
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Colors, FontWeight } from '../../constants';
@@ -15,17 +15,21 @@ interface ProgressRingProps {
   showLabel?: boolean;
 }
 
-export function ProgressRing({ 
+export const ProgressRing = React.memo(function ProgressRing({ 
   current, 
   goal, 
   size = 54, 
   strokeWidth = 5,
   showLabel = true,
 }: ProgressRingProps) {
-  const progress = Math.min(current / goal, 1);
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
+  // Memoize calculations
+  const { progress, radius, circumference, strokeDashoffset } = useMemo(() => {
+    const progress = Math.min(current / goal, 1);
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference * (1 - progress);
+    return { progress, radius, circumference, strokeDashoffset };
+  }, [current, goal, size, strokeWidth]);
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
@@ -61,7 +65,7 @@ export function ProgressRing({
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
