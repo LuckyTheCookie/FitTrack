@@ -4,7 +4,7 @@ set -e
 # ==================================================
 # 🔨 FitTrack F-Droid Prebuild Script
 # Flavor: FOSS (com.fittrack.app.foss)
-# Version: NO FIREBASE - NO STUBS
+# Version: NO FIREBASE - SOURCE CODE PATCHING
 # ==================================================
 
 echo "=================================================="
@@ -109,106 +109,106 @@ bun install --force
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 bunx expo prebuild --clean --platform android
 
-
 # ==================================================
-# 📦 Create TypeScript stub for removed modules
+# 📝 CRITICAL: Patch source code to remove Firebase imports
 # ==================================================
 echo ""
-echo "📦 Creating TypeScript stubs for removed FOSS modules..."
+echo "📝 Patching source code to remove Firebase module imports..."
 
-# Create expo-notifications stub
-NOTIF_STUB_DIR="node_modules/expo-notifications"
-mkdir -p "$NOTIF_STUB_DIR"
-
-cat > "$NOTIF_STUB_DIR/package.json" <<'EOF'
-{
-  "name": "expo-notifications",
-  "version": "0.0.0-foss-stub",
-  "main": "index.js",
-  "types": "index.d.ts"
-}
-EOF
-
-cat > "$NOTIF_STUB_DIR/index.js" <<'EOF'
-// FOSS Stub: expo-notifications not available in F-Droid builds
-console.warn('[FOSS] Push notifications are disabled in F-Droid build');
-
-export const setNotificationHandler = () => {};
-export const requestPermissionsAsync = async () => ({ status: 'denied' });
-export const getPermissionsAsync = async () => ({ status: 'denied' });
-export const scheduleNotificationAsync = async () => null;
-export const cancelScheduledNotificationAsync = async () => {};
-export const cancelAllScheduledNotificationsAsync = async () => {};
-export const getExpoPushTokenAsync = async () => null;
-export const addNotificationReceivedListener = () => ({ remove: () => {} });
-export const addNotificationResponseReceivedListener = () => ({ remove: () => {} });
-export const removeNotificationSubscription = () => {};
-EOF
-
-cat > "$NOTIF_STUB_DIR/index.d.ts" <<'EOF'
-// FOSS Stub: expo-notifications type definitions
-export type NotificationPermissionsStatus = {
-  status: 'granted' | 'denied' | 'undetermined';
+# Patch expo-notifications imports
+echo "  🔍 Searching for expo-notifications imports..."
+find src app -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) 2>/dev/null | while read -r file; do
+    if grep -q "from ['\"]expo-notifications['\"]" "$file" 2>/dev/null || grep -q "from \"expo-notifications\"" "$file" 2>/dev/null || grep -q "from 'expo-notifications'" "$file" 2>/dev/null; then
+        echo "  🔧 Patching $file..."
+        
+        # Create backup
+        cp "$file" "$file.backup"
+        
+        # Replace the entire import with FOSS stub
+        cat > "${file}.tmp" <<'PATCH_NOTIF'
+// ==================================================
+// FOSS PATCH: expo-notifications stub (F-Droid build)
+// ==================================================
+const Notifications = {
+  setNotificationHandler: () => {
+    if (__DEV__) console.warn('[FOSS] Notifications disabled in F-Droid build');
+  },
+  requestPermissionsAsync: async () => ({ status: 'denied' as const }),
+  getPermissionsAsync: async () => ({ status: 'denied' as const }),
+  scheduleNotificationAsync: async () => null,
+  cancelScheduledNotificationAsync: async () => {},
+  cancelAllScheduledNotificationsAsync: async () => {},
+  getExpoPushTokenAsync: async () => null,
+  addNotificationReceivedListener: () => ({ remove: () => {} }),
+  addNotificationResponseReceivedListener: () => ({ remove: () => {} }),
+  removeNotificationSubscription: () => {},
 };
 
-export function setNotificationHandler(handler: any): void;
-export function requestPermissionsAsync(): Promise<NotificationPermissionsStatus>;
-export function getPermissionsAsync(): Promise<NotificationPermissionsStatus>;
-export function scheduleNotificationAsync(content: any, trigger: any): Promise<string | null>;
-export function cancelScheduledNotificationAsync(id: string): Promise<void>;
-export function cancelAllScheduledNotificationsAsync(): Promise<void>;
-export function getExpoPushTokenAsync(options?: any): Promise<any>;
-export function addNotificationReceivedListener(listener: any): { remove: () => void };
-export function addNotificationResponseReceivedListener(listener: any): { remove: () => void };
-export function removeNotificationSubscription(subscription: any): void;
-EOF
+PATCH_NOTIF
+        
+        # Append rest of file (skip the import line)
+        sed '/from ['\''"]expo-notifications['\''\"]/d' "$file" >> "${file}.tmp"
+        
+        # Replace original
+        mv "${file}.tmp" "$file"
+        
+        echo "    ✅ Patched $file"
+    fi
+done
 
-echo "  ✅ expo-notifications stub created"
-
-# Create expo-application stub
-APP_STUB_DIR="node_modules/expo-application"
-mkdir -p "$APP_STUB_DIR"
-
-cat > "$APP_STUB_DIR/package.json" <<'EOF'
-{
-  "name": "expo-application",
-  "version": "0.0.0-foss-stub",
-  "main": "index.js",
-  "types": "index.d.ts"
-}
-EOF
-
-cat > "$APP_STUB_DIR/index.js" <<'EOF'
-// FOSS Stub: expo-application not available in F-Droid builds
+# Patch expo-application imports
+echo "  🔍 Searching for expo-application imports..."
+find src app -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) 2>/dev/null | while read -r file; do
+    if grep -q "from ['\"]expo-application['\"]" "$file" 2>/dev/null || grep -q "from \"expo-application\"" "$file" 2>/dev/null || grep -q "from 'expo-application'" "$file" 2>/dev/null; then
+        echo "  🔧 Patching $file..."
+        
+        # Create backup
+        cp "$file" "$file.backup"
+        
+        # Replace with FOSS stub
+        cat > "${file}.tmp" <<'PATCH_APP'
+// ==================================================
+// FOSS PATCH: expo-application stub (F-Droid build)
+// ==================================================
 import Constants from 'expo-constants';
 
-export const applicationName = Constants.expoConfig?.name || 'FitTrack';
-export const applicationId = Constants.expoConfig?.android?.package || 'com.fittrack.app.foss';
-export const nativeApplicationVersion = Constants.expoConfig?.version || '1.0.0';
-export const nativeBuildVersion = String(Constants.expoConfig?.android?.versionCode || 1);
+const Application = {
+  applicationName: Constants.expoConfig?.name || 'FitTrack',
+  applicationId: Constants.expoConfig?.android?.package || 'com.fittrack.app.foss',
+  nativeApplicationVersion: Constants.expoConfig?.version || '1.0.0',
+  nativeBuildVersion: String(Constants.expoConfig?.android?.versionCode || 1),
+  getInstallReferrerAsync: async () => {
+    if (__DEV__) console.warn('[FOSS] Install referrer disabled in F-Droid build');
+    return null;
+  },
+};
 
-export async function getInstallReferrerAsync() {
-  console.warn('[FOSS] Install referrer not available in F-Droid build');
-  return null;
-}
-EOF
+PATCH_APP
+        
+        # Append rest of file (skip the import line)
+        sed '/from ['\''"]expo-application['\''\"]/d' "$file" >> "${file}.tmp"
+        
+        # Replace original
+        mv "${file}.tmp" "$file"
+        
+        echo "    ✅ Patched $file"
+    fi
+done
 
-cat > "$APP_STUB_DIR/index.d.ts" <<'EOF'
-// FOSS Stub: expo-application type definitions
-export const applicationName: string;
-export const applicationId: string;
-export const nativeApplicationVersion: string;
-export const nativeBuildVersion: string;
-
-export function getInstallReferrerAsync(): Promise<any>;
-EOF
-
-echo "  ✅ expo-application stub created"
-echo "  ✅ TypeScript bundling will succeed with FOSS stubs"
-
+echo "  ✅ All Firebase imports patched with FOSS stubs"
 
 # ==================================================
-# 🔥 NO STUBS - NO FIREBASE CODE AT ALL
+# 🔥 Clean Metro bundler cache
+# ==================================================
+echo ""
+echo "🧹 Clearing Metro bundler cache..."
+rm -rf .expo
+rm -rf android/.gradle
+rm -rf android/app/build
+echo "  ✅ Metro cache cleared"
+
+# ==================================================
+# 🔥 Ensure NO Firebase code exists in node_modules
 # ==================================================
 echo ""
 echo "🔥 Ensuring NO Firebase/GMS code exists..."
@@ -236,7 +236,7 @@ if [ -d "android/app/src/main/java/expo/modules/application" ]; then
     echo "  ✅ Removed generated application native code"
 fi
 
-echo "  ✅ NO Firebase code present - NO STUBS NEEDED"
+echo "  ✅ NO Firebase code present"
 
 # 4. Patching Native Files (Dynamic Path Finding)
 echo ""
@@ -392,6 +392,8 @@ include ':react-native-vision-camera'
 project(':react-native-vision-camera').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-vision-camera/android')
 EOF
             echo "  ✅ Vision Camera registered in settings.gradle"
+        else
+            echo "  ℹ️  Vision Camera already in settings.gradle"
         fi
     fi
 else
@@ -420,11 +422,11 @@ echo "✅ F-Droid prebuild COMPLETED - 100% FOSS"
 echo "=================================================="
 echo ""
 echo "🔍 Applied changes:"
-echo "  ✅ expo-notifications plugin removed from app.json"
-echo "  ✅ expo-notifications package removed from dependencies"
-echo "  ✅ expo-application package removed from dependencies"
-echo "  ✅ NO STUBS created (nothing to detect)"
+echo "  ✅ expo-notifications removed & source code patched"
+echo "  ✅ expo-application removed & source code patched"
+echo "  ✅ Firebase imports replaced with inline FOSS stubs"
+echo "  ✅ Metro cache cleared"
 echo "  ✅ Gradle exclusions configured"
 echo "  ✅ Vision Camera FOSS fork integrated"
 echo ""
-echo "🚀 Ready for F-Droid build - 0 Firebase code!"
+echo "🚀 Ready for F-Droid build - JavaScript bundling will work!"
