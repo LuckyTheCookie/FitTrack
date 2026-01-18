@@ -109,6 +109,104 @@ bun install --force
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 bunx expo prebuild --clean --platform android
 
+
+# ==================================================
+# 📦 Create TypeScript stub for removed modules
+# ==================================================
+echo ""
+echo "📦 Creating TypeScript stubs for removed FOSS modules..."
+
+# Create expo-notifications stub
+NOTIF_STUB_DIR="node_modules/expo-notifications"
+mkdir -p "$NOTIF_STUB_DIR"
+
+cat > "$NOTIF_STUB_DIR/package.json" <<'EOF'
+{
+  "name": "expo-notifications",
+  "version": "0.0.0-foss-stub",
+  "main": "index.js",
+  "types": "index.d.ts"
+}
+EOF
+
+cat > "$NOTIF_STUB_DIR/index.js" <<'EOF'
+// FOSS Stub: expo-notifications not available in F-Droid builds
+console.warn('[FOSS] Push notifications are disabled in F-Droid build');
+
+export const setNotificationHandler = () => {};
+export const requestPermissionsAsync = async () => ({ status: 'denied' });
+export const getPermissionsAsync = async () => ({ status: 'denied' });
+export const scheduleNotificationAsync = async () => null;
+export const cancelScheduledNotificationAsync = async () => {};
+export const cancelAllScheduledNotificationsAsync = async () => {};
+export const getExpoPushTokenAsync = async () => null;
+export const addNotificationReceivedListener = () => ({ remove: () => {} });
+export const addNotificationResponseReceivedListener = () => ({ remove: () => {} });
+export const removeNotificationSubscription = () => {};
+EOF
+
+cat > "$NOTIF_STUB_DIR/index.d.ts" <<'EOF'
+// FOSS Stub: expo-notifications type definitions
+export type NotificationPermissionsStatus = {
+  status: 'granted' | 'denied' | 'undetermined';
+};
+
+export function setNotificationHandler(handler: any): void;
+export function requestPermissionsAsync(): Promise<NotificationPermissionsStatus>;
+export function getPermissionsAsync(): Promise<NotificationPermissionsStatus>;
+export function scheduleNotificationAsync(content: any, trigger: any): Promise<string | null>;
+export function cancelScheduledNotificationAsync(id: string): Promise<void>;
+export function cancelAllScheduledNotificationsAsync(): Promise<void>;
+export function getExpoPushTokenAsync(options?: any): Promise<any>;
+export function addNotificationReceivedListener(listener: any): { remove: () => void };
+export function addNotificationResponseReceivedListener(listener: any): { remove: () => void };
+export function removeNotificationSubscription(subscription: any): void;
+EOF
+
+echo "  ✅ expo-notifications stub created"
+
+# Create expo-application stub
+APP_STUB_DIR="node_modules/expo-application"
+mkdir -p "$APP_STUB_DIR"
+
+cat > "$APP_STUB_DIR/package.json" <<'EOF'
+{
+  "name": "expo-application",
+  "version": "0.0.0-foss-stub",
+  "main": "index.js",
+  "types": "index.d.ts"
+}
+EOF
+
+cat > "$APP_STUB_DIR/index.js" <<'EOF'
+// FOSS Stub: expo-application not available in F-Droid builds
+import Constants from 'expo-constants';
+
+export const applicationName = Constants.expoConfig?.name || 'FitTrack';
+export const applicationId = Constants.expoConfig?.android?.package || 'com.fittrack.app.foss';
+export const nativeApplicationVersion = Constants.expoConfig?.version || '1.0.0';
+export const nativeBuildVersion = String(Constants.expoConfig?.android?.versionCode || 1);
+
+export async function getInstallReferrerAsync() {
+  console.warn('[FOSS] Install referrer not available in F-Droid build');
+  return null;
+}
+EOF
+
+cat > "$APP_STUB_DIR/index.d.ts" <<'EOF'
+// FOSS Stub: expo-application type definitions
+export const applicationName: string;
+export const applicationId: string;
+export const nativeApplicationVersion: string;
+export const nativeBuildVersion: string;
+
+export function getInstallReferrerAsync(): Promise<any>;
+EOF
+
+echo "  ✅ expo-application stub created"
+echo "  ✅ TypeScript bundling will succeed with FOSS stubs"
+
+
 # ==================================================
 # 🔥 NO STUBS - NO FIREBASE CODE AT ALL
 # ==================================================
