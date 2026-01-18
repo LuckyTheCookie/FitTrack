@@ -159,6 +159,29 @@ EOF
 
 echo "  ✅ Gradle patched for F-Droid compliance"
 
+# ==================================================
+# 🔧 PATCH: Fix MediaPipe dependency on Vision Camera
+# ==================================================
+echo ""
+echo "🔧 Patching MediaPipe to find Vision Camera fork..."
+
+MEDIAPIPE_BUILD_GRADLE="node_modules/react-native-mediapipe-posedetection/android/build.gradle"
+
+if [ -f "$MEDIAPIPE_BUILD_GRADLE" ]; then
+    # Cherche la ligne qui référence Vision Camera et la commente/remplace
+    # Exemple de ligne à modifier : 
+    #   implementation project(':react-native-vision-camera')
+    # On la remplace par une référence correcte ou on la commente si pas nécessaire
+    
+    # Option 1 : Si Vision Camera est vraiment nécessaire à MediaPipe, corrige le path
+    sed -i "s|project(':react-native-vision-camera')|project(path: ':react-native-vision-camera', configuration: 'default')|g" "$MEDIAPIPE_BUILD_GRADLE"
+    
+    
+    echo "  ✅ MediaPipe build.gradle patched"
+else
+    echo "  ⚠️  MediaPipe build.gradle not found (module might not be installed)"
+fi
+
 
 echo ""
 echo "📸 Vision Camera FOSS: Using pre-patched fork (no runtime patches needed)"
