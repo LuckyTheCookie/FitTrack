@@ -151,43 +151,81 @@ EOF
 echo "  ✅ Gradle patched for F-Droid compliance"
 
 # ==================================================
-# 🔧 PATCH: Fix MediaPipe dependency on Vision Camera
+# 🔧 FIX: MediaPipe compilation order (Vision Camera V4 TurboModules)
 # ==================================================
 echo ""
-echo "🔧 Fixing Vision Camera module resolution for MediaPipe..."
+echo "🔧 Fixing MediaPipe to work with Vision Camera V4 TurboModules..."
 
-# 1. Patch MediaPipe's build.gradle
-MEDIAPIPE_BUILD_GRADLE="node_modules/react-native-mediapipe-posedetection/android/build.gradle"
-if [ -f "$MEDIAPIPE_BUILD_GRADLE" ]; then
-    sed -i "s|project(':react-native-vision-camera')|project(path: ':react-native-vision-camera', configuration: 'default')|g" "$MEDIAPIPE_BUILD_GRADLE"
-    echo "  ✅ MediaPipe build.gradle patched"
-else
-    echo "  ⚠️  MediaPipe build.gradle not found"
-fi
+MEDIAPIPE_BUILD="node_modules/react-native-mediapipe-posedetection/android/build.gradle"
 
-# 2. Register Vision Camera in settings.gradle (CRITICAL!)
-SETTINGS_GRADLE="android/settings.gradle"
-if [ -f "$SETTINGS_GRADLE" ]; then
-    if ! grep -q "react-native-vision-camera" "$SETTINGS_GRADLE"; then
-        echo "  🔧 Adding Vision Camera to settings.gradle..."
+if [ -f "$MEDIAPIPE_BUILD" ]; then
+    # Backup original
+    cp "$MEDIAPIPE_BUILD" "$MEDIAPIPE_BUILD.backup"
+    
+    echo "  🔧 Adding Vision Camera + Worklets dependencies to MediaPipe..."
+    
+    # Ajouter les dépendances + forcer l'ordre de compilation
+    cat >> "$MEDIAPIPE_BUILD" <<'GRADLE_PATCH'
+
+// ==================================================
+// FOSS Patch: Fix Vision Camera V4 TurboModule dependencies
+// ==================================================
+
+dependencies {
+    // Vision Camera V4 classes are generated via TurboModules
+    implementation project(':react-native-vision-camera')
+    // Frame processor classes come from Worklets
+    implementation project(':react-native-worklets-core')
+}
+
+// Force MediaPipe to compile AFTER Vision Camera classes are generated
+tasks.configureEach { task ->
+    if (task.name.contains("compileKotlin")) {
+        // Wait for Vision Camera codegen to finish
+        def visionCameraCodegen = tasks.findByPath(":react-native-vision-camera:generateCodegenArtifactsFromSchema")
+        if (visionCameraCodegen != null) {
+            task.dependsOn(visionCameraCodegen)
+        }
         
-        cat >> "$SETTINGS_GRADLE" <<EOF
+        // Wait for Vision Camera to compile first
+        def visionCameraCompile = tasks.findByPath(":react-native-vision-camera:compileReleaseKotlin")
+        if (visionCameraCompile != null) {
+            task.dependsOn(visionCameraCompile)
+            task.mustRunAfter(visionCameraCompile)
+        }
+    }
+}
+GRADLE_PATCH
+    
+    echo "  ✅ MediaPipe build.gradle patched"
+    
+    # S'assurer que Vision Camera est enregistré dans settings.gradle
+    SETTINGS_GRADLE="android/settings.gradle"
+    if [ -f "$SETTINGS_GRADLE" ]; then
+        if ! grep -q "react-native-vision-camera" "$SETTINGS_GRADLE"; then
+            echo "  🔧 Adding Vision Camera to settings.gradle..."
+            
+            cat >> "$SETTINGS_GRADLE" <<EOF
 
 // Vision Camera module (FOSS fork)
 include ':react-native-vision-camera'
 project(':react-native-vision-camera').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-vision-camera/android')
 EOF
-        echo "  ✅ Vision Camera registered in settings.gradle"
-    else
-        echo "  ℹ️  Vision Camera already in settings.gradle"
+            echo "  ✅ Vision Camera registered in settings.gradle"
+        else
+            echo "  ℹ️  Vision Camera already in settings.gradle"
+        fi
     fi
 else
-    echo "  ⚠️  settings.gradle not found!"
+    echo "  ❌ ERROR: MediaPipe build.gradle not found!"
+    exit 1
 fi
 
-echo "  ✅ Vision Camera module resolution fixed"
+echo "  ✅ MediaPipe compilation order fixed for TurboModules"
 
 # 8. Dummy build.gradle for F-Droid Cleaner
+echo ""
+echo "🧹 Creating dummy Gradle files for F-Droid..."
 rm -f settings.gradle
 touch settings.gradle
 cat > build.gradle <<EOF
@@ -199,4 +237,6 @@ task clean {
 EOF
 
 echo ""
-echo "✅✅ F-Droid prebuild phase COMPLETED successfully."
+echo "=================================================="
+echo "✅✅ F-Droid prebuild phase COMPLETED successfully"
+echo "=================================================="
