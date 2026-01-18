@@ -4,6 +4,7 @@ set -e
 # ==================================================
 # 🔨 FitTrack F-Droid Prebuild Script
 # Flavor: FOSS (com.fittrack.app.foss)
+# Version: NO FIREBASE - NO STUBS
 # ==================================================
 
 echo "=================================================="
@@ -40,30 +41,45 @@ console.log('✅ app.json updated with package: ' + fossPackage);
 "
 
 # ==================================================
-# 📦 FOSS DEPENDENCIES: Use FOSS Vision Camera Fork
+# 📦 FOSS DEPENDENCIES
 # ==================================================
 echo ""
-echo "📦 Patching package.json to use FOSS Vision Camera fork..."
+echo "📦 Patching dependencies for F-Droid compliance..."
+
 node -e "
 const fs = require('fs');
 const packageJsonPath = '$ROOT_DIR/package.json';
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
+// 1. Use FOSS Vision Camera fork
 const fossVisionCamera = 'github:LuckyTheCookie/react-native-vision-camera-foss';
-if (packageJson.dependencies && packageJson.dependencies['react-native-vision-camera']) {
+if (packageJson.dependencies['react-native-vision-camera']) {
   const originalVersion = packageJson.dependencies['react-native-vision-camera'];
   packageJson.dependencies['react-native-vision-camera'] = fossVisionCamera;
   console.log('✅ react-native-vision-camera: ' + originalVersion + ' → ' + fossVisionCamera);
-} else {
-  console.log('⚠️  react-native-vision-camera not found in dependencies');
+}
+
+// 2. REMOVE expo-notifications (contains Firebase)
+if (packageJson.dependencies['expo-notifications']) {
+  delete packageJson.dependencies['expo-notifications'];
+  console.log('✅ expo-notifications REMOVED for F-Droid compliance');
+}
+
+// 3. REMOVE expo-application (contains InstallReferrer)
+if (packageJson.dependencies['expo-application']) {
+  delete packageJson.dependencies['expo-application'];
+  console.log('✅ expo-application REMOVED for F-Droid compliance');
 }
 
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
+console.log('');
+console.log('⚠️  WARNING: Push notifications disabled in F-Droid build');
+console.log('⚠️  WARNING: Application info APIs disabled in F-Droid build');
 "
 
-# 3. Install dependencies & Generate Native Code
+# 3. Install dependencies
 echo ""
-echo "📦 Installing dependencies (with FOSS Vision Camera)..."
+echo "📦 Installing FOSS dependencies..."
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
@@ -73,168 +89,35 @@ echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 bunx expo prebuild --clean --platform android
 
 # ==================================================
-# 🔥 CRITICAL: Remove ALL Firebase & Google Services CODE
+# 🔥 NO STUBS - NO FIREBASE CODE AT ALL
 # ==================================================
 echo ""
-echo "🔥 REMOVING ALL FIREBASE & GOOGLE SERVICES CODE..."
+echo "🔥 Ensuring NO Firebase/GMS code exists..."
 
-# Strip Firebase from expo-notifications build.gradle
-EXPO_NOTIF_GRADLE="node_modules/expo-notifications/android/build.gradle"
-if [ -f "$EXPO_NOTIF_GRADLE" ]; then
-    echo "  🧹 Cleaning expo-notifications/build.gradle..."
-    sed -i '/com\.google\.firebase/d' "$EXPO_NOTIF_GRADLE"
-    sed -i '/firebase-messaging/d' "$EXPO_NOTIF_GRADLE"
-    sed -i '/firebase-core/d' "$EXPO_NOTIF_GRADLE"
-    sed -i '/firebase-analytics/d' "$EXPO_NOTIF_GRADLE"
-    echo "  ✅ Firebase removed from expo-notifications build.gradle"
+# Verify expo-notifications is gone
+if [ -d "node_modules/expo-notifications" ]; then
+    echo "  🗑️  Removing leftover expo-notifications..."
+    rm -rf node_modules/expo-notifications
 fi
 
-# Strip InstallReferrer from expo-application build.gradle
-EXPO_APP_GRADLE="node_modules/expo-application/android/build.gradle"
-if [ -f "$EXPO_APP_GRADLE" ]; then
-    echo "  🧹 Cleaning expo-application/build.gradle..."
-    sed -i '/com\.android\.installreferrer/d' "$EXPO_APP_GRADLE"
-    sed -i '/installreferrer/d' "$EXPO_APP_GRADLE"
-    echo "  ✅ InstallReferrer removed from expo-application build.gradle"
+# Verify expo-application is gone
+if [ -d "node_modules/expo-application" ]; then
+    echo "  🗑️  Removing leftover expo-application..."
+    rm -rf node_modules/expo-application
 fi
 
-# ==================================================
-# 🚨 NEW APPROACH: Delete Firebase code instead of stubbing
-# ==================================================
-echo ""
-echo "🗑️  DELETING Firebase & GMS code from expo modules..."
-
-# Delete ALL Firebase-related Java/Kotlin files from expo-notifications
-if [ -d "node_modules/expo-notifications/android/src/main/java/expo/modules/notifications" ]; then
-    echo "  🔥 Removing Firebase classes from expo-notifications..."
-    
-    # Delete Firebase-specific service files
-    find node_modules/expo-notifications/android/src -type f \( -name "*Firebase*" -o -name "*Fcm*" -o -name "*PushToken*" \) -delete
-    
-    # Comment out Firebase imports in remaining files
-    find node_modules/expo-notifications/android/src -type f \( -name "*.java" -o -name "*.kt" \) -exec sed -i \
-        -e 's/^import com\.google\.firebase/\/\/ FOSS: import com.google.firebase/g' \
-        -e 's/^import com\.google\.android\.gms/\/\/ FOSS: import com.google.android.gms/g' \
-        {} +
-    
-    echo "  ✅ Firebase code removed from expo-notifications"
+# Remove any generated notification code
+if [ -d "android/app/src/main/java/expo/modules/notifications" ]; then
+    rm -rf android/app/src/main/java/expo/modules/notifications
+    echo "  ✅ Removed generated notification native code"
 fi
 
-# Delete InstallReferrer code from expo-application
-if [ -d "node_modules/expo-application/android/src/main/java/expo/modules/application" ]; then
-    echo "  🔥 Removing InstallReferrer from expo-application..."
-    
-    find node_modules/expo-application/android/src -type f \( -name "*.java" -o -name "*.kt" \) -exec sed -i \
-        -e 's/^import com\.android\.installreferrer/\/\/ FOSS: import com.android.installreferrer/g' \
-        {} +
-    
-    echo "  ✅ InstallReferrer code removed from expo-application"
+if [ -d "android/app/src/main/java/expo/modules/application" ]; then
+    rm -rf android/app/src/main/java/expo/modules/application
+    echo "  ✅ Removed generated application native code"
 fi
 
-# ==================================================
-# 📦 Minimal compile-only stubs (NOT included in APK)
-# ==================================================
-echo ""
-echo "📦 Creating minimal compile-only stubs..."
-
-# These stubs are ONLY for compilation - Gradle will exclude them from APK
-COMPILE_STUBS_DIR="android/app/src/debug/java"
-mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/messaging"
-mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/encoders"
-mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/encoders/config"
-mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/encoders/proto"
-mkdir -p "$COMPILE_STUBS_DIR/com/google/android/gms/tasks"
-mkdir -p "$COMPILE_STUBS_DIR/com/android/installreferrer/api"
-
-# Minimal Firebase stubs (in debug sourceSet only)
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/messaging/FirebaseMessagingService.java" <<'EOF'
-package com.google.firebase.messaging;
-public class FirebaseMessagingService {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/messaging/RemoteMessage.java" <<'EOF'
-package com.google.firebase.messaging;
-public class RemoteMessage {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/messaging/FirebaseMessaging.java" <<'EOF'
-package com.google.firebase.messaging;
-public class FirebaseMessaging {
-    public static FirebaseMessaging getInstance() { return new FirebaseMessaging(); }
-}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/DataEncoder.java" <<'EOF'
-package com.google.firebase.encoders;
-public interface DataEncoder {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/ObjectEncoder.java" <<'EOF'
-package com.google.firebase.encoders;
-public interface ObjectEncoder<T> {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/ObjectEncoderContext.java" <<'EOF'
-package com.google.firebase.encoders;
-public interface ObjectEncoderContext {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/FieldDescriptor.java" <<'EOF'
-package com.google.firebase.encoders;
-public final class FieldDescriptor {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/EncodingException.java" <<'EOF'
-package com.google.firebase.encoders;
-public class EncodingException extends Exception {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/config/EncoderConfig.java" <<'EOF'
-package com.google.firebase.encoders.config;
-public interface EncoderConfig<T> {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/config/Configurator.java" <<'EOF'
-package com.google.firebase.encoders.config;
-public interface Configurator {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/proto/ProtoEnum.java" <<'EOF'
-package com.google.firebase.encoders.proto;
-public @interface ProtoEnum {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/proto/ProtobufEncoder.java" <<'EOF'
-package com.google.firebase.encoders.proto;
-public class ProtobufEncoder {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/android/gms/tasks/Task.java" <<'EOF'
-package com.google.android.gms.tasks;
-public abstract class Task<TResult> {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/google/android/gms/tasks/OnCompleteListener.java" <<'EOF'
-package com.google.android.gms.tasks;
-public interface OnCompleteListener<TResult> {}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/android/installreferrer/api/InstallReferrerClient.java" <<'EOF'
-package com.android.installreferrer.api;
-public abstract class InstallReferrerClient {
-    public static Builder newBuilder(android.content.Context context) { return null; }
-    public static class Builder {
-        public InstallReferrerClient build() { return null; }
-    }
-}
-EOF
-
-cat > "$COMPILE_STUBS_DIR/com/android/installreferrer/api/InstallReferrerStateListener.java" <<'EOF'
-package com.android.installreferrer.api;
-public interface InstallReferrerStateListener {}
-EOF
-
-echo "  ✅ Compile-only stubs created (in debug sourceSet - NOT in release APK)"
+echo "  ✅ NO Firebase code present - NO STUBS NEEDED"
 
 # 4. Patching Native Files (Dynamic Path Finding)
 echo ""
@@ -286,9 +169,9 @@ if [ -f "android/app/build.gradle" ]; then
 fi
 rm -f "android/app/google-services.json"
 
-# 7. Patching Gradle for F-Droid Compliance (ULTRA CRITICAL)
+# 7. Patching Gradle for F-Droid Compliance
 echo ""
-echo "🔧 Patching Gradle for F-Droid Compliance (AGGRESSIVE EXCLUSIONS)..."
+echo "🔧 Patching Gradle for F-Droid Compliance..."
 
 cat >> android/build.gradle <<'EOF'
 
@@ -312,43 +195,18 @@ allprojects {
         exclude module: 'play-services-base'
         exclude module: 'play-services-tasks'
     }
-    
-    // Force remove Firebase at resolution time
-    configurations.all {
-        resolutionStrategy {
-            eachDependency { details ->
-                if (details.requested.group.startsWith('com.google.firebase')) {
-                    details.useVersion('')
-                }
-                if (details.requested.group.startsWith('com.google.android.gms')) {
-                    details.useVersion('')
-                }
-                if (details.requested.group == 'com.android.installreferrer') {
-                    details.useVersion('')
-                }
-            }
-        }
-    }
 }
 EOF
 
 cat >> android/app/build.gradle <<'EOF'
 
 // ==================================================
-// F-Droid FOSS Patch: Exclude proprietary code from APK
+// F-Droid FOSS Patch: Disable dependency metadata
 // ==================================================
 android {
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
-    }
-    
-    // CRITICAL: Use only main sourceSet for release builds
-    // Debug sourceSet (with stubs) is NOT included in release APK
-    sourceSets {
-        release {
-            java.srcDirs = ['src/main/java']
-        }
     }
 }
 
@@ -357,15 +215,9 @@ configurations.all {
     exclude group: 'com.google.android.gms'
     exclude group: 'com.android.installreferrer'
 }
-
-configurations.configureEach {
-    exclude group: 'com.google.firebase'
-    exclude group: 'com.google.android.gms'
-    exclude group: 'com.android.installreferrer'
-}
 EOF
 
-echo "  ✅ Gradle patched with AGGRESSIVE exclusions"
+echo "  ✅ Gradle patched for F-Droid compliance"
 
 # ==================================================
 # 🔧 FIX: MediaPipe compilation order (Vision Camera V4 TurboModules)
@@ -381,7 +233,6 @@ if [ -f "$MEDIAPIPE_BUILD" ]; then
     
     echo "  🔧 Adding Vision Camera + Worklets dependencies to MediaPipe..."
     
-    # Ajouter les dépendances + forcer l'ordre de compilation
     cat >> "$MEDIAPIPE_BUILD" <<'GRADLE_PATCH'
 
 // ==================================================
@@ -455,14 +306,23 @@ EOF
 
 echo ""
 echo "=================================================="
-echo "✅ F-Droid prebuild COMPLETED - FOSS compliant"
+echo "✅ F-Droid prebuild COMPLETED - 100% FOSS"
 echo "=================================================="
 echo ""
-echo "🔍 NEW Approach applied:"
-echo "  ✅ Firebase CODE DELETED from expo modules"
-echo "  ✅ Stubs in DEBUG sourceSet only (NOT in release APK)"
-echo "  ✅ Gradle AGGRESSIVE exclusions configured"
-echo "  ✅ Runtime classpath excludes Firebase/GMS"
+echo "🔍 Applied changes:"
+echo "  ✅ expo-notifications REMOVED (no push notifications)"
+echo "  ✅ expo-application REMOVED (no install referrer)"
+echo "  ✅ NO STUBS created (nothing to detect)"
+echo "  ✅ Gradle exclusions configured"
 echo "  ✅ Vision Camera FOSS fork integrated"
 echo ""
-echo "🚀 Ready for F-Droid build (stubs WILL NOT be in APK)!"
+echo "⚠️  F-Droid build will NOT have:"
+echo "  ❌ Push notifications (Firebase)"
+echo "  ❌ Application info APIs (InstallReferrer)"
+echo ""
+echo "✅ F-Droid build WILL have:"
+echo "  ✅ Camera (FOSS fork)"
+echo "  ✅ Health Connect"
+echo "  ✅ All other features"
+echo ""
+echo "🚀 Ready for F-Droid build!"
