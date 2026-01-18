@@ -354,7 +354,7 @@ export default function SettingsMainScreen() {
                 <Sparkles size={28} color={Colors.cta} />
               </View>
               <View>
-                <Text style={styles.appName}>FitTrack</Text>
+                <Text style={styles.appName}>Spix</Text>
                 <Text style={styles.appVersion}>
                   {t('settings.version', { version: Constants.default.expoConfig?.version ?? '3.0.0' })}
                 </Text>

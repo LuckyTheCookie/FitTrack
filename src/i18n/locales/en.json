@@ -137,7 +137,7 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "Welcome to FitTrack",
+      "title": "Welcome to Spix",
       "subtitle": "Your personal fitness companion to achieve your goals",
       "button": "Get Started"
     },
@@ -888,11 +888,11 @@
   },
   "privacyPolicy": {
     "title": "Privacy Policy",
-    "intro": "FitTrack respects your privacy. This policy explains how we handle your data in accordance with GDPR (General Data Protection Regulation).",
+    "intro": "Spix respects your privacy. This policy explains how we handle your data in accordance with GDPR (General Data Protection Regulation).",
     "lastUpdate": "Last updated: January 1, 2026",
     "localMode": {
       "title": "Local Mode (default)",
-      "description": "By default FitTrack runs 100% locally. Your data remains only on your device.",
+      "description": "By default Spix runs 100% locally. Your data remains only on your device.",
       "storedData": {
         "sessions": "Workout sessions (exercises, durations, reps)",
         "runs": "Runs (distance, time, speed)",
@@ -905,7 +905,7 @@
     },
     "foss": {
       "title": "FOSS Edition (F-Droid)",
-      "description": "You are using the FOSS edition of FitTrack, built to comply with F-Droid guidelines.",
+      "description": "You are using the FOSS edition of Spix, built to comply with F-Droid guidelines.",
       "removed": {
         "fcm": "Firebase Cloud Messaging (FCM)",
         "google": "Google Services / Google Play Services",
@@ -955,7 +955,7 @@
     },
     "healthConnect": {
       "title": "Health Connect (Android)",
-      "description": "FitTrack can import workouts from Google Health Connect on Android. This feature is optional.",
+      "description": "Spix can import workouts from Google Health Connect on Android. This feature is optional.",
       "data": {
         "sessions": "Workout sessions (type, duration, date)",
         "distance": "Distance covered",
@@ -964,10 +964,10 @@
       },
       "usage": {
         "localImport": "Local import only - no server upload",
-        "convert": "Converted into local FitTrack entries",
+        "convert": "Converted into local Spix entries",
         "choose": "You choose which sessions to import"
       },
-      "highlight": "✅ Health Connect data is read once and stored locally. FitTrack never writes to Health Connect.",
+      "highlight": "✅ Health Connect data is read once and stored locally. Spix never writes to Health Connect.",
       "revoke": "You can revoke access at any time in your device's Health Connect settings."
     },
     "rights": {

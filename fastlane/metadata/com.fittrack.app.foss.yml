@@ -3,16 +3,16 @@ Categories:
 License: AGPL-3.0-or-later
 AuthorName: LuckyTheCookie - Lucas THIEBAUT
 AuthorWebSite: https://github.com/LuckyTheCookie
-WebSite: https://fittrack.luckythecookie.dev
-SourceCode: https://github.com/LuckyTheCookie/FitTrack
-IssueTracker: https://github.com/LuckyTheCookie/FitTrack/issues
-Changelog: https://github.com/LuckyTheCookie/FitTrack/releases
+WebSite: https://spix.luckythecookie.dev
+SourceCode: https://github.com/LuckyTheCookie/Spix
+IssueTracker: https://github.com/LuckyTheCookie/Spix/issues
+Changelog: https://github.com/LuckyTheCookie/Spix/releases
 
-Name: FitTrack
-AutoName: FitTrack
+Name: Spix
+AutoName: Spix
 
 RepoType: git
-Repo: https://github.com/LuckyTheCookie/FitTrack.git
+Repo: https://github.com/LuckyTheCookie/Spix.git
 
 Builds:
   - versionName: 7.2.5

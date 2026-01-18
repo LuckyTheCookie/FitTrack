@@ -2,8 +2,8 @@
 set -e
 
 # ==================================================
-# 🔨 FitTrack F-Droid Prebuild Script
-# Flavor: FOSS (com.fittrack.app.foss)
+# 🔨 Spix F-Droid Prebuild Script
+# Flavor: FOSS (com.spix.app.foss)
 # Version: NO FIREBASE - SOURCE CODE PATCHING
 # ==================================================
 
@@ -32,9 +32,9 @@ if (appJson.expo.android && appJson.expo.android.googleServicesFile) {
   delete appJson.expo.android.googleServicesFile;
 }
 
-const fossPackage = 'com.fittrack.app.foss';
+const fossPackage = 'com.spix.app.foss';
 appJson.expo.android.package = fossPackage;
-appJson.expo.ios.bundleIdentifier = 'com.fittrack.app';
+appJson.expo.ios.bundleIdentifier = 'com.spix.app';
 
 // CRITICAL: Remove expo-notifications and expo-application plugins
 if (appJson.expo.plugins) {
@@ -173,8 +173,8 @@ find src app -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "
 import Constants from 'expo-constants';
 
 const Application = {
-  applicationName: Constants.expoConfig?.name || 'FitTrack',
-  applicationId: Constants.expoConfig?.android?.package || 'com.fittrack.app.foss',
+  applicationName: Constants.expoConfig?.name || 'Spix',
+  applicationId: Constants.expoConfig?.android?.package || 'com.spix.app.foss',
   nativeApplicationVersion: Constants.expoConfig?.version || '1.0.0',
   nativeBuildVersion: String(Constants.expoConfig?.android?.versionCode || 1),
   getInstallReferrerAsync: async () => {

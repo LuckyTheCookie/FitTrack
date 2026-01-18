@@ -83,7 +83,7 @@ export const checkHealthConnectOnStartup = async (): Promise<void> => {
             let importCount = 0;
             
             for (const workout of newWorkouts) {
-                const defaultType = healthConnect.getDefaultFitTrackType(workout.exerciseType);
+                const defaultType = healthConnect.getDefaultSpixType(workout.exerciseType);
                 if (defaultType === 'skip') continue;
                 
                 const date = new Date(workout.startTime).toISOString().split('T')[0];

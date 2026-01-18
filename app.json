@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "FitTrack",
-    "slug": "fittrack-app",
-    "version": "7.2.0",
+    "name": "Spix",
+    "slug": "spix-app",
+    "version": "7.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "scheme": "fittrack",
+    "scheme": "spix",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,18 +15,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittrack.app",
+      "bundleIdentifier": "com.spix.app",
       "infoPlist": {
         "NSCameraUsageDescription": "$(PRODUCT_NAME) a besoin de la caméra pour détecter vos mouvements"
       },
-      "buildNumber": "7.2.0"
+      "buildNumber": "7.3.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0b0c0f"
       },
-      "package": "com.fittrack.app",
+      "package": "com.spix.app",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.CAMERA",
@@ -39,7 +39,7 @@
         "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_BODY_FAT"
       ],
-      "versionCode": 70200,
+      "versionCode": 70300,
       "googleServicesFile": "./google-services.json"
     },
     "web": {

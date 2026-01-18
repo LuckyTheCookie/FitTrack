@@ -102,7 +102,7 @@ class Logger {
 // ============================================================================
 
 /** Logger principal de l'app */
-export const logger = new Logger({ prefix: 'FitTrack' });
+export const logger = new Logger({ prefix: 'Spix' });
 
 /** Logger pour les stores */
 export const storeLogger = new Logger({ prefix: 'Store' });

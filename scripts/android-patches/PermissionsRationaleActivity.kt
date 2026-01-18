@@ -1,4 +1,4 @@
-package com.fittrack.app
+package com.spix.app
 
 import android.os.Bundle
 import android.webkit.WebResourceRequest

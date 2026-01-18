@@ -1,5 +1,5 @@
 // ============================================================================
-// THÈME ET CONSTANTES DE STYLE - FitTrack App
+// THÈME ET CONSTANTES DE STYLE - Spix App
 // Style glassmorphism sombre inspiré de la maquette
 // ============================================================================
 

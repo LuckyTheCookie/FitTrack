@@ -137,7 +137,7 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "Bienvenue sur FitTrack",
+      "title": "Bienvenue sur Spix",
       "subtitle": "Ton compagnon fitness personnel pour atteindre tes objectifs",
       "button": "Commencer"
     },
@@ -883,11 +883,11 @@
   },
   "privacyPolicy": {
     "title": "Politique de Confidentialité",
-    "intro": "FitTrack respecte ta vie privée. Cette politique explique comment nous traitons tes données selon le RGPD (Règlement Général sur la Protection des Données).",
+    "intro": "Spix respecte ta vie privée. Cette politique explique comment nous traitons tes données selon le RGPD (Règlement Général sur la Protection des Données).",
     "lastUpdate": "Dernière mise à jour : 1er janvier 2026",
     "localMode": {
       "title": "Mode Local (par défaut)",
-      "description": "Par défaut, FitTrack fonctionne en mode 100% local. Tes données restent uniquement sur ton appareil.",
+      "description": "Par défaut, Spix fonctionne en mode 100% local. Tes données restent uniquement sur ton appareil.",
       "storedData": {
         "sessions": "Séances d'entraînement (exercices, durées, répétitions)",
         "runs": "Courses (distance, temps, vitesse)",
@@ -900,7 +900,7 @@
     },
     "foss": {
       "title": "Version FOSS (F-Droid)",
-      "description": "Tu utilises la version FOSS de FitTrack, spécialement conçue pour respecter les directives de F-Droid.",
+      "description": "Tu utilises la version FOSS de Spix, spécialement conçue pour respecter les directives de F-Droid.",
       "removed": {
         "fcm": "Firebase Cloud Messaging (FCM)",
         "google": "Google Services / Google Play Services",
@@ -950,7 +950,7 @@
     },
     "healthConnect": {
       "title": "Health Connect (Android)",
-      "description": "FitTrack peut importer des séances d'entraînement depuis Google Health Connect sur Android. Cette fonctionnalité est optionnelle.",
+      "description": "Spix peut importer des séances d'entraînement depuis Google Health Connect sur Android. Cette fonctionnalité est optionnelle.",
       "data": {
         "sessions": "Séances d'exercice (type, durée, date)",
         "distance": "Distance parcourue",
@@ -959,10 +959,10 @@
       },
       "usage": {
         "localImport": "Import local uniquement - aucun envoi serveur",
-        "convert": "Conversion en entrées FitTrack locales",
+        "convert": "Conversion en entrées Spix locales",
         "choose": "Tu choisis quelles séances importer"
       },
-      "highlight": "✅ Les données Health Connect sont lues une seule fois et stockées localement. FitTrack n'écrit jamais dans Health Connect.",
+      "highlight": "✅ Les données Health Connect sont lues une seule fois et stockées localement. Spix n'écrit jamais dans Health Connect.",
       "revoke": "Tu peux révoquer l'accès à tout moment dans les paramètres Health Connect de ton appareil."
     },
     "rights": {

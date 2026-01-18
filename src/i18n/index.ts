@@ -1,5 +1,5 @@
 // ============================================================================
-// i18n Configuration - FitTrack App
+// i18n Configuration - Spix App
 // Internationalization with i18next + react-i18next + expo-localization
 // ============================================================================
 

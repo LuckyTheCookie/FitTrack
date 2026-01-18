@@ -1,5 +1,5 @@
 // ============================================================================
-// EXPORT JSON HEBDOMADAIRE - FitTrack App
+// EXPORT JSON HEBDOMADAIRE - Spix App
 // ============================================================================
 
 import type { Entry, WeeklyExport, StreakInfo, HomeWorkoutEntry, RunEntry, BeatSaberEntry, MealEntry, MeasureEntry, BadgeId } from '../types';

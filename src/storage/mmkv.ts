@@ -1,5 +1,5 @@
 // ============================================================================
-// STORAGE - FitTrack App
+// STORAGE - Spix App
 // Stockage local persistant avec MMKV et fallback sur AsyncStorage
 // ============================================================================
 
@@ -13,7 +13,7 @@ let useMMKV = false;
 
 try {
     const instance = createMMKV({
-        id: 'fittrack-storage',
+        id: 'spix-storage',
     });
     // Test write/read to ensure MMKV works
     instance.set('__test__', 'ok');

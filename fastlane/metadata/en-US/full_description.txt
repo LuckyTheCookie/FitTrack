@@ -1,7 +1,7 @@
-FitTrack is your elegant, privacy-first fitness companion that works 100% offline.
+Spix is your elegant, privacy-first fitness companion that works 100% offline.
 
 PRIVACY & PHILOSOPHY
-Because your health data belongs to YOU, FitTrack was designed to be completely transparent:
+Because your health data belongs to YOU, Spix was designed to be completely transparent:
 • 100% Local & Offline: Works without internet. Your data stays on your device.
 • Secure Camera: Used only for real-time movement detection in Rep Counter. No images are saved or sent.
 • Accelerometer Alternative: Privacy-conscious? Use sensor-only mode to count reps without the camera.
@@ -33,4 +33,4 @@ TECH STACK
 Built with React Native, Expo SDK 54, TypeScript, and local-first architecture using Zustand + MMKV for blazing-fast offline performance.
 
 OPEN SOURCE
-FitTrack is open source under AGPL-3.0 license. Contributions welcome!
+Spix is open source under AGPL-3.0 license. Contributions welcome!

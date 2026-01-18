@@ -1,4 +1,4 @@
-# 🏋️‍♂️ FitTrack
+# 🏋️‍♂️ Spix
 
 > **Votre compagnon fitness personnel, élégant et respectueux de votre vie privée.**
 >
@@ -10,13 +10,13 @@
 [![Privacy](https://img.shields.io/badge/Privacy-100%25-green.svg?style=for-the-badge&logo=shield&logoColor=white)]()
 [![Health Connect](https://img.shields.io/badge/Health_Connect-Android-3DDC84.svg?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/health-and-fitness/guides/health-connect)
 
-**FitTrack** est une application de suivi fitness moderne conçue avec une philosophie simple : **vos données vous appartiennent**. Elle combine un design *Glassmorphism* sombre ultra-soigné, une gamification motivante et des fonctionnalités avancées (Health Connect, AI Rep Counter) tout en fonctionnant parfaitement **hors ligne**.
+**Spix** est une application de suivi fitness moderne conçue avec une philosophie simple : **vos données vous appartiennent**. Elle combine un design *Glassmorphism* sombre ultra-soigné, une gamification motivante et des fonctionnalités avancées (Health Connect, AI Rep Counter) tout en fonctionnant parfaitement **hors ligne**.
 
 ---
 
 ## 🔒 Vie Privée & Philosophie "Clean App"
 
-**Parce que votre santé ne regarde que VOUS**, FitTrack a été pensée pour être totalement transparente :
+**Parce que votre santé ne regarde que VOUS**, Spix a été pensée pour être totalement transparente :
 
 - **🏠 100% Local & Offline** : L'application fonctionne sans internet. Vos données sont stockées localement sur votre appareil.
 - **📷 Caméra Sécurisée** : L'utilisation de la caméra pour le *Rep Counter* sert uniquement à la détection de mouvement en temps réel. **Aucune image n'est enregistrée ni envoyée sur un serveur.**

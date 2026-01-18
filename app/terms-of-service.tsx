@@ -103,7 +103,7 @@ export default function TermsOfServiceScreen() {
                 {/* Introduction */}
                 <Animated.View entering={FadeInDown.delay(100).springify()}>
                     <Text style={styles.intro}>
-                        En utilisant FitTrack, tu acceptes les conditions suivantes. 
+                        En utilisant Spix, tu acceptes les conditions suivantes. 
                         Nous te recommandons de les lire attentivement.
                     </Text>
                     <Text style={styles.lastUpdate}>
@@ -119,7 +119,7 @@ export default function TermsOfServiceScreen() {
                     delay={200}
                 >
                     <Text style={styles.paragraph}>
-                        FitTrack est une application gratuite de suivi fitness conçue pour 
+                        Spix est une application gratuite de suivi fitness conçue pour 
                         t'aider à atteindre tes objectifs sportifs.
                     </Text>
                     
@@ -185,7 +185,7 @@ export default function TermsOfServiceScreen() {
                     delay={500}
                 >
                     <Text style={styles.paragraph}>
-                        FitTrack est fourni "tel quel" sans garantie d'aucune sorte.
+                        Spix est fourni "tel quel" sans garantie d'aucune sorte.
                     </Text>
                     <BulletPoint>
                         L'app n'est pas un conseil médical - consulte un professionnel de 
@@ -216,7 +216,7 @@ export default function TermsOfServiceScreen() {
                         importants seront notifiés dans l'application.
                     </Text>
                     <Text style={styles.paragraph}>
-                        En continuant à utiliser FitTrack après une modification, tu acceptes 
+                        En continuant à utiliser Spix après une modification, tu acceptes 
                         les nouvelles conditions.
                     </Text>
                 </TermsSection>
@@ -225,7 +225,7 @@ export default function TermsOfServiceScreen() {
                 <Animated.View entering={FadeInDown.delay(700).springify()}>
                     <GlassCard style={styles.acceptCard}>
                         <CheckCircle size={32} color="#4ade80" />
-                        <Text style={styles.acceptTitle}>Utilisation de FitTrack</Text>
+                        <Text style={styles.acceptTitle}>Utilisation de Spix</Text>
                         <Text style={styles.acceptText}>
                             En utilisant cette application, tu confirmes avoir lu et accepté 
                             ces conditions d'utilisation ainsi que notre politique de confidentialité.

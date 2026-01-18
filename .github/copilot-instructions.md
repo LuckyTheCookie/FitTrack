@@ -1,7 +1,7 @@
-# FitTrack - AI Agent Instructions
+# Spix - AI Agent Instructions
 
 ## Project Overview
-FitTrack is a **privacy-first offline-first** React Native fitness tracking app built with **Expo 54** and **Expo Router v6**. It tracks workouts (home/run/beatsaber), meals, measurements with gamification (XP, levels, quests, badges) and optional social features. Uses **glassmorphism dark theme** with carefully tuned animations and persistent bottom tab navigation.
+Spix is a **privacy-first offline-first** React Native fitness tracking app built with **Expo 54** and **Expo Router v6**. It tracks workouts (home/run/beatsaber), meals, measurements with gamification (XP, levels, quests, badges) and optional social features. Uses **glassmorphism dark theme** with carefully tuned animations and persistent bottom tab navigation.
 
 ### Tech Stack
 - **React Native 0.81** + **Expo SDK 54** + **TypeScript**
@@ -69,7 +69,7 @@ Affects: Notifications service, auth flow (shows F-Droid warning), and package n
 ### Health Connect Integration (Android Only)
 [src/services/healthConnect/index.ts](src/services/healthConnect/index.ts) imports workouts from Android Health Connect:
 - **Lazy-loaded module** to prevent iOS crashes
-- **Exercise type mappings**: Maps Health Connect exercise type IDs to FitTrack types (`home`/`run`/`beatsaber`/`skip`)
+- **Exercise type mappings**: Maps Health Connect exercise type IDs to Spix types (`home`/`run`/`beatsaber`/`skip`)
 - **Custom date support**: Pass `customDate` param to entry actions to preserve original workout date
 - **Duplicate detection**: Compare `startTime`/`endTime` to avoid re-importing
 

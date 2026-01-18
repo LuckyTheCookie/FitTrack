@@ -1,6 +1,6 @@
 {
-  "name": "fittrack-app",
-  "version": "7.2.3",
+  "name": "spix-app",
+  "version": "7.3.0",
   "license": "AGPL-3.0-or-later",
   "author": "LuckyTheCookie - Lucas THIEBAUT",
   "main": "expo-router/entry",

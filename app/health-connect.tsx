@@ -47,7 +47,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore, useGamificationStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import * as healthConnect from '../src/services/healthConnect';
-import type { HealthConnectWorkout, FitTrackWorkoutType, HealthConnectWeight } from '../src/services/healthConnect';
+import type { HealthConnectWorkout, SpixWorkoutType, HealthConnectWeight } from '../src/services/healthConnect';
 import { calculateQuestTotals, calculateXpForEntry } from '../src/stores/gamificationStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -61,7 +61,7 @@ import * as LucideIcons from 'lucide-react-native';
 type HealthConnectMappedType = 'home' | 'run' | 'beatsaber' | 'custom' | 'skip';
 
 interface ImportableWorkout extends HealthConnectWorkout {
-    fitTrackType: HealthConnectMappedType;
+    spixType: HealthConnectMappedType;
     customSportId?: string; // ID du sport personnalisé si type === 'custom'
     detectedSportId?: string; // ID du sport détecté automatiquement
     selected: boolean;
@@ -158,8 +158,8 @@ function WorkoutImportCard({
     index: number;
 }) {
     const { t } = useTranslation();
-    const isSkipped = workout.fitTrackType === 'skip';
-    const isOther = workout.fitTrackType === 'custom';
+    const isSkipped = workout.spixType === 'skip';
+    const isOther = workout.spixType === 'custom';
     
     // Get the detected/mapped sport config (if any)
     const detectedSportId = workout.detectedSportId;
@@ -168,11 +168,11 @@ function WorkoutImportCard({
     // Get active sport config for color
     const getActiveColor = (): string => {
         if (isSkipped) return '#374151';
-        if (workout.fitTrackType === 'custom' && workout.customSportId) {
+        if (workout.spixType === 'custom' && workout.customSportId) {
             const customSport = sportsConfig.find(s => s.id === workout.customSportId);
             return customSport?.color || Colors.cta;
         }
-        const defaultSport = sportsConfig.find(s => s.id === workout.fitTrackType);
+        const defaultSport = sportsConfig.find(s => s.id === workout.spixType);
         return defaultSport?.color || Colors.cta;
     };
     
@@ -180,7 +180,7 @@ function WorkoutImportCard({
     
     // Get selected sport name for "Autre" display
     const getSelectedSportName = (): string | null => {
-        if (workout.fitTrackType === 'custom' && workout.customSportId) {
+        if (workout.spixType === 'custom' && workout.customSportId) {
             const sport = sportsConfig.find(s => s.id === workout.customSportId);
             return sport ? `${sport.emoji} ${sport.name}` : null;
         }
@@ -252,8 +252,8 @@ function WorkoutImportCard({
                         {detectedSport && (
                             <WorkoutTypePill
                                 sportConfig={detectedSport}
-                                selected={workout.fitTrackType === detectedSport.id || 
-                                    (workout.fitTrackType === 'custom' && workout.customSportId === detectedSport.id)}
+                                selected={workout.spixType === detectedSport.id || 
+                                    (workout.spixType === 'custom' && workout.customSportId === detectedSport.id)}
                                 onPress={() => {
                                     if (detectedSport.isDefault) {
                                         onTypeChange(detectedSport.id as HealthConnectMappedType);
@@ -481,7 +481,7 @@ export default function HealthConnectScreen() {
             
             // Map workouts with detected sport
             const importable = notImported.map((w): ImportableWorkout => {
-                const defaultType = healthConnect.getDefaultFitTrackType(w.exerciseType as number);
+                const defaultType = healthConnect.getDefaultSpixType(w.exerciseType as number);
                 
                 // Find the detected sport ID based on the default type
                 // If it's a default sport (home, run, beatsaber), use that ID
@@ -493,7 +493,7 @@ export default function HealthConnectScreen() {
                 
                 return {
                     ...w,
-                    fitTrackType: defaultType,
+                    spixType: defaultType,
                     detectedSportId,
                     selected: true,
                 };
@@ -532,7 +532,7 @@ export default function HealthConnectScreen() {
         setWorkouts((prev) =>
             prev.map((w) =>
                 w.id === workoutId
-                    ? { ...w, fitTrackType: type, customSportId, selected: type !== 'skip' }
+                    ? { ...w, spixType: type, customSportId, selected: type !== 'skip' }
                     : w
             )
         );
@@ -562,7 +562,7 @@ export default function HealthConnectScreen() {
     }, [sportPickerWorkoutId, handleTypeChange]);
 
     const handleImport = async () => {
-        const toImport = workouts.filter((w) => w.selected && w.fitTrackType !== 'skip');
+        const toImport = workouts.filter((w) => w.selected && w.spixType !== 'skip');
         const weightsToImport = weights.filter((w) => w.selected);
         if (toImport.length === 0 && weightsToImport.length === 0) return;
 
@@ -577,7 +577,7 @@ export default function HealthConnectScreen() {
             for (const workout of toImport) {
                 const date = format(workout.startTime, 'yyyy-MM-dd');
                 const createdAt = workout.startTime.toISOString();
-                switch (workout.fitTrackType) {
+                switch (workout.spixType) {
                     case 'home':
                         addHomeWorkout({
                             name: workout.title || workout.exerciseTypeName,
@@ -753,7 +753,7 @@ export default function HealthConnectScreen() {
         }
 
         // READY STATE
-        const selectedCount = workouts.filter((w) => w.selected && w.fitTrackType !== 'skip').length;
+        const selectedCount = workouts.filter((w) => w.selected && w.spixType !== 'skip').length;
         const selectedWeightsCount = weights.filter((w) => w.selected).length;
         const totalSelected = selectedCount + selectedWeightsCount;
 

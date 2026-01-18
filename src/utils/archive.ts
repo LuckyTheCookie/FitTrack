@@ -204,7 +204,7 @@ export const separateForArchive = (entries: Entry[]): ArchiveResult => {
 export const generateArchiveFilename = (period: string): string => {
     const date = new Date().toISOString().split('T')[0];
     const safePeriod = period.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
-    return `fittrack-archive-${safePeriod}-${date}.json`;
+    return `spix-archive-${safePeriod}-${date}.json`;
 };
 
 /**

@@ -56,7 +56,7 @@ export const BuildConfig = {
     expoPushEnabled: BUILD_FLAVOR === 'standard',
 
     /** URL GitHub Releases pour télécharger la version complète */
-    githubReleasesUrl: 'https://github.com/LuckyTheCookie/FitTrack/releases',
+    githubReleasesUrl: 'https://github.com/LuckyTheCookie/Spix/releases',
 
     /** Nom d'affichage du flavor */
     flavorDisplayName: BUILD_FLAVOR === 'foss' ? 'FOSS Edition' : 'Standard',

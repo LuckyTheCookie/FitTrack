@@ -1,5 +1,5 @@
 // ============================================================================
-// GÉNÉRATEUR DE SÉANCE "CHAMBRE" - FitTrack App
+// GÉNÉRATEUR DE SÉANCE "CHAMBRE" - Spix App
 // V1 simple : génère une liste d'exercices selon durée/focus/intensité
 // ============================================================================
 

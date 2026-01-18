@@ -1,5 +1,5 @@
 // ============================================================================
-// CONSTANTES DE VALEURS - FitTrack App
+// CONSTANTES DE VALEURS - Spix App
 // Valeurs configurables centralisées (pas de magic numbers)
 // ============================================================================
 
@@ -112,9 +112,9 @@ export const PUSH_TOKEN_MAX_RETRIES = 3;
 
 /** Clés de stockage pour les stores Zustand */
 export const STORAGE_KEYS = {
-    appStore: 'fittrack-app-store',
-    gamificationStore: 'fittrack-gamification-store',
-    socialStore: 'fittrack-social-store',
+    appStore: 'spix-app-store',
+    gamificationStore: 'spix-gamification-store',
+    socialStore: 'spix-social-store',
 } as const;
 
 // ============================================================================

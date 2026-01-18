@@ -47,7 +47,7 @@ jobs:
 
       - name: 🔐 Decode Secrets
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > fittrack.p12.tmp
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > spix.p12.tmp
           echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > google-services.json
 
       - name: 🔨 Run Build Script
@@ -72,6 +72,6 @@ jobs:
         if: success()
         with:
           tag_name: v${{ steps.build_script.outputs.final_version }}
-          name: FitTrack v${{ steps.build_script.outputs.final_version }}
+          name: Spix v${{ steps.build_script.outputs.final_version }}
           files: releases/*.apk
           generate_release_notes: true

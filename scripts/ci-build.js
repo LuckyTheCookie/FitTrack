@@ -86,7 +86,7 @@ function patchHealthConnect(rootDir) {
   console.log(`🏥 Patching Health Connect...`);
   const patchesDir = path.join(rootDir, 'scripts/android-patches');
   const androidMainDir = path.join(rootDir, 'android/app/src/main');
-  const kotlinDir = path.join(androidMainDir, 'java/com/fittrack/app');
+  const kotlinDir = path.join(androidMainDir, 'java/com/spix/app');
   const manifestPath = path.join(androidMainDir, 'AndroidManifest.xml');
 
   // Copie des fichiers Kotlin (s'ils existent dans le repo)
@@ -129,9 +129,9 @@ function patchHealthConnect(rootDir) {
 }
 
 function injectGradleConfig(rootDir, enableSplits) {
-  // CRITIQUE EN CI: On récupère le keystore temporaire (fittrack.p12.tmp) et on le met là où Gradle le veut
-  const tempKeystore = path.join(rootDir, 'fittrack.p12.tmp');
-  const destKeystore = path.join(rootDir, 'android/app/fittrack.p12');
+  // CRITIQUE EN CI: On récupère le keystore temporaire (spix.p12.tmp) et on le met là où Gradle le veut
+  const tempKeystore = path.join(rootDir, 'spix.p12.tmp');
+  const destKeystore = path.join(rootDir, 'android/app/spix.p12');
   
   if (fs.existsSync(tempKeystore)) {
       fs.copyFileSync(tempKeystore, destKeystore);
@@ -147,7 +147,7 @@ function injectGradleConfig(rootDir, enableSplits) {
   const signingBlock = `
     signingConfigs {
         release {
-            storeFile file("fittrack.p12")
+            storeFile file("spix.p12")
             storePassword "${KEYSTORE_PASSWORD}"
             keyAlias "${KEYSTORE_ALIAS}"
             keyPassword "${KEYSTORE_PASSWORD}"
@@ -260,7 +260,7 @@ async function buildFlavor(rootDir, flavor, version) {
           const archMatch = apk.match(/(arm64-v8a|armeabi-v7a|x86_64|x86)/);
           if (archMatch) archSuffix = `-${archMatch[1]}`;
           
-          const newName = `FitTrack-${version}${flavorConfig.apkSuffix}${archSuffix}.apk`;
+          const newName = `Spix-${version}${flavorConfig.apkSuffix}${archSuffix}.apk`;
           fs.renameSync(path.join(apkDir, apk), path.join(releasesDir, newName));
           console.log(`✅ Artifact ready: releases/${newName}`);
       });

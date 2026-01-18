@@ -114,7 +114,7 @@ export default function DataScreen() {
       );
       
       const jsonString = exportFullBackup(backup);
-      const filename = `fittrack-backup-${new Date().toISOString().split('T')[0]}.json`;
+      const filename = `spix-backup-${new Date().toISOString().split('T')[0]}.json`;
       const fileUri = `${FileSystem.cacheDirectory}${filename}`;
       
       await FileSystem.writeAsStringAsync(fileUri, jsonString, {

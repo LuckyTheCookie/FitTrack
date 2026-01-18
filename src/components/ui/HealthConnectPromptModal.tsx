@@ -84,7 +84,7 @@ export function HealthConnectPromptModal({
           {/* Description */}
           <Animated.View entering={FadeInDown.delay(500)}>
             <Text style={styles.description}>
-              De nouvelles séances ont été détectées dans Health Connect. Souhaites-tu les importer dans FitTrack ?
+              De nouvelles séances ont été détectées dans Health Connect. Souhaites-tu les importer dans Spix ?
             </Text>
           </Animated.View>
 

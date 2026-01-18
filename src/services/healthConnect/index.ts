@@ -39,13 +39,13 @@ export interface HealthConnectWorkout {
     calories?: number;
 }
 
-export type FitTrackWorkoutType = 'home' | 'run' | 'beatsaber' | 'skip';
+export type SpixWorkoutType = 'home' | 'run' | 'beatsaber' | 'skip';
 
 // ============================================================================
 // EXERCISE TYPE MAPPINGS (ADAPTÉ À VOS LOGS)
 // ============================================================================
 
-export const DEFAULT_EXERCISE_MAPPINGS: Record<number, FitTrackWorkoutType> = {
+export const DEFAULT_EXERCISE_MAPPINGS: Record<number, SpixWorkoutType> = {
     // RUNNING & WALKING
     56: 'run',   // RUNNING
     57: 'run',   // RUNNING_TREADMILL
@@ -399,7 +399,7 @@ export async function getDistanceForWorkout(startTime: Date, endTime: Date): Pro
 // MAPPING HELPERS
 // ============================================================================
 
-export function getDefaultFitTrackType(exerciseType: number): FitTrackWorkoutType {
+export function getDefaultSpixType(exerciseType: number): SpixWorkoutType {
     const mapping = DEFAULT_EXERCISE_MAPPINGS[exerciseType];
     if (mapping) return mapping;
     // Si ID inconnu mais commence par 79 (marche), etc.

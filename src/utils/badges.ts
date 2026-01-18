@@ -1,5 +1,5 @@
 // ============================================================================
-// SYSTÈME DE BADGES - FitTrack App
+// SYSTÈME DE BADGES - Spix App
 // ============================================================================
 
 import type { Badge, BadgeId, Entry } from '../types';

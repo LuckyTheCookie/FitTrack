@@ -1,5 +1,5 @@
 // ============================================================================
-// EXPORT MODAL - FitTrack App
+// EXPORT MODAL - Spix App
 // Modal pour exporter les données au format JSON avec options
 // ============================================================================
 
