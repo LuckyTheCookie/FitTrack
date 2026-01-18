@@ -73,12 +73,12 @@ echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 bunx expo prebuild --clean --platform android
 
 # ==================================================
-# 🔥 CRITICAL: Remove ALL Firebase & Google Services
+# 🔥 CRITICAL: Remove ALL Firebase & Google Services CODE
 # ==================================================
 echo ""
-echo "🔥 REMOVING ALL FIREBASE & GOOGLE SERVICES DEPENDENCIES..."
+echo "🔥 REMOVING ALL FIREBASE & GOOGLE SERVICES CODE..."
 
-# Strip Firebase from expo-notifications
+# Strip Firebase from expo-notifications build.gradle
 EXPO_NOTIF_GRADLE="node_modules/expo-notifications/android/build.gradle"
 if [ -f "$EXPO_NOTIF_GRADLE" ]; then
     echo "  🧹 Cleaning expo-notifications/build.gradle..."
@@ -86,147 +86,155 @@ if [ -f "$EXPO_NOTIF_GRADLE" ]; then
     sed -i '/firebase-messaging/d' "$EXPO_NOTIF_GRADLE"
     sed -i '/firebase-core/d' "$EXPO_NOTIF_GRADLE"
     sed -i '/firebase-analytics/d' "$EXPO_NOTIF_GRADLE"
-    echo "  ✅ Firebase removed from expo-notifications"
+    echo "  ✅ Firebase removed from expo-notifications build.gradle"
 fi
 
-# Strip InstallReferrer from expo-application
+# Strip InstallReferrer from expo-application build.gradle
 EXPO_APP_GRADLE="node_modules/expo-application/android/build.gradle"
 if [ -f "$EXPO_APP_GRADLE" ]; then
     echo "  🧹 Cleaning expo-application/build.gradle..."
     sed -i '/com\.android\.installreferrer/d' "$EXPO_APP_GRADLE"
     sed -i '/installreferrer/d' "$EXPO_APP_GRADLE"
-    echo "  ✅ InstallReferrer removed from expo-application"
+    echo "  ✅ InstallReferrer removed from expo-application build.gradle"
 fi
 
-# Create stub classes to prevent compilation errors
+# ==================================================
+# 🚨 NEW APPROACH: Delete Firebase code instead of stubbing
+# ==================================================
 echo ""
-echo "📦 Creating FOSS stub classes..."
+echo "🗑️  DELETING Firebase & GMS code from expo modules..."
 
-# Firebase Messaging stub
-FIREBASE_STUB_DIR="node_modules/expo-notifications/android/src/main/java/com/google/firebase/messaging"
-mkdir -p "$FIREBASE_STUB_DIR"
-cat > "$FIREBASE_STUB_DIR/FirebaseMessagingService.java" <<'EOF'
+# Delete ALL Firebase-related Java/Kotlin files from expo-notifications
+if [ -d "node_modules/expo-notifications/android/src/main/java/expo/modules/notifications" ]; then
+    echo "  🔥 Removing Firebase classes from expo-notifications..."
+    
+    # Delete Firebase-specific service files
+    find node_modules/expo-notifications/android/src -type f \( -name "*Firebase*" -o -name "*Fcm*" -o -name "*PushToken*" \) -delete
+    
+    # Comment out Firebase imports in remaining files
+    find node_modules/expo-notifications/android/src -type f \( -name "*.java" -o -name "*.kt" \) -exec sed -i \
+        -e 's/^import com\.google\.firebase/\/\/ FOSS: import com.google.firebase/g' \
+        -e 's/^import com\.google\.android\.gms/\/\/ FOSS: import com.google.android.gms/g' \
+        {} +
+    
+    echo "  ✅ Firebase code removed from expo-notifications"
+fi
+
+# Delete InstallReferrer code from expo-application
+if [ -d "node_modules/expo-application/android/src/main/java/expo/modules/application" ]; then
+    echo "  🔥 Removing InstallReferrer from expo-application..."
+    
+    find node_modules/expo-application/android/src -type f \( -name "*.java" -o -name "*.kt" \) -exec sed -i \
+        -e 's/^import com\.android\.installreferrer/\/\/ FOSS: import com.android.installreferrer/g' \
+        {} +
+    
+    echo "  ✅ InstallReferrer code removed from expo-application"
+fi
+
+# ==================================================
+# 📦 Minimal compile-only stubs (NOT included in APK)
+# ==================================================
+echo ""
+echo "📦 Creating minimal compile-only stubs..."
+
+# These stubs are ONLY for compilation - Gradle will exclude them from APK
+COMPILE_STUBS_DIR="android/app/src/debug/java"
+mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/messaging"
+mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/encoders"
+mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/encoders/config"
+mkdir -p "$COMPILE_STUBS_DIR/com/google/firebase/encoders/proto"
+mkdir -p "$COMPILE_STUBS_DIR/com/google/android/gms/tasks"
+mkdir -p "$COMPILE_STUBS_DIR/com/android/installreferrer/api"
+
+# Minimal Firebase stubs (in debug sourceSet only)
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/messaging/FirebaseMessagingService.java" <<'EOF'
 package com.google.firebase.messaging;
-
-// FOSS Stub: Firebase Messaging not available in F-Droid builds
-public class FirebaseMessagingService {
-    public void onMessageReceived(RemoteMessage message) {}
-}
+public class FirebaseMessagingService {}
 EOF
 
-cat > "$FIREBASE_STUB_DIR/RemoteMessage.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/messaging/RemoteMessage.java" <<'EOF'
 package com.google.firebase.messaging;
-
-// FOSS Stub: Firebase Messaging not available in F-Droid builds
-public class RemoteMessage {
-    public String getData() { return ""; }
-}
+public class RemoteMessage {}
 EOF
 
-cat > "$FIREBASE_STUB_DIR/FirebaseMessaging.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/messaging/FirebaseMessaging.java" <<'EOF'
 package com.google.firebase.messaging;
-
-// FOSS Stub: Firebase Messaging not available in F-Droid builds
 public class FirebaseMessaging {
     public static FirebaseMessaging getInstance() { return new FirebaseMessaging(); }
-    public void getToken() {}
 }
 EOF
 
-# Firebase Encoders stubs
-FIREBASE_ENCODERS_DIR="node_modules/expo-notifications/android/src/main/java/com/google/firebase/encoders"
-mkdir -p "$FIREBASE_ENCODERS_DIR/config"
-mkdir -p "$FIREBASE_ENCODERS_DIR/proto"
-
-cat > "$FIREBASE_ENCODERS_DIR/DataEncoder.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/DataEncoder.java" <<'EOF'
 package com.google.firebase.encoders;
 public interface DataEncoder {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/ObjectEncoder.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/ObjectEncoder.java" <<'EOF'
 package com.google.firebase.encoders;
 public interface ObjectEncoder<T> {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/ObjectEncoderContext.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/ObjectEncoderContext.java" <<'EOF'
 package com.google.firebase.encoders;
 public interface ObjectEncoderContext {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/FieldDescriptor.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/FieldDescriptor.java" <<'EOF'
 package com.google.firebase.encoders;
 public final class FieldDescriptor {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/EncodingException.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/EncodingException.java" <<'EOF'
 package com.google.firebase.encoders;
 public class EncodingException extends Exception {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/config/EncoderConfig.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/config/EncoderConfig.java" <<'EOF'
 package com.google.firebase.encoders.config;
 public interface EncoderConfig<T> {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/config/Configurator.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/config/Configurator.java" <<'EOF'
 package com.google.firebase.encoders.config;
 public interface Configurator {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/proto/ProtoEnum.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/proto/ProtoEnum.java" <<'EOF'
 package com.google.firebase.encoders.proto;
 public @interface ProtoEnum {}
 EOF
 
-cat > "$FIREBASE_ENCODERS_DIR/proto/ProtobufEncoder.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/firebase/encoders/proto/ProtobufEncoder.java" <<'EOF'
 package com.google.firebase.encoders.proto;
 public class ProtobufEncoder {}
 EOF
 
-# Google Play Services Tasks stub
-GMS_TASKS_DIR="node_modules/expo-notifications/android/src/main/java/com/google/android/gms/tasks"
-mkdir -p "$GMS_TASKS_DIR"
-
-cat > "$GMS_TASKS_DIR/Task.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/android/gms/tasks/Task.java" <<'EOF'
 package com.google.android.gms.tasks;
 public abstract class Task<TResult> {}
 EOF
 
-cat > "$GMS_TASKS_DIR/OnCompleteListener.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/google/android/gms/tasks/OnCompleteListener.java" <<'EOF'
 package com.google.android.gms.tasks;
 public interface OnCompleteListener<TResult> {}
 EOF
 
-# InstallReferrer stub
-INSTALL_REF_DIR="node_modules/expo-application/android/src/main/java/com/android/installreferrer/api"
-mkdir -p "$INSTALL_REF_DIR"
-
-cat > "$INSTALL_REF_DIR/InstallReferrerClient.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/android/installreferrer/api/InstallReferrerClient.java" <<'EOF'
 package com.android.installreferrer.api;
-
-// FOSS Stub: Install Referrer not available in F-Droid builds
 public abstract class InstallReferrerClient {
-    public static InstallReferrerClient.Builder newBuilder(android.content.Context context) {
-        return new Builder();
-    }
-    
+    public static Builder newBuilder(android.content.Context context) { return null; }
     public static class Builder {
         public InstallReferrerClient build() { return null; }
     }
 }
 EOF
 
-cat > "$INSTALL_REF_DIR/InstallReferrerStateListener.java" <<'EOF'
+cat > "$COMPILE_STUBS_DIR/com/android/installreferrer/api/InstallReferrerStateListener.java" <<'EOF'
 package com.android.installreferrer.api;
-
-// FOSS Stub: Install Referrer not available in F-Droid builds
-public interface InstallReferrerStateListener {
-    void onInstallReferrerSetupFinished(int responseCode);
-    void onInstallReferrerServiceDisconnected();
-}
+public interface InstallReferrerStateListener {}
 EOF
 
-echo "  ✅ All FOSS stub classes created"
+echo "  ✅ Compile-only stubs created (in debug sourceSet - NOT in release APK)"
 
 # 4. Patching Native Files (Dynamic Path Finding)
 echo ""
@@ -278,9 +286,9 @@ if [ -f "android/app/build.gradle" ]; then
 fi
 rm -f "android/app/google-services.json"
 
-# 7. Patching Gradle for F-Droid Compliance (CRITICAL)
+# 7. Patching Gradle for F-Droid Compliance (ULTRA CRITICAL)
 echo ""
-echo "🔧 Patching Gradle for F-Droid Compliance..."
+echo "🔧 Patching Gradle for F-Droid Compliance (AGGRESSIVE EXCLUSIONS)..."
 
 cat >> android/build.gradle <<'EOF'
 
@@ -297,6 +305,9 @@ allprojects {
         exclude module: 'firebase-core'
         exclude module: 'firebase-analytics'
         exclude module: 'firebase-iid'
+        exclude module: 'firebase-encoders'
+        exclude module: 'firebase-encoders-json'
+        exclude module: 'firebase-datatransport'
         exclude module: 'play-services-basement'
         exclude module: 'play-services-base'
         exclude module: 'play-services-tasks'
@@ -306,10 +317,10 @@ allprojects {
     configurations.all {
         resolutionStrategy {
             eachDependency { details ->
-                if (details.requested.group == 'com.google.firebase') {
+                if (details.requested.group.startsWith('com.google.firebase')) {
                     details.useVersion('')
                 }
-                if (details.requested.group == 'com.google.android.gms') {
+                if (details.requested.group.startsWith('com.google.android.gms')) {
                     details.useVersion('')
                 }
                 if (details.requested.group == 'com.android.installreferrer') {
@@ -324,12 +335,20 @@ EOF
 cat >> android/app/build.gradle <<'EOF'
 
 // ==================================================
-// F-Droid FOSS Patch: Disable dependency metadata & proprietary libs
+// F-Droid FOSS Patch: Exclude proprietary code from APK
 // ==================================================
 android {
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
+    }
+    
+    // CRITICAL: Use only main sourceSet for release builds
+    // Debug sourceSet (with stubs) is NOT included in release APK
+    sourceSets {
+        release {
+            java.srcDirs = ['src/main/java']
+        }
     }
 }
 
@@ -338,9 +357,16 @@ configurations.all {
     exclude group: 'com.google.android.gms'
     exclude group: 'com.android.installreferrer'
 }
+
+// Force exclude from runtime classpath
+configurations.runtimeClasspath {
+    exclude group: 'com.google.firebase'
+    exclude group: 'com.google.android.gms'
+    exclude group: 'com.android.installreferrer'
+}
 EOF
 
-echo "  ✅ Gradle patched for F-Droid compliance"
+echo "  ✅ Gradle patched with AGGRESSIVE exclusions"
 
 # ==================================================
 # 🔧 FIX: MediaPipe compilation order (Vision Camera V4 TurboModules)
@@ -433,11 +459,11 @@ echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED - FOSS compliant"
 echo "=================================================="
 echo ""
-echo "🔍 Verification steps applied:"
-echo "  ✅ Firebase removed from expo-notifications"
-echo "  ✅ InstallReferrer removed from expo-application"
-echo "  ✅ FOSS stub classes created (16 stubs)"
-echo "  ✅ Gradle exclusions configured"
+echo "🔍 NEW Approach applied:"
+echo "  ✅ Firebase CODE DELETED from expo modules"
+echo "  ✅ Stubs in DEBUG sourceSet only (NOT in release APK)"
+echo "  ✅ Gradle AGGRESSIVE exclusions configured"
+echo "  ✅ Runtime classpath excludes Firebase/GMS"
 echo "  ✅ Vision Camera FOSS fork integrated"
 echo ""
-echo "🚀 Ready for F-Droid build!"
+echo "🚀 Ready for F-Droid build (stubs WILL NOT be in APK)!"
