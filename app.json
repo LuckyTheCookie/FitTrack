@@ -23,8 +23,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0b0c0f"
+        "foregroundImage": "./assets/adaptive-icon/foreground.png",
+        "backgroundImage": "./assets/adaptive-icon/background.png",
+        "backgroundColor": "#ffffff"
       },
       "package": "com.spix.app",
       "edgeToEdgeEnabled": true,
