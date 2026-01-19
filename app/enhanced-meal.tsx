@@ -1,6 +1,6 @@
 // ============================================================================
 // ENHANCED MEAL PAGE - Page d'ajout de repas avec analyse IA
-// Design premium avec glassmorphism et animations fluides
+// Design premium avec contraste noir/blanc et animations fluides
 // ============================================================================
 
 import React, { useState, useCallback } from 'react';
@@ -14,6 +14,7 @@ import {
     ActivityIndicator,
     Image,
     Dimensions,
+    Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -28,12 +29,14 @@ import Animated, {
     withSequence,
     withTiming,
     Easing,
+    ZoomIn,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { 
     ArrowLeft, 
     Camera, 
@@ -41,14 +44,15 @@ import {
     Sparkles, 
     Check,
     X,
-    ChefHat,
     Lightbulb,
     Save,
     AlertTriangle,
     Star,
-    Utensils,
+    Info,
+    ChevronRight,
+    Zap,
 } from 'lucide-react-native';
-import { GlassCard, CustomAlertModal } from '../src/components/ui';
+import { CustomAlertModal } from '../src/components/ui';
 import type { AlertButton } from '../src/components/ui';
 import { useAppStore } from '../src/stores';
 import { 
@@ -57,9 +61,27 @@ import {
     type MealAnalysis,
 } from '../src/services/pollination';
 import { uploadImageToTmpFiles } from '../src/services/imageUpload';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Gradients } from '../src/constants';
+import { getTodayDateString, formatDisplayDate } from '../src/utils/date';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Premium Design Colors
+const PREMIUM = {
+    black: '#000000',
+    white: '#FFFFFF',
+    offWhite: '#F8F8F8',
+    gray100: '#E5E5E5',
+    gray200: '#CCCCCC',
+    gray400: '#888888',
+    gray600: '#555555',
+    gray800: '#222222',
+    gray900: '#111111',
+    accent: '#CEFF00', // Vert acide pour accents
+    teal: '#2DD4BF',
+    purple: '#A78BFA',
+};
 
 // Score color based on value
 const getScoreColor = (score: number): string => {
@@ -83,9 +105,17 @@ const getScoreGradient = (score: number): [string, string] => {
 const getScoreLabel = (score: number): string => {
     if (score >= 85) return 'Excellent !';
     if (score >= 70) return 'Très bien';
-    if (score >= 50) return 'Pas mal';
+    if (score >= 50) return 'Correct';
     if (score >= 30) return 'À améliorer';
     return 'Attention';
+};
+
+// Get meal time based on hour
+const getMealTimeFromHour = (hour: number): MealTime => {
+    if (hour >= 6 && hour < 11) return 'breakfast';
+    if (hour >= 11 && hour < 16) return 'lunch';
+    if (hour >= 16 && hour < 22) return 'dinner';
+    return 'snack';
 };
 
 type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -94,14 +124,14 @@ interface MealTimeOption {
     value: MealTime;
     label: string;
     emoji: string;
-    gradient: [string, string];
+    time: string;
 }
 
 const mealTimeOptions: MealTimeOption[] = [
-    { value: 'breakfast', label: 'Petit-déj', emoji: '☀️', gradient: ['#fbbf24', '#f59e0b'] },
-    { value: 'lunch', label: 'Déjeuner', emoji: '🌤️', gradient: ['#60a5fa', '#3b82f6'] },
-    { value: 'dinner', label: 'Dîner', emoji: '🌙', gradient: ['#8b5cf6', '#7c3aed'] },
-    { value: 'snack', label: 'Collation', emoji: '🍎', gradient: ['#f472b6', '#ec4899'] },
+    { value: 'breakfast', label: 'Petit-déj', emoji: '☀️', time: '6h-10h' },
+    { value: 'lunch', label: 'Déjeuner', emoji: '🌤️', time: '11h-14h' },
+    { value: 'dinner', label: 'Dîner', emoji: '🌙', time: '18h-21h' },
+    { value: 'snack', label: 'Collation', emoji: '🍎', time: 'Entre-deux' },
 ];
 
 // Alert state interface
@@ -113,13 +143,73 @@ interface AlertState {
     buttons: AlertButton[];
 }
 
+// Time Card Component for 2x2 Grid
+const TimeCard = ({ 
+    selected, 
+    onPress, 
+    emoji, 
+    label, 
+    time 
+}: { 
+    selected: boolean; 
+    onPress: () => void; 
+    emoji: string; 
+    label: string;
+    time: string;
+}) => {
+    const scale = useSharedValue(1);
+    
+    const handlePressIn = () => {
+        scale.value = withSpring(0.95);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    };
+    
+    const handlePressOut = () => {
+        scale.value = withSpring(1);
+        onPress();
+    };
+    
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+    
+    return (
+        <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} style={{ flex: 1 }}>
+            <Animated.View style={[
+                styles.timeCard,
+                selected && styles.timeCardSelected,
+                animatedStyle,
+            ]}>
+                <Text style={styles.timeCardEmoji}>{emoji}</Text>
+                <Text style={[styles.timeCardLabel, selected && styles.timeCardLabelSelected]}>
+                    {label}
+                </Text>
+                <Text style={[styles.timeCardTime, selected && styles.timeCardTimeSelected]}>
+                    {time}
+                </Text>
+                {selected && (
+                    <View style={styles.timeCardCheck}>
+                        <Check size={12} color={PREMIUM.black} strokeWidth={3} />
+                    </View>
+                )}
+            </Animated.View>
+        </Pressable>
+    );
+};
+
 export default function EnhancedMealScreen() {
     const { t } = useTranslation();
     const { addMeal } = useAppStore();
     
     // State
-    const [selectedTime, setSelectedTime] = useState<MealTime>('lunch');
+    const [selectedTime, setSelectedTime] = useState<MealTime>(() => {
+        const hour = new Date().getHours();
+        return getMealTimeFromHour(hour);
+    });
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [description, setDescription] = useState('');
+    const [additionalDetails, setAdditionalDetails] = useState('');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -140,7 +230,7 @@ export default function EnhancedMealScreen() {
     const scoreScale = useSharedValue(0);
     
     const scoreAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scoreScale.value }],
+        opacity: scoreScale.value,
     }));
 
     // Phrases drôles pour l'analyse
@@ -187,15 +277,18 @@ export default function EnhancedMealScreen() {
     // Change funny phrase periodically during upload/analysis
     React.useEffect(() => {
         if (isUploading || isAnalyzing) {
+            let index = 0;
             const interval = setInterval(() => {
-                setCurrentPhrase(funnyPhrases[Math.floor(Math.random() * funnyPhrases.length)]);
-            }, 2000);
+                index = (index + 1) % funnyPhrases.length;
+                setCurrentPhrase(funnyPhrases[index]);
+            }, 1500);
             return () => clearInterval(interval);
         }
     }, [isUploading, isAnalyzing]);
 
     // Pick image from camera
     const pickFromCamera = useCallback(async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
             showAlert(
@@ -221,6 +314,7 @@ export default function EnhancedMealScreen() {
 
     // Pick image from gallery
     const pickFromGallery = useCallback(async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
             showAlert(
@@ -269,6 +363,8 @@ export default function EnhancedMealScreen() {
             return;
         }
         
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        
         try {
             setIsUploading(true);
             
@@ -281,19 +377,20 @@ export default function EnhancedMealScreen() {
             setIsUploading(false);
             setIsAnalyzing(true);
             
-            const result = await analyzeMealImage(uploadResult.url);
+            // Passer les détails additionnels à l'IA
+            const result = await analyzeMealImage(uploadResult.url, additionalDetails);
             
             setAnalysis(result);
             setDescription(result.description);
             
-            // Simple scale animation without bounce
-            scoreScale.value = withSequence(
-                withTiming(0, { duration: 0 }),
-                withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) })
-            );
+            // Animation d'entrée du score - simple fade
+            scoreScale.value = withTiming(1, { duration: 300 });
+            
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             
         } catch (error) {
             console.error('[EnhancedMeal] Analysis error:', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             showAlert(
                 t('enhancedMeal.analysisError'),
                 t('enhancedMeal.analysisErrorMessage'),
@@ -303,7 +400,7 @@ export default function EnhancedMealScreen() {
             setIsUploading(false);
             setIsAnalyzing(false);
         }
-    }, [selectedImage, t, checkPollinationConnection, scoreScale, showAlert]);
+    }, [selectedImage, additionalDetails, t, checkPollinationConnection, scoreScale, showAlert]);
 
     // Save meal
     const saveMeal = useCallback(async () => {
@@ -330,15 +427,20 @@ export default function EnhancedMealScreen() {
         }
         
         setIsSaving(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         
         try {
+            // Format date to YYYY-MM-DD for customDate
+            const customDateString = format(selectedDate, 'yyyy-MM-dd');
+            
             addMeal({
                 mealName: mealTitle,
                 description: mealDescription,
                 score: analysis?.score,
                 suggestions: analysis?.suggestions,
-            });
+            }, customDateString);
             
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             showAlert(
                 t('enhancedMeal.saved'),
                 t('enhancedMeal.savedMessage'),
@@ -350,326 +452,370 @@ export default function EnhancedMealScreen() {
         } finally {
             setIsSaving(false);
         }
-    }, [selectedTime, description, analysis, addMeal, t, showAlert]);
+    }, [selectedTime, selectedDate, description, analysis, addMeal, t, showAlert]);
 
     // Clear image
     const clearImage = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setSelectedImage(null);
         setAnalysis(null);
     }, []);
 
+    // Handle date change
+    const onDateChange = useCallback((event: any, date?: Date) => {
+        setShowDatePicker(false);
+        if (date) {
+            setSelectedDate(date);
+        }
+    }, []);
+
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.container}>
             <StatusBar style="light" />
             
-            {/* Background gradient */}
-            <LinearGradient
-                colors={['rgba(139, 92, 246, 0.08)', 'transparent', 'rgba(45, 212, 191, 0.05)']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            />
-            
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.content}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-            >
-                {/* Header */}
-                <Animated.View entering={FadeIn} style={styles.header}>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => router.back()}
-                    >
-                        <ArrowLeft size={22} color={Colors.text} />
-                    </TouchableOpacity>
-                    <View style={styles.headerTitleContainer}>
-                        <Text style={styles.headerTitle}>{t('enhancedMeal.title')}</Text>
-                        <Text style={styles.headerSubtitle}>Analyse IA avec Ploppy 🐦</Text>
-                    </View>
-                    <View style={styles.headerRight}>
-                        <LinearGradient
-                            colors={['rgba(215, 150, 134, 0.2)', 'rgba(215, 150, 134, 0.05)']}
-                            style={styles.headerIconGradient}
+            <SafeAreaView style={styles.safeArea} edges={['top']}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Header Premium */}
+                    <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                router.back();
+                            }}
                         >
-                            <ChefHat size={22} color={Colors.cta} />
-                        </LinearGradient>
-                    </View>
-                </Animated.View>
-
-                {/* Meal Time Selection - Grid 2x2 */}
-                <Animated.View entering={FadeInDown.delay(100).springify()}>
-                    <Text style={styles.sectionLabel}>{t('enhancedMeal.mealTime')}</Text>
-                    <View style={styles.timeOptionsGrid}>
-                        {mealTimeOptions.map((option, index) => (
-                            <Animated.View
-                                key={option.value}
-                                entering={FadeInDown.delay(150 + index * 50).springify()}
-                                style={styles.timeOptionContainer}
-                            >
-                                <TouchableOpacity
-                                    style={[
-                                        styles.timeOption,
-                                        selectedTime === option.value && styles.timeOptionSelected,
-                                    ]}
-                                    onPress={() => setSelectedTime(option.value)}
-                                    activeOpacity={0.8}
-                                >
-                                    {selectedTime === option.value ? (
-                                        <LinearGradient
-                                            colors={option.gradient}
-                                            start={{ x: 0, y: 0 }}
-                                            end={{ x: 1, y: 1 }}
-                                            style={styles.timeOptionGradient}
-                                        >
-                                            <Text style={styles.timeEmoji}>{option.emoji}</Text>
-                                            <Text style={styles.timeLabelSelected}>{option.label}</Text>
-                                        </LinearGradient>
-                                    ) : (
-                                        <View style={styles.timeOptionInner}>
-                                            <Text style={styles.timeEmoji}>{option.emoji}</Text>
-                                            <Text style={styles.timeLabel}>{option.label}</Text>
-                                        </View>
-                                    )}
-                                </TouchableOpacity>
-                            </Animated.View>
-                        ))}
-                    </View>
-                </Animated.View>
-
-                {/* Image Section */}
-                <Animated.View entering={FadeInDown.delay(200).springify()}>
-                    <Text style={styles.sectionLabel}>{t('enhancedMeal.photo')}</Text>
-                    
-                    {selectedImage ? (
-                        <View style={styles.imageContainer}>
-                            <Image 
-                                source={{ uri: selectedImage }} 
-                                style={styles.imagePreview} 
-                            />
-                            <LinearGradient
-                                colors={['transparent', 'rgba(0,0,0,0.6)']}
-                                style={styles.imageOverlay}
-                            />
-                            <TouchableOpacity 
-                                style={styles.clearImageButton}
-                                onPress={clearImage}
-                            >
-                                <BlurView intensity={30} tint="dark" style={styles.clearImageBlur}>
-                                    <X size={18} color="#fff" />
-                                </BlurView>
-                            </TouchableOpacity>
-                            
-                            <View style={styles.imageInfoBadge}>
-                                <Utensils size={14} color="#fff" />
-                                <Text style={styles.imageInfoText}>Photo prête</Text>
+                            <ArrowLeft size={20} color={PREMIUM.white} strokeWidth={2.5} />
+                        </TouchableOpacity>
+                        <View style={styles.headerCenter}>
+                            <Text style={styles.headerTitle}>Nouveau repas</Text>
+                            <View style={styles.headerBadge}>
+                                <Sparkles size={10} color={PREMIUM.accent} />
+                                <Text style={styles.headerBadgeText}>IA</Text>
                             </View>
                         </View>
-                    ) : (
-                        <View style={styles.imageButtonsContainer}>
-                            <TouchableOpacity
-                                style={styles.imageButton}
-                                onPress={pickFromCamera}
-                                activeOpacity={0.8}
+                        <View style={styles.headerRight} />
+                    </Animated.View>
+
+                    {/* Meal Time Selection - 2x2 Grid */}
+                    <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Moment du repas</Text>
+                            <TouchableOpacity 
+                                style={styles.dateButton}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setShowDatePicker(true);
+                                }}
                             >
-                                <LinearGradient
-                                    colors={['rgba(45, 212, 191, 0.15)', 'rgba(45, 212, 191, 0.05)']}
-                                    style={styles.imageButtonGradient}
-                                >
-                                    <View style={styles.imageButtonIconWrap}>
-                                        <Camera size={28} color={Colors.teal} />
-                                    </View>
-                                    <Text style={styles.imageButtonTitle}>{t('enhancedMeal.camera')}</Text>
-                                    <Text style={styles.imageButtonSubtitle}>Prendre une photo</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity
-                                style={styles.imageButton}
-                                onPress={pickFromGallery}
-                                activeOpacity={0.8}
-                            >
-                                <LinearGradient
-                                    colors={['rgba(215, 150, 134, 0.15)', 'rgba(215, 150, 134, 0.05)']}
-                                    style={styles.imageButtonGradient}
-                                >
-                                    <View style={styles.imageButtonIconWrap}>
-                                        <ImageIcon size={28} color={Colors.cta} />
-                                    </View>
-                                    <Text style={styles.imageButtonTitle}>{t('enhancedMeal.gallery')}</Text>
-                                    <Text style={styles.imageButtonSubtitle}>Choisir une image</Text>
-                                </LinearGradient>
+                                <Text style={styles.dateButtonText}>
+                                    {format(selectedDate, 'd MMM yyyy')}
+                                </Text>
                             </TouchableOpacity>
                         </View>
-                    )}
-                </Animated.View>
-
-                {/* Ploppy Analysis Button */}
-                {selectedImage && !analysis && (
-                    <Animated.View entering={FadeInDown.delay(300).springify()}>
-                        <TouchableOpacity
-                            style={styles.plopButtonMascot}
-                            onPress={analyzeWithPloppy}
-                            disabled={isAnalyzing || isUploading}
-                            activeOpacity={0.9}
-                        >
-                            <LinearGradient
-                                colors={['#a78bfa', '#8b5cf6', '#7c3aed']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.plopButtonGradient}
-                            >
-                                {isUploading || isAnalyzing ? (
-                                    <View style={styles.plopButtonContent}>
-                                        <View style={styles.plopButtonEmojiCircle}>
-                                            <Text style={styles.plopButtonEmoji}>🐦</Text>
-                                        </View>
-                                        <View style={styles.plopButtonTexts}>
-                                            <Text style={styles.plopButtonTitle}>
-                                                {currentPhrase}
-                                            </Text>
-                                        </View>
-                                        <ActivityIndicator size="small" color="#fff" style={styles.plopButtonSpinner} />
-                                    </View>
-                                ) : (
-                                    <View style={styles.plopButtonContent}>
-                                        <View style={styles.plopButtonEmojiCircle}>
-                                            <Text style={styles.plopButtonEmoji}>🐦</Text>
-                                        </View>
-                                        <View style={styles.plopButtonTexts}>
-                                            <Text style={styles.plopButtonTitle}>Demander à Ploppy</Text>
-                                            <Text style={styles.plopButtonSubtitle}>Analyse ton repas</Text>
-                                        </View>
-                                        <Sparkles size={20} color="#fff" style={styles.plopButtonIcon} />
-                                    </View>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
-                        
-                        <View style={styles.betaWarning}>
-                            <AlertTriangle size={14} color={Colors.muted} />
-                            <Text style={styles.betaWarningText}>
-                                {t('enhancedMeal.betaWarning')}
-                            </Text>
+                        <View style={styles.timeGrid}>
+                            {mealTimeOptions.map((option, index) => (
+                                <Animated.View 
+                                    key={option.value}
+                                    entering={FadeInDown.delay(150 + index * 50).springify()}
+                                    style={{ flex: 1, marginBottom: index < 2 ? 12 : 0 }}
+                                >
+                                    <TimeCard
+                                        selected={selectedTime === option.value}
+                                        onPress={() => setSelectedTime(option.value)}
+                                        emoji={option.emoji}
+                                        label={option.label}
+                                        time={option.time}
+                                    />
+                                </Animated.View>
+                            ))}
                         </View>
                     </Animated.View>
-                )}
 
-                {/* Analysis Results */}
-                {analysis && (
-                    <Animated.View entering={FadeInUp.delay(100).springify()}>
-                        {/* Score Card */}
-                        <View style={styles.scoreCardContainer}>
-                            <LinearGradient
-                                colors={['rgba(31, 41, 55, 0.95)', 'rgba(17, 24, 39, 0.98)']}
-                                style={styles.scoreCard}
-                            >
-                                <View style={[styles.decorativeCircle, styles.decorativeCircle1]} />
-                                <View style={[styles.decorativeCircle, styles.decorativeCircle2]} />
+                    {/* Date Picker Modal */}
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={selectedDate}
+                            mode="date"
+                            display="default"
+                            onChange={onDateChange}
+                            maximumDate={new Date()}
+                        />
+                    )}
+
+                    {/* Image Section - Premium Design */}
+                    <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+                        <Text style={styles.sectionTitle}>Photo du repas</Text>
+                        
+                        {selectedImage ? (
+                            <View style={styles.imageContainer}>
+                                <Image 
+                                    source={{ uri: selectedImage }} 
+                                    style={styles.imagePreview}
+                                    resizeMode="cover"
+                                />
+                                <LinearGradient
+                                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                                    style={styles.imageOverlay}
+                                />
+                                <TouchableOpacity 
+                                    style={styles.clearImageButton}
+                                    onPress={clearImage}
+                                >
+                                    <BlurView intensity={40} tint="dark" style={styles.clearImageBlur}>
+                                        <X size={16} color={PREMIUM.white} strokeWidth={2.5} />
+                                    </BlurView>
+                                </TouchableOpacity>
                                 
-                                <View style={styles.scoreHeader}>
-                                    <View style={styles.scoreTitleContainer}>
-                                        <Star size={16} color="#fbbf24" fill="#fbbf24" />
-                                        <Text style={styles.scoreTitle}>{analysis.title}</Text>
+                                {!analysis && (
+                                    <View style={styles.imageReadyBadge}>
+                                        <Check size={14} color={PREMIUM.accent} strokeWidth={3} />
+                                        <Text style={styles.imageReadyText}>Prête pour analyse</Text>
                                     </View>
+                                )}
+                            </View>
+                        ) : (
+                            <View style={styles.imagePickerContainer}>
+                                <TouchableOpacity
+                                    style={styles.imagePickerButton}
+                                    onPress={pickFromCamera}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={styles.imagePickerIconContainer}>
+                                        <Camera size={28} color={PREMIUM.white} strokeWidth={1.5} />
+                                    </View>
+                                    <Text style={styles.imagePickerLabel}>Appareil photo</Text>
+                                </TouchableOpacity>
+                                
+                                <View style={styles.imageDivider}>
+                                    <View style={styles.imageDividerLine} />
+                                    <Text style={styles.imageDividerText}>ou</Text>
+                                    <View style={styles.imageDividerLine} />
                                 </View>
                                 
-                                <Animated.View style={[styles.scoreCircleContainer, scoreAnimatedStyle]}>
-                                    <LinearGradient
-                                        colors={getScoreGradient(analysis.score)}
-                                        style={styles.scoreCircle}
-                                    >
-                                        <Text style={styles.scoreValue}>{analysis.score}</Text>
-                                        <Text style={styles.scoreMax}>/100</Text>
-                                    </LinearGradient>
-                                    <Text style={[styles.scoreLabel, { color: getScoreColor(analysis.score) }]}>
-                                        {getScoreLabel(analysis.score)}
-                                    </Text>
-                                </Animated.View>
-                                
-                                <Text style={styles.scoreDescription}>{analysis.description}</Text>
-                            </LinearGradient>
-                        </View>
+                                <TouchableOpacity
+                                    style={styles.imagePickerButton}
+                                    onPress={pickFromGallery}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={styles.imagePickerIconContainer}>
+                                        <ImageIcon size={28} color={PREMIUM.white} strokeWidth={1.5} />
+                                    </View>
+                                    <Text style={styles.imagePickerLabel}>Galerie</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </Animated.View>
 
-                        {/* Suggestions Card */}
-                        {analysis.suggestions.length > 0 && (
-                            <Animated.View entering={SlideInRight.delay(200).springify()}>
-                                <GlassCard style={styles.suggestionsCard}>
+                    {/* Details for Ploppy - NEW SECTION */}
+                    <Animated.View entering={FadeInDown.delay(250).duration(400)}>
+                        <View style={styles.detailsHeader}>
+                            <Text style={styles.sectionTitle}>Infos pour Ploppy</Text>
+                            <View style={styles.detailsOptional}>
+                                <Text style={styles.detailsOptionalText}>Optionnel</Text>
+                            </View>
+                        </View>
+                        <View style={styles.detailsContainer}>
+                            <View style={styles.detailsIconRow}>
+                                <Info size={16} color={PREMIUM.purple} />
+                                <Text style={styles.detailsHint}>
+                                    Aide Ploppy à mieux évaluer ton repas
+                                </Text>
+                            </View>
+                            <TextInput
+                                style={styles.detailsInput}
+                                value={additionalDetails}
+                                onChangeText={setAdditionalDetails}
+                                placeholder="Ex: Fait maison, régime IG bas, végétarien..."
+                                placeholderTextColor={PREMIUM.gray600}
+                                multiline
+                                numberOfLines={2}
+                            />
+                            <View style={styles.detailsTags}>
+                                {['🏠 Fait maison', '🥗 Healthy', '🍖 Protéiné'].map((tag) => (
+                                    <TouchableOpacity 
+                                        key={tag}
+                                        style={styles.detailsTag}
+                                        onPress={() => {
+                                            Haptics.selectionAsync();
+                                            setAdditionalDetails(prev => 
+                                                prev ? `${prev}, ${tag.slice(2)}` : tag.slice(2)
+                                            );
+                                        }}
+                                    >
+                                        <Text style={styles.detailsTagText}>{tag}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+                    </Animated.View>
+
+                    {/* Ploppy Analysis Button - Premium CTA */}
+                    {selectedImage && !analysis && (
+                        <Animated.View entering={FadeInUp.delay(300).springify()}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.analyzeButton,
+                                    (isAnalyzing || isUploading) && styles.analyzeButtonLoading,
+                                ]}
+                                onPress={analyzeWithPloppy}
+                                disabled={isAnalyzing || isUploading}
+                                activeOpacity={0.85}
+                            >
+                                {isUploading || isAnalyzing ? (
+                                    <View style={styles.analyzeButtonContent}>
+                                        <ActivityIndicator size="small" color={PREMIUM.black} />
+                                        <Text style={styles.analyzeButtonText}>
+                                            {currentPhrase}
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <View style={styles.analyzeButtonContent}>
+                                        <View style={styles.analyzeButtonIcon}>
+                                            <Text style={styles.analyzeButtonEmoji}>🐦</Text>
+                                        </View>
+                                        <View style={styles.analyzeButtonTexts}>
+                                            <Text style={styles.analyzeButtonText}>
+                                                Analyser avec Ploppy
+                                            </Text>
+                                            <Text style={styles.analyzeButtonSubtext}>
+                                                Score nutritionnel + conseils
+                                            </Text>
+                                        </View>
+                                        <Zap size={18} color={PREMIUM.black} fill={PREMIUM.black} />
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                            
+                            <View style={styles.betaRow}>
+                                <AlertTriangle size={12} color={PREMIUM.gray600} />
+                                <Text style={styles.betaText}>
+                                    Fonctionnalité expérimentale
+                                </Text>
+                            </View>
+                        </Animated.View>
+                    )}
+
+                    {/* Analysis Results - Premium Cards */}
+                    {analysis && (
+                        <Animated.View entering={FadeInUp.delay(100).duration(300)}>
+                            {/* Score Card - Premium Dark Design */}
+                            <Animated.View style={[styles.scoreCard, scoreAnimatedStyle]}>
+                                <View style={styles.scoreCardInner}>
+                                    <View style={styles.scoreHeader}>
+                                        <View style={styles.scoreTitleRow}>
+                                            <Star size={18} color="#fbbf24" fill="#fbbf24" />
+                                            <Text style={styles.scoreTitle}>{analysis.title}</Text>
+                                        </View>
+                                        <View style={[
+                                            styles.scoreBadge,
+                                            { backgroundColor: getScoreColor(analysis.score) + '20' }
+                                        ]}>
+                                            <Text style={[
+                                                styles.scoreBadgeText,
+                                                { color: getScoreColor(analysis.score) }
+                                            ]}>
+                                                {getScoreLabel(analysis.score)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    
+                                    <View style={styles.scoreCircleContainer}>
+                                        <LinearGradient
+                                            colors={getScoreGradient(analysis.score)}
+                                            style={styles.scoreCircle}
+                                        >
+                                            <Text style={styles.scoreValue}>{analysis.score}</Text>
+                                        </LinearGradient>
+                                        <Text style={styles.scoreMax}>/100</Text>
+                                    </View>
+                                    
+                                    <Text style={styles.scoreDescription}>
+                                        {analysis.description}
+                                    </Text>
+                                </View>
+                            </Animated.View>
+
+                            {/* Suggestions Card */}
+                            {analysis.suggestions.length > 0 && (
+                                <Animated.View 
+                                    entering={SlideInRight.delay(200).springify()}
+                                    style={styles.suggestionsCard}
+                                >
                                     <View style={styles.suggestionsHeader}>
                                         <View style={styles.suggestionsIconWrap}>
-                                            <Lightbulb size={18} color="#fbbf24" />
+                                            <Lightbulb size={16} color="#fbbf24" />
                                         </View>
                                         <Text style={styles.suggestionsTitle}>
-                                            {t('enhancedMeal.suggestions')}
+                                            Conseils de Ploppy
                                         </Text>
                                     </View>
                                     
                                     {analysis.suggestions.map((suggestion, index) => (
                                         <Animated.View 
                                             key={index} 
-                                            entering={FadeInDown.delay(300 + index * 100).springify()}
+                                            entering={FadeInDown.delay(300 + index * 80).springify()}
                                             style={styles.suggestionItem}
                                         >
                                             <View style={styles.suggestionBullet}>
-                                                <Check size={12} color="#fff" />
+                                                <ChevronRight size={12} color={PREMIUM.teal} strokeWidth={3} />
                                             </View>
                                             <Text style={styles.suggestionText}>{suggestion}</Text>
                                         </Animated.View>
                                     ))}
-                                </GlassCard>
-                            </Animated.View>
-                        )}
+                                </Animated.View>
+                            )}
+                        </Animated.View>
+                    )}
+
+                    {/* Manual Description - Premium Input */}
+                    <Animated.View entering={FadeInDown.delay(400).duration(400)}>
+                        <Text style={styles.sectionTitle}>Description</Text>
+                        <View style={styles.descriptionContainer}>
+                            <TextInput
+                                style={styles.descriptionInput}
+                                value={description}
+                                onChangeText={setDescription}
+                                placeholder="Décris ton repas..."
+                                placeholderTextColor={PREMIUM.gray600}
+                                multiline
+                                numberOfLines={4}
+                                textAlignVertical="top"
+                            />
+                        </View>
                     </Animated.View>
-                )}
 
-                {/* Manual Description */}
-                <Animated.View entering={FadeInDown.delay(400).springify()}>
-                    <Text style={styles.sectionLabel}>{t('enhancedMeal.description')}</Text>
-                    <View style={styles.descriptionContainer}>
-                        <TextInput
-                            style={styles.descriptionInput}
-                            value={description}
-                            onChangeText={setDescription}
-                            placeholder={t('enhancedMeal.descriptionPlaceholder')}
-                            placeholderTextColor={Colors.muted}
-                            multiline
-                            numberOfLines={4}
-                            textAlignVertical="top"
-                        />
-                    </View>
-                </Animated.View>
-
-                {/* Save Button */}
-                <Animated.View entering={FadeInDown.delay(500).springify()}>
-                    <TouchableOpacity
-                        style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-                        onPress={saveMeal}
-                        disabled={isSaving}
-                        activeOpacity={0.9}
-                    >
-                        <LinearGradient
-                            colors={Gradients.cta as [string, string]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.saveButtonGradient}
+                    {/* Save Button - Premium CTA */}
+                    <Animated.View entering={FadeInDown.delay(500).duration(400)}>
+                        <TouchableOpacity
+                            style={[
+                                styles.saveButton,
+                                isSaving && styles.saveButtonDisabled,
+                            ]}
+                            onPress={saveMeal}
+                            disabled={isSaving}
+                            activeOpacity={0.85}
                         >
                             {isSaving ? (
-                                <ActivityIndicator size="small" color="#fff" />
+                                <ActivityIndicator size="small" color={PREMIUM.white} />
                             ) : (
                                 <>
-                                    <Save size={20} color="#fff" />
+                                    <Save size={18} color={PREMIUM.white} strokeWidth={2.5} />
                                     <Text style={styles.saveButtonText}>
-                                        {t('enhancedMeal.save')}
+                                        Enregistrer le repas
                                     </Text>
                                 </>
                             )}
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </Animated.View>
+                        </TouchableOpacity>
+                    </Animated.View>
 
-                <View style={{ height: 40 }} />
-            </ScrollView>
+                    <View style={{ height: 50 }} />
+                </ScrollView>
+            </SafeAreaView>
             
             {/* Custom Alert Modal */}
             <CustomAlertModal
@@ -680,151 +826,183 @@ export default function EnhancedMealScreen() {
                 buttons={alertState.buttons}
                 onClose={hideAlert}
             />
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.bg,
+        backgroundColor: PREMIUM.black,
+    },
+    safeArea: {
+        flex: 1,
     },
     scrollView: {
         flex: 1,
     },
     content: {
-        padding: Spacing.lg,
+        paddingHorizontal: 20,
         paddingBottom: 100,
     },
 
-    // Header
+    // Header Premium
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.xl,
-        gap: Spacing.md,
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+        marginBottom: 24,
     },
     backButton: {
         width: 44,
         height: 44,
-        borderRadius: BorderRadius.lg,
-        backgroundColor: Colors.overlay,
+        borderRadius: 22,
+        backgroundColor: PREMIUM.gray900,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
+        borderColor: PREMIUM.gray800,
     },
-    headerTitleContainer: {
-        flex: 1,
+    headerCenter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     headerTitle: {
-        fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
-        color: Colors.text,
+        fontSize: 18,
+        fontWeight: '700',
+        color: PREMIUM.white,
+        letterSpacing: -0.3,
     },
-    headerSubtitle: {
-        fontSize: FontSize.xs,
-        color: Colors.muted,
-        marginTop: 2,
+    headerBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: PREMIUM.gray900,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    headerBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: PREMIUM.accent,
+        letterSpacing: 0.5,
     },
     headerRight: {
         width: 44,
-        height: 44,
-    },
-    headerIconGradient: {
-        width: 44,
-        height: 44,
-        borderRadius: BorderRadius.lg,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
 
-    // Section Label
-    sectionLabel: {
-        fontSize: FontSize.xs,
-        fontWeight: FontWeight.semibold,
-        color: Colors.muted,
+    // Section Titles
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: PREMIUM.gray400,
         textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        marginBottom: Spacing.md,
-        marginLeft: 2,
+        letterSpacing: 1.2,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    dateButton: {
+        backgroundColor: PREMIUM.gray900,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: PREMIUM.gray800,
+    },
+    dateButtonText: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: PREMIUM.gray400,
     },
 
-    // Time Selection - Grid 2x2
-    timeOptionsGrid: {
+    // Time Grid 2x2
+    timeGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: Spacing.md,
-        marginBottom: Spacing.lg,
+        gap: 12,
+        marginBottom: 28,
     },
-    timeOptionContainer: {
-        width: (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2,
-    },
-    timeOption: {
-        borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
-    },
-    timeOptionSelected: {
-        shadowColor: '#8B5CF6',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    timeOptionGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.lg,
-        gap: Spacing.sm,
-    },
-    timeOptionInner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.lg,
-        backgroundColor: Colors.card,
+    timeCard: {
+        backgroundColor: PREMIUM.gray900,
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: BorderRadius.xl,
-        gap: Spacing.sm,
+        borderColor: PREMIUM.gray800,
+        alignItems: 'center',
+        position: 'relative',
+        minHeight: 100,
+        justifyContent: 'center',
     },
-    timeEmoji: {
-        fontSize: 20,
+    timeCardSelected: {
+        backgroundColor: PREMIUM.white,
+        borderColor: PREMIUM.white,
     },
-    timeLabel: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.medium,
-        color: Colors.muted,
+    timeCardEmoji: {
+        fontSize: 32,
+        marginBottom: 8,
     },
-    timeLabelSelected: {
-        fontSize: FontSize.sm,
-        fontWeight: FontWeight.bold,
-        color: '#fff',
+    timeCardLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: PREMIUM.white,
+        marginBottom: 2,
+    },
+    timeCardLabelSelected: {
+        color: PREMIUM.black,
+    },
+    timeCardTime: {
+        fontSize: 11,
+        color: PREMIUM.gray600,
+    },
+    timeCardTimeSelected: {
+        color: PREMIUM.gray600,
+    },
+    timeCardCheck: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: PREMIUM.accent,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 
     // Image Section
     imageContainer: {
         position: 'relative',
-        borderRadius: BorderRadius.xl,
+        borderRadius: 20,
         overflow: 'hidden',
-        marginBottom: Spacing.lg,
+        marginBottom: 28,
+        backgroundColor: PREMIUM.gray900,
+        borderWidth: 1,
+        borderColor: PREMIUM.gray800,
     },
     imagePreview: {
         width: '100%',
-        height: 220,
+        height: 240,
+        backgroundColor: PREMIUM.gray800,
     },
     imageOverlay: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 80,
+        height: 100,
     },
     clearImageButton: {
         position: 'absolute',
-        top: Spacing.md,
-        right: Spacing.md,
+        top: 12,
+        right: 12,
     },
     clearImageBlur: {
         width: 36,
@@ -834,296 +1012,334 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         overflow: 'hidden',
     },
-    imageInfoBadge: {
+    imageReadyBadge: {
         position: 'absolute',
-        bottom: Spacing.md,
-        left: Spacing.md,
+        bottom: 16,
+        left: 16,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 6,
-        borderRadius: BorderRadius.lg,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
     },
-    imageInfoText: {
-        fontSize: FontSize.xs,
-        fontWeight: FontWeight.medium,
-        color: '#fff',
+    imageReadyText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: PREMIUM.white,
     },
-    imageButtonsContainer: {
+    imagePickerContainer: {
         flexDirection: 'row',
-        gap: Spacing.md,
-        marginBottom: Spacing.lg,
-    },
-    imageButton: {
-        flex: 1,
-        borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
-    },
-    imageButtonGradient: {
         alignItems: 'center',
-        paddingVertical: Spacing.xl,
-        paddingHorizontal: Spacing.md,
+        backgroundColor: PREMIUM.gray900,
+        borderRadius: 20,
+        padding: 24,
+        marginBottom: 28,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: BorderRadius.xl,
+        borderColor: PREMIUM.gray800,
         borderStyle: 'dashed',
     },
-    imageButtonIconWrap: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    imagePickerButton: {
+        flex: 1,
+        alignItems: 'center',
+        gap: 8,
+    },
+    imagePickerIconContainer: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: PREMIUM.gray800,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.sm,
     },
-    imageButtonTitle: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
-        color: Colors.text,
+    imagePickerLabel: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: PREMIUM.gray200,
     },
-    imageButtonSubtitle: {
-        fontSize: FontSize.xs,
-        color: Colors.muted,
-        marginTop: 2,
-    },
-
-    // Ploppy Button - Redesigned
-    plopButtonMascot: {
-        borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
-        marginBottom: Spacing.sm,
-        shadowColor: '#8B5CF6',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        elevation: 8,
-    },
-    plopButtonGradient: {
-        paddingVertical: Spacing.lg + 4,
-        paddingHorizontal: Spacing.xl,
-    },
-    plopButtonContent: {
+    imageDivider: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.md,
+        paddingHorizontal: 16,
     },
-    plopButtonEmojiCircle: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    imageDividerLine: {
+        width: 1,
+        height: 40,
+        backgroundColor: PREMIUM.gray800,
+    },
+    imageDividerText: {
+        fontSize: 12,
+        color: PREMIUM.gray600,
+        paddingHorizontal: 8,
+    },
+
+    // Details Section (NEW)
+    detailsHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    detailsOptional: {
+        backgroundColor: PREMIUM.gray900,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    detailsOptionalText: {
+        fontSize: 10,
+        fontWeight: '500',
+        color: PREMIUM.gray600,
+    },
+    detailsContainer: {
+        backgroundColor: PREMIUM.gray900,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 28,
+        borderWidth: 1,
+        borderColor: PREMIUM.gray800,
+    },
+    detailsIconRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 12,
+    },
+    detailsHint: {
+        fontSize: 12,
+        color: PREMIUM.gray400,
+    },
+    detailsInput: {
+        fontSize: 14,
+        color: PREMIUM.white,
+        minHeight: 50,
+        textAlignVertical: 'top',
+    },
+    detailsTags: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: PREMIUM.gray800,
+    },
+    detailsTag: {
+        backgroundColor: PREMIUM.gray800,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    detailsTagText: {
+        fontSize: 12,
+        color: PREMIUM.gray200,
+    },
+
+    // Analyze Button (Premium)
+    analyzeButton: {
+        backgroundColor: PREMIUM.accent,
+        borderRadius: 16,
+        paddingVertical: 18,
+        paddingHorizontal: 20,
+        marginBottom: 8,
+    },
+    analyzeButtonLoading: {
+        opacity: 0.8,
+    },
+    analyzeButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+    },
+    analyzeButtonIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0,0,0,0.1)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    plopButtonEmoji: {
-        fontSize: 28,
+    analyzeButtonEmoji: {
+        fontSize: 24,
     },
-    plopButtonTexts: {
+    analyzeButtonTexts: {
         flex: 1,
     },
-    plopButtonTitle: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
-        color: '#fff',
+    analyzeButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: PREMIUM.black,
     },
-    plopButtonSubtitle: {
-        fontSize: FontSize.sm,
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginTop: 2,
+    analyzeButtonSubtext: {
+        fontSize: 12,
+        color: 'rgba(0,0,0,0.6)',
+        marginTop: 1,
     },
-    plopButtonSpinner: {
-        marginLeft: Spacing.xs,
-    },
-    plopButtonIcon: {
-        marginLeft: Spacing.xs,
-    },
-
-    // Beta Warning
-    betaWarning: {
+    betaRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: Spacing.xs,
-        marginBottom: Spacing.lg,
+        gap: 6,
+        marginBottom: 28,
     },
-    betaWarningText: {
-        fontSize: FontSize.xs,
-        color: Colors.muted,
+    betaText: {
+        fontSize: 11,
+        color: PREMIUM.gray600,
     },
 
-    // Score Card
-    scoreCardContainer: {
-        marginBottom: Spacing.lg,
-        borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 10,
-    },
+    // Score Card (Premium Dark)
     scoreCard: {
-        padding: Spacing.xl,
+        marginBottom: 20,
+    },
+    scoreCardInner: {
+        backgroundColor: PREMIUM.gray900,
+        borderRadius: 24,
+        padding: 24,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: BorderRadius.xl,
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    decorativeCircle: {
-        position: 'absolute',
-        borderRadius: 100,
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    },
-    decorativeCircle1: {
-        width: 150,
-        height: 150,
-        top: -50,
-        right: -50,
-    },
-    decorativeCircle2: {
-        width: 100,
-        height: 100,
-        bottom: -30,
-        left: -30,
-        backgroundColor: 'rgba(45, 212, 191, 0.08)',
+        borderColor: PREMIUM.gray800,
     },
     scoreHeader: {
-        marginBottom: Spacing.lg,
-    },
-    scoreTitleContainer: {
+        width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.xs,
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    scoreTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flex: 1,
     },
     scoreTitle: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
-        color: Colors.text,
+        fontSize: 16,
+        fontWeight: '700',
+        color: PREMIUM.white,
+        flex: 1,
+    },
+    scoreBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+    },
+    scoreBadgeText: {
+        fontSize: 12,
+        fontWeight: '700',
     },
     scoreCircleContainer: {
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: 20,
     },
     scoreCircle: {
-        width: 130,
-        height: 130,
-        borderRadius: 65,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: 8,
     },
     scoreValue: {
         fontSize: 48,
-        fontWeight: FontWeight.extrabold,
-        color: '#fff',
+        fontWeight: '800',
+        color: PREMIUM.white,
     },
     scoreMax: {
-        fontSize: FontSize.md,
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginTop: -6,
-    },
-    scoreLabel: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.bold,
+        fontSize: 16,
+        fontWeight: '600',
+        color: PREMIUM.gray400,
     },
     scoreDescription: {
-        fontSize: FontSize.md,
-        color: Colors.text,
+        fontSize: 14,
+        color: PREMIUM.gray200,
         textAlign: 'center',
-        lineHeight: 24,
-        paddingHorizontal: Spacing.sm,
+        lineHeight: 22,
     },
 
     // Suggestions Card
     suggestionsCard: {
-        marginBottom: Spacing.lg,
+        backgroundColor: PREMIUM.gray900,
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 28,
+        borderWidth: 1,
+        borderColor: PREMIUM.gray800,
     },
     suggestionsHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
-        marginBottom: Spacing.md,
+        gap: 10,
+        marginBottom: 16,
     },
     suggestionsIconWrap: {
         width: 32,
         height: 32,
-        borderRadius: 16,
+        borderRadius: 10,
         backgroundColor: 'rgba(251, 191, 36, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     suggestionsTitle: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.bold,
-        color: Colors.text,
+        fontSize: 15,
+        fontWeight: '700',
+        color: PREMIUM.white,
     },
     suggestionItem: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        gap: Spacing.sm,
-        marginBottom: Spacing.md,
+        gap: 10,
+        marginBottom: 12,
     },
     suggestionBullet: {
         width: 20,
         height: 20,
         borderRadius: 10,
-        backgroundColor: Colors.teal,
+        backgroundColor: PREMIUM.gray800,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 2,
     },
     suggestionText: {
         flex: 1,
-        fontSize: FontSize.sm,
-        color: Colors.text,
+        fontSize: 14,
+        color: PREMIUM.gray200,
         lineHeight: 22,
     },
 
     // Description
     descriptionContainer: {
-        backgroundColor: Colors.card,
-        borderRadius: BorderRadius.xl,
+        backgroundColor: PREMIUM.gray900,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
-        marginBottom: Spacing.lg,
+        borderColor: PREMIUM.gray800,
+        marginBottom: 28,
         overflow: 'hidden',
     },
     descriptionInput: {
-        padding: Spacing.lg,
-        fontSize: FontSize.md,
-        color: Colors.text,
-        minHeight: 120,
+        padding: 16,
+        fontSize: 14,
+        color: PREMIUM.white,
+        minHeight: 100,
     },
 
     // Save Button
     saveButton: {
-        borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
-        shadowColor: Colors.cta,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
-    },
-    saveButtonDisabled: {
-        opacity: 0.6,
-        shadowOpacity: 0,
-    },
-    saveButtonGradient: {
+        backgroundColor: PREMIUM.teal,
+        borderRadius: 16,
+        paddingVertical: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: Spacing.sm,
-        paddingVertical: Spacing.lg,
+        gap: 10,
+    },
+    saveButtonDisabled: {
+        opacity: 0.6,
     },
     saveButtonText: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.bold,
-        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+        color: PREMIUM.white,
     },
 });

@@ -151,9 +151,10 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`;
 /**
  * Analyse une image de repas via Pollination/Gemini
  * @param imageUrl URL de l'image uploadée
+ * @param additionalContext Informations complémentaires sur le repas (optionnel)
  * @returns Analyse du repas
  */
-export const analyzeMealImage = async (imageUrl: string): Promise<MealAnalysis> => {
+export const analyzeMealImage = async (imageUrl: string, additionalContext?: string): Promise<MealAnalysis> => {
   const apiKey = await getPollinationApiKey();
   
   if (!apiKey) {
@@ -161,6 +162,15 @@ export const analyzeMealImage = async (imageUrl: string): Promise<MealAnalysis> 
   }
   
   console.log('[Pollination] Analyzing meal image:', imageUrl);
+  if (additionalContext) {
+    console.log('[Pollination] Additional context:', additionalContext);
+  }
+  
+  // Construire le message utilisateur avec le contexte additionnel
+  let userMessage = 'Analyse cette photo de repas et donne-moi ton évaluation.';
+  if (additionalContext && additionalContext.trim()) {
+    userMessage += `\n\nInformations complémentaires de l'utilisateur: ${additionalContext.trim()}`;
+  }
   
   const response = await fetch(POLLINATION_API_URL, {
     method: 'POST',
@@ -180,7 +190,7 @@ export const analyzeMealImage = async (imageUrl: string): Promise<MealAnalysis> 
           content: [
             {
               type: 'text',
-              text: 'Analyse cette photo de repas et donne-moi ton évaluation.',
+              text: userMessage,
             },
             {
               type: 'image_url',
@@ -191,7 +201,6 @@ export const analyzeMealImage = async (imageUrl: string): Promise<MealAnalysis> 
           ],
         },
       ],
-      max_tokens: 1000,
     }),
   });
   
