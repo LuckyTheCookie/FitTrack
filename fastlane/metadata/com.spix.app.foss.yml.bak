@@ -3,21 +3,21 @@ Categories:
 License: AGPL-3.0-or-later
 AuthorName: LuckyTheCookie - Lucas THIEBAUT
 AuthorWebSite: https://github.com/LuckyTheCookie
-WebSite: https://spix.luckythecookie.dev
-SourceCode: https://github.com/LuckyTheCookie/Spix
-IssueTracker: https://github.com/LuckyTheCookie/Spix/issues
-Changelog: https://github.com/LuckyTheCookie/Spix/releases
+WebSite: https://lthb.fr
+SourceCode: https://github.com/LuckyTheCookie/FitTrack
+IssueTracker: https://github.com/LuckyTheCookie/FitTrack/issues
+Changelog: https://github.com/LuckyTheCookie/FitTrack/releases
 
 Name: Spix
 AutoName: Spix
 
 RepoType: git
-Repo: https://github.com/LuckyTheCookie/Spix.git
+Repo: https://github.com/LuckyTheCookie/FitTrack.git
 
 Builds:
-  - versionName: 7.2.5
-    versionCode: 70200
-    commit: v7.2.5
+  - versionName: 7.5.1
+    versionCode: 70500
+    commit: v7.5.1
     subdir: .
     sudo:
       - apt-get update
@@ -25,7 +25,6 @@ Builds:
       - npm install -g n
       - n 20
       - npm install -g bun
-    init: bun install
     output: android/app/build/outputs/apk/release/app-release.apk
     prebuild: scripts/fdroid-prebuild.sh
     scanignore:

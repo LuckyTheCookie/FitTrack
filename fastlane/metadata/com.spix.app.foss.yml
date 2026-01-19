@@ -1,0 +1,44 @@
+Categories:
+  - Sports & Health
+License: AGPL-3.0-or-later
+AuthorName: LuckyTheCookie - Lucas THIEBAUT
+AuthorWebSite: https://github.com/LuckyTheCookie
+WebSite: https://lthb.fr
+SourceCode: https://github.com/LuckyTheCookie/FitTrack
+IssueTracker: https://github.com/LuckyTheCookie/FitTrack/issues
+Changelog: https://github.com/LuckyTheCookie/FitTrack/releases
+
+Name: Spix
+AutoName: Spix
+
+RepoType: git
+Repo: https://github.com/LuckyTheCookie/FitTrack.git
+
+Binaries: https://github.com/LuckyTheCookie/FitTrack/releases/download/v%v/Spix-%v-foss.apk
+
+Builds:
+  - versionName: 7.5.1
+    versionCode: 70500
+    commit: v7.5.1
+    subdir: .
+    sudo:
+      - apt-get update
+      - apt-get install -y nodejs npm
+      - npm install -g n
+      - n 20
+      - npm install -g bun
+    output: android/app/build/outputs/apk/release/app-release.apk
+    prebuild: scripts/fdroid-prebuild.sh
+    scanignore:
+      - node_modules
+    build:
+      - cd android
+      - gradle assembleRelease
+    ndk: r26d
+
+AllowedAPKSigningKeys: 7de06fe7d7ca28c2db68ebe2b0f3c376b53375c8dd11ecc41839b305784a9af4
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[\d.]+$
+CurrentVersion: 7.5.1
+CurrentVersionCode: 70500

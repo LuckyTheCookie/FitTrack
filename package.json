@@ -1,6 +1,6 @@
 {
   "name": "spix-app",
-  "version": "7.5.0",
+  "version": "7.5.2",
   "license": "AGPL-3.0-or-later",
   "author": "LuckyTheCookie - Lucas THIEBAUT",
   "main": "expo-router/entry",
