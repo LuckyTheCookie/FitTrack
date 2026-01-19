@@ -2,7 +2,7 @@
   "expo": {
     "name": "Spix",
     "slug": "spix-app",
-    "version": "7.6.0",
+    "version": "7.7.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -19,7 +19,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "$(PRODUCT_NAME) a besoin de la caméra pour détecter vos mouvements"
       },
-      "buildNumber": "7.6.0"
+      "buildNumber": "7.7.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -40,7 +40,7 @@
         "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_BODY_FAT"
       ],
-      "versionCode": 70600,
+      "versionCode": 70700,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
