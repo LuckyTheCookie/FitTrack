@@ -5,6 +5,7 @@ set -e
 # 🔨 Spix F-Droid Prebuild Script
 # Flavor: FOSS (com.spix.app.foss)
 # Fix: Exclude Encoders & Proto (F-Droid compliance)
+# Updated: 2026-01-21 - Integrated buildFromSource strategy
 # ==================================================
 
 echo "=================================================="
@@ -18,40 +19,9 @@ fi
 export EXPO_PUBLIC_BUILD_FLAVOR=foss
 ROOT_DIR="$(pwd)"
 
-# 2. Configure app.json for FOSS Package
-echo "📝 Configuring app.json for F-Droid build..."
-node -e "
-const fs = require('fs');
-const appJsonPath = '$ROOT_DIR/app.json';
-const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-
-appJson.expo.extra = appJson.expo.extra || {};
-appJson.expo.extra.buildFlavor = 'foss';
-
-if (appJson.expo.android && appJson.expo.android.googleServicesFile) {
-  delete appJson.expo.android.googleServicesFile;
-}
-
-const fossPackage = 'com.spix.app.foss';
-appJson.expo.android.package = fossPackage;
-appJson.expo.ios.bundleIdentifier = 'com.spix.app';
-
-// CRITICAL: Remove expo-notifications and expo-application plugins
-if (appJson.expo.plugins) {
-  appJson.expo.plugins = appJson.expo.plugins.filter(plugin => {
-    if (typeof plugin === 'string') {
-      return plugin !== 'expo-notifications' && plugin !== 'expo-application';
-    }
-    if (Array.isArray(plugin)) {
-      return plugin[0] !== 'expo-notifications' && plugin[0] !== 'expo-application';
-    }
-    return true;
-  });
-}
-
-fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
-console.log('✅ app.json configured for FOSS build');
-"
+# 2. Clean old build artifacts
+echo "🧹 Cleaning old node_modules..."
+rm -rf node_modules package-lock.json
 
 # ==================================================
 # 📦 Create Local FOSS Stubs
@@ -129,14 +99,16 @@ EOF
 echo "  ✅ Local stubs created in ./stubs/"
 
 # ==================================================
-# 📦 Patch package.json (Stubs & Fixes)
+# 📦 Patch package.json & app.json (CRITICAL)
 # ==================================================
 echo ""
-echo "📦 Patching package.json (Deps, Stubs & React Version)..."
+echo "📦 Patching package.json & app.json..."
 
-node -e "
+node - <<'NODEJS_PATCH'
 const fs = require('fs');
-const packageJsonPath = '$ROOT_DIR/package.json';
+
+// --- PATCH PACKAGE.JSON ---
+const packageJsonPath = 'package.json';
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 // 1. Use FOSS Vision Camera
@@ -148,33 +120,64 @@ if (packageJson.dependencies['react-native-vision-camera']) {
 packageJson.dependencies['expo-notifications'] = 'file:./stubs/expo-notifications';
 packageJson.dependencies['expo-application'] = 'file:./stubs/expo-application';
 
-// 3. FIX: Add missing babel-preset-expo
+// 3. Add missing babel-preset-expo
 if (!packageJson.devDependencies) packageJson.devDependencies = {};
-packageJson.devDependencies['babel-preset-expo'] = '^12.0.0'; // Version sûre pour Expo 52+
+packageJson.devDependencies['babel-preset-expo'] = '^12.0.0';
 
-// 4. FIX: Align React-DOM with React (Resolution conflict fix)
-// Force la version de react-dom à correspondre à celle de react installée
+// 4. Align React-DOM with React (Fix Resolution conflict)
 const reactVersion = packageJson.dependencies['react'] || '18.2.0';
 packageJson.dependencies['react-dom'] = reactVersion;
 
+// 5. ⭐ NEW: Force Expo to build from source (F-Droid friendly)
+if (!packageJson.expo) packageJson.expo = {};
+packageJson.expo.autolinking = {
+  android: {
+    buildFromSource: ['.*'] 
+  }
+};
+
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
-console.log('✅ package.json patched: VisionCamera, Stubs, babel-preset-expo, react-dom aligned');
-"
+
+// --- PATCH APP.JSON ---
+const appJsonPath = 'app.json';
+const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+
+appJson.expo.extra = appJson.expo.extra || {};
+appJson.expo.extra.buildFlavor = 'foss';
+
+if (appJson.expo.android && appJson.expo.android.googleServicesFile) {
+  delete appJson.expo.android.googleServicesFile;
+}
+
+appJson.expo.android.package = 'com.spix.app.foss';
+appJson.expo.ios.bundleIdentifier = 'com.spix.app';
+
+// Remove expo-notifications and expo-application plugins
+if (appJson.expo.plugins) {
+  appJson.expo.plugins = appJson.expo.plugins.filter(plugin => {
+    if (typeof plugin === 'string') {
+      return plugin !== 'expo-notifications' && plugin !== 'expo-application';
+    }
+    if (Array.isArray(plugin)) {
+      return plugin[0] !== 'expo-notifications' && plugin[0] !== 'expo-application';
+    }
+    return true;
+  });
+}
+
+fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
+
+console.log('✅ package.json & app.json patched (buildFromSource enabled)');
+NODEJS_PATCH
 
 # 3. Install dependencies
 echo ""
-echo "📦 Installing dependencies..."
-# Créer un .npmrc pour forcer legacy-peer-deps globalement
-echo "legacy-peer-deps=true" > .npmrc
+echo "📦 Installing dependencies (yarn mode)..."
+yarn install --ignore-engines
 
-# Nettoyer pour garantir une installation propre
-rm -rf node_modules package-lock.json
-
-# Installer sans --force car legacy-peer-deps et l'alignement react-dom suffisent généralement
-npm install
-
+echo ""
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
-npx expo prebuild --clean --platform android
+yarn expo prebuild --clean --platform android
 
 # ==================================================
 # 🔥 CLEANUP: Native modules
@@ -185,13 +188,13 @@ rm -rf android/app/src/main/java/expo/modules/notifications
 rm -rf android/app/src/main/java/expo/modules/application
 echo "  ✅ Native code verification complete"
 
-# 4. Patching Native Files
+# 4. Patching Native Files (Health Connect)
 echo ""
 echo "🏥 Patching Health Connect configuration..."
 ANDROID_MAIN_DIR="android/app/src/main"
 PATCHES_DIR="scripts/android-patches"
 
-MAIN_ACTIVITY_PATH=$(find "$ANDROID_MAIN_DIR/java" -name "MainActivity.kt" | head -n 1)
+MAIN_ACTIVITY_PATH=$(find "$ANDROID_MAIN_DIR/java" -name "MainActivity.kt" 2>/dev/null | head -n 1)
 
 if [ -f "$MAIN_ACTIVITY_PATH" ]; then
   CURRENT_PACKAGE_LINE=$(grep "^package " "$MAIN_ACTIVITY_PATH")
@@ -234,6 +237,7 @@ echo ""
 echo "🔧 Patching Gradle (Aggressive Exclusions + PickFirst)..."
 
 cat >> android/build.gradle <<'EOF'
+
 allprojects {
     configurations.all {
         // GLOBAL BLOCKLIST
@@ -242,7 +246,7 @@ allprojects {
         exclude group: 'com.android.installreferrer'
         exclude group: 'com.google.mlkit'
         
-        // AGGRESSIVE: Remove Transport & Encoders (source of the 9 problems)
+        // AGGRESSIVE: Remove Transport & Encoders
         exclude group: 'com.google.android.datatransport'
         exclude module: 'firebase-encoders-proto'
         exclude module: 'firebase-encoders'
@@ -254,6 +258,7 @@ allprojects {
 EOF
 
 cat >> android/app/build.gradle <<'EOF'
+
 android {
     dependenciesInfo {
         includeInApk = false
@@ -266,7 +271,7 @@ android {
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
         
-        // FIX: Prevent Duplicate Class errors if stubs conflict
+        // FIX: Prevent Duplicate Class errors
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE.txt'
@@ -277,6 +282,7 @@ android {
         exclude 'META-INF/ASL2.0'
     }
 }
+
 configurations.all {
     // REPEAT EXCLUSIONS FOR APP CONFIGURATION
     exclude group: 'com.google.firebase'
@@ -300,10 +306,12 @@ MEDIAPIPE_BUILD="node_modules/react-native-mediapipe-posedetection/android/build
 if [ -f "$MEDIAPIPE_BUILD" ]; then
     cp "$MEDIAPIPE_BUILD" "$MEDIAPIPE_BUILD.backup"
     cat >> "$MEDIAPIPE_BUILD" <<'GRADLE_PATCH'
+
 dependencies {
     implementation project(':react-native-vision-camera')
     implementation project(':react-native-worklets-core')
 }
+
 tasks.configureEach { task ->
     if (task.name.contains("compileKotlin")) {
         def vcCodegen = tasks.findByPath(":react-native-vision-camera:generateCodegenArtifactsFromSchema")
@@ -323,13 +331,13 @@ SETTINGS_GRADLE="android/settings.gradle"
 if [ -f "$SETTINGS_GRADLE" ]; then
     if ! grep -q "react-native-vision-camera" "$SETTINGS_GRADLE"; then
         cat >> "$SETTINGS_GRADLE" <<EOF
+
 include ':react-native-vision-camera'
 project(':react-native-vision-camera').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-vision-camera/android')
 EOF
-        echo "  ✅ Vision Camera registered"
+        echo "  ✅ Vision Camera registered in settings.gradle"
     fi
 fi
-
 
 # ==================================================
 # 🧹 FINAL CLEANUP
@@ -341,23 +349,11 @@ rm -rf android/app/build/generated/res/google-services
 rm -rf android/app/src/main/assets/index.android.bundle
 echo "  ✅ Intermediates cleaned"
 
-# 8. Dummy build.gradle
-echo ""
-echo "🧹 Creating dummy Gradle files..."
-rm -f settings.gradle
-touch settings.gradle
-cat > build.gradle <<EOF
-task clean {
-    doLast {
-        println "Clean dummy task executed"
-    }
-}
-EOF
-
 echo ""
 echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
+echo "  ✅ buildFromSource enabled (reduces .aar files)"
 echo "  ✅ Aggressive Exclusions: firebase-encoders-proto, transport-runtime"
 echo "  ✅ Crash Fix: pickFirst libc++_shared.so"
 echo "🚀 Ready for F-Droid build!"
