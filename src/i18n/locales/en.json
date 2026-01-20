@@ -113,7 +113,7 @@
     },
     "quickActions": {
       "title": "Quick Actions",
-      "addWorkout": "Add Workout",
+      "addWorkout": "Add",
       "addRun": "Add Run",
       "addMeal": "Add Meal",
       "addMeasure": "Add Measurements",
@@ -907,15 +907,15 @@
       "linkLogin": "Sign in"
     },
     "privacyNote": "By creating an account you agree that your weekly stats (XP, workouts, streak) may be shared with your friends.",
+    "signupSuccessTitle": "🚀 You're ready to go!",
+    "signupSuccessMessage": "Welcome {{username}}! Your account was created successfully. Ready to challenge your friends?",
     "errors": {
       "emptyFields": "Please fill all fields",
       "invalidEmail": "Invalid email address",
       "shortPassword": "Password must be at least 6 characters",
       "passwordsNotMatch": "Passwords do not match",
       "usernameRequired": "Please choose a username",
-      "invalidUsername": "Username must be between 3 and 20 characters (letters, numbers, underscore)",
-      "signupSuccessTitle": "🚀 You're ready to go!",
-      "signupSuccessMessage": "Welcome {{username}}! Your account was created successfully. Ready to challenge your friends?"
+      "invalidUsername": "Username must be between 3 and 20 characters (letters, numbers, underscore)"
     }
   },
   "privacyPolicy": {

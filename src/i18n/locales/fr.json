@@ -113,7 +113,7 @@
     },
     "quickActions": {
       "title": "Actions rapides",
-      "addWorkout": "Ajouter séance",
+      "addWorkout": "Ajouter",
       "addRun": "Ajouter course",
       "addMeal": "Ajouter repas",
       "addMeasure": "Ajouter mesures",
@@ -902,15 +902,15 @@
       "linkLogin": "Se connecter"
     },
     "privacyNote": "En créant un compte, tu acceptes que tes stats de la semaine (XP, séances, streak) soient partagées avec tes amis.",
+    "signupSuccessTitle": "🚀 Tu es paré à l'action !",
+    "signupSuccessMessage": "Bienvenue {{username}} ! Ton compte a été créé avec succès. Prêt à défier tes amis ?",
     "errors": {
       "emptyFields": "Veuillez remplir tous les champs",
       "invalidEmail": "Adresse email invalide",
       "shortPassword": "Le mot de passe doit contenir au moins 6 caractères",
       "passwordsNotMatch": "Les mots de passe ne correspondent pas",
       "usernameRequired": "Veuillez choisir un nom d'utilisateur",
-      "invalidUsername": "Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres, underscore)",
-      "signupSuccessTitle": "🚀 Tu es paré à l'action !",
-      "signupSuccessMessage": "Bienvenue {{username}} ! Ton compte a été créé avec succès. Prêt à défier tes amis ?"
+      "invalidUsername": "Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres, underscore)"
     }
   },
   "privacyPolicy": {
