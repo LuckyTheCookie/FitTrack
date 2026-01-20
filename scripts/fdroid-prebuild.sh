@@ -129,10 +129,10 @@ EOF
 echo "  ✅ Local stubs created in ./stubs/"
 
 # ==================================================
-# 📦 Patch package.json to use Stubs
+# 📦 Patch package.json (Stubs & Fixes)
 # ==================================================
 echo ""
-echo "📦 Redirecting dependencies to local stubs..."
+echo "📦 Patching package.json (Deps, Stubs & React Version)..."
 
 node -e "
 const fs = require('fs');
@@ -140,28 +140,38 @@ const packageJsonPath = '$ROOT_DIR/package.json';
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 // 1. Use FOSS Vision Camera
-const fossVisionCamera = 'github:LuckyTheCookie/react-native-vision-camera-foss';
 if (packageJson.dependencies['react-native-vision-camera']) {
-  packageJson.dependencies['react-native-vision-camera'] = fossVisionCamera;
-  console.log('✅ react-native-vision-camera -> FOSS Fork');
+  packageJson.dependencies['react-native-vision-camera'] = 'github:LuckyTheCookie/react-native-vision-camera-foss';
 }
 
 // 2. Use Local Stubs
 packageJson.dependencies['expo-notifications'] = 'file:./stubs/expo-notifications';
 packageJson.dependencies['expo-application'] = 'file:./stubs/expo-application';
-console.log('✅ expo-notifications -> file:./stubs/expo-notifications');
-console.log('✅ expo-application -> file:./stubs/expo-application');
+
+// 3. FIX: Add missing babel-preset-expo
+if (!packageJson.devDependencies) packageJson.devDependencies = {};
+packageJson.devDependencies['babel-preset-expo'] = '^12.0.0'; // Version sûre pour Expo 52+
+
+// 4. FIX: Align React-DOM with React (Resolution conflict fix)
+// Force la version de react-dom à correspondre à celle de react installée
+const reactVersion = packageJson.dependencies['react'] || '18.2.0';
+packageJson.dependencies['react-dom'] = reactVersion;
 
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
+console.log('✅ package.json patched: VisionCamera, Stubs, babel-preset-expo, react-dom aligned');
 "
 
 # 3. Install dependencies
 echo ""
-echo "📦 Installing dependencies (including stubs)..."
-if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-  cp ".env.example" ".env"
-fi
-npm install --force
+echo "📦 Installing dependencies..."
+# Créer un .npmrc pour forcer legacy-peer-deps globalement
+echo "legacy-peer-deps=true" > .npmrc
+
+# Nettoyer pour garantir une installation propre
+rm -rf node_modules package-lock.json
+
+# Installer sans --force car legacy-peer-deps et l'alignement react-dom suffisent généralement
+npm install
 
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 npx expo prebuild --clean --platform android
