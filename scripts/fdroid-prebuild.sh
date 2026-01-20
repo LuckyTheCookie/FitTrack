@@ -333,19 +333,19 @@ fi
 # ==================================================
 # 🔧 FIX: Reanimated Node Path
 # ==================================================
-echo ""
-echo "🔧 Patching Reanimated to find Node..."
-REANIMATED_GRADLE="node_modules/react-native-reanimated/android/build.gradle"
+echo "🔧 Forcing Gradle Properties for Reanimated & Node..."
+GRADLE_PROPERTIES="android/gradle.properties"
 
-if [ -f "$REANIMATED_GRADLE" ]; then
-    # On remplace la commande "node" générique par le chemin absolu
-    # Cela force Gradle à utiliser le bon binaire sans dépendre du PATH
-    sed -i 's/command "node"/command "\/usr\/local\/bin\/node"/g' "$REANIMATED_GRADLE"
-    sed -i "s/command 'node'/command '\/usr\/local\/bin\/node'/g" "$REANIMATED_GRADLE"
-    echo "  ✅ Reanimated build.gradle patched with absolute Node path"
-else
-    echo "  ⚠️ WARNING: Reanimated build.gradle not found!"
-fi
+# 1. Définir explicitement le chemin de Node pour Gradle
+echo "reactNative.nodeExecutableAndArgs=/usr/local/bin/node" >> $GRADLE_PROPERTIES
+
+# 2. Désactiver la nouvelle architecture (source fréquente de plantage sur les vieux builds)
+echo "newArchEnabled=false" >> $GRADLE_PROPERTIES
+
+# 3. Augmenter la mémoire (parfois l'erreur exit 1 est un OOM masqué)
+echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> $GRADLE_PROPERTIES
+
+echo "  ✅ gradle.properties patched with node path and JVM args"
 
 
 # ==================================================
