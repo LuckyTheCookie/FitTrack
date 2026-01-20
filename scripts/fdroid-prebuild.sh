@@ -330,23 +330,6 @@ EOF
     fi
 fi
 
-# ==================================================
-# 🔧 FIX: Reanimated Node Path
-# ==================================================
-echo "🔧 Forcing Gradle Properties for Reanimated & Node..."
-GRADLE_PROPERTIES="android/gradle.properties"
-
-# 1. Définir explicitement le chemin de Node pour Gradle
-echo "reactNative.nodeExecutableAndArgs=/usr/local/bin/node" >> $GRADLE_PROPERTIES
-
-# 2. Désactiver la nouvelle architecture (source fréquente de plantage sur les vieux builds)
-echo "newArchEnabled=false" >> $GRADLE_PROPERTIES
-
-# 3. Augmenter la mémoire (parfois l'erreur exit 1 est un OOM masqué)
-echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> $GRADLE_PROPERTIES
-
-echo "  ✅ gradle.properties patched with node path and JVM args"
-
 
 # ==================================================
 # 🧹 FINAL CLEANUP
