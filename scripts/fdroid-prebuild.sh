@@ -331,6 +331,24 @@ EOF
 fi
 
 # ==================================================
+# 🔧 FIX: Reanimated Node Path
+# ==================================================
+echo ""
+echo "🔧 Patching Reanimated to find Node..."
+REANIMATED_GRADLE="node_modules/react-native-reanimated/android/build.gradle"
+
+if [ -f "$REANIMATED_GRADLE" ]; then
+    # On remplace la commande "node" générique par le chemin absolu
+    # Cela force Gradle à utiliser le bon binaire sans dépendre du PATH
+    sed -i 's/command "node"/command "\/usr\/local\/bin\/node"/g' "$REANIMATED_GRADLE"
+    sed -i "s/command 'node'/command '\/usr\/local\/bin\/node'/g" "$REANIMATED_GRADLE"
+    echo "  ✅ Reanimated build.gradle patched with absolute Node path"
+else
+    echo "  ⚠️ WARNING: Reanimated build.gradle not found!"
+fi
+
+
+# ==================================================
 # 🧹 FINAL CLEANUP
 # ==================================================
 echo ""
