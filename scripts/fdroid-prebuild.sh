@@ -4,8 +4,7 @@ set -e
 # ==================================================
 # 🔨 Spix F-Droid Prebuild Script
 # Flavor: FOSS (com.spix.app.foss)
-# Fix: Exclude Encoders & Proto (F-Droid compliance)
-# Updated: 2026-01-21 - Integrated buildFromSource strategy
+# Fix: Reanimated + Node PATH issues
 # ==================================================
 
 echo "=================================================="
@@ -99,7 +98,7 @@ EOF
 echo "  ✅ Local stubs created in ./stubs/"
 
 # ==================================================
-# 📦 Patch package.json & app.json (CRITICAL)
+# 📦 Patch package.json & app.json (CRITICAL FIX)
 # ==================================================
 echo ""
 echo "📦 Patching package.json & app.json..."
@@ -124,21 +123,13 @@ packageJson.dependencies['expo-application'] = 'file:./stubs/expo-application';
 if (!packageJson.devDependencies) packageJson.devDependencies = {};
 packageJson.devDependencies['babel-preset-expo'] = '^12.0.0';
 
-// 4. Align React-DOM with React (Fix Resolution conflict)
+// 4. Align React-DOM with React
 const reactVersion = packageJson.dependencies['react'] || '18.2.0';
 packageJson.dependencies['react-dom'] = reactVersion;
 
-// 5. ⭐ NEW: Force Expo to build from source (F-Droid friendly)
-if (!packageJson.expo) packageJson.expo = {};
-packageJson.expo.autolinking = {
-  android: {
-    buildFromSource: ['.*'] 
-  }
-};
-
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
 
-// --- PATCH APP.JSON ---
+// --- PATCH APP.JSON (buildFromSource MUST BE HERE) ---
 const appJsonPath = 'app.json';
 const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
 
@@ -165,9 +156,15 @@ if (appJson.expo.plugins) {
   });
 }
 
+// ⭐ CRITICAL FIX: buildFromSource must be in app.json, not package.json
+if (!appJson.expo.autolinking) appJson.expo.autolinking = {};
+appJson.expo.autolinking.android = {
+  buildFromSource: ['.*']
+};
+
 fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
 
-console.log('✅ package.json & app.json patched (buildFromSource enabled)');
+console.log('✅ package.json & app.json patched (buildFromSource in app.json)');
 NODEJS_PATCH
 
 # 3. Install dependencies
@@ -178,6 +175,16 @@ yarn install --ignore-engines
 echo ""
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 yarn expo prebuild --clean --platform android
+
+# ==================================================
+# 🔥 POST-PREBUILD: Delete generated .aar/.jar (Aggressive cleanup)
+# ==================================================
+echo ""
+echo "🔥 POST-PREBUILD: Deleting all .aar and .jar files in node_modules..."
+find node_modules -type f \( -name "*.aar" -o -name "*.jar" \) -delete
+find node_modules -type f -name "*.bin" -path "*/React/I18n/*" -delete
+find node_modules -type f -name "template.tgz" -delete
+echo "  ✅ All .aar, .jar, and problematic binaries deleted"
 
 # ==================================================
 # 🔥 CLEANUP: Native modules
@@ -297,6 +304,28 @@ EOF
 echo "  ✅ Gradle patched (Encoders aggressively removed)"
 
 # ==================================================
+# 🔧 FIX: Reanimated Node PATH Issue
+# ==================================================
+echo ""
+echo "🔧 Fixing Reanimated Node PATH..."
+
+# Ensure gradle.properties has the correct Node path
+echo "reactNative.nodeExecutableAndArgs=/usr/local/bin/node" >> android/gradle.properties
+echo "newArchEnabled=false" >> android/gradle.properties
+echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
+
+# Patch Reanimated build.gradle to use explicit Node path
+REANIMATED_BUILD="node_modules/react-native-reanimated/android/build.gradle"
+if [ -f "$REANIMATED_BUILD" ]; then
+    # Backup original
+    cp "$REANIMATED_BUILD" "$REANIMATED_BUILD.backup"
+    
+    # Replace 'node' command with explicit path
+    sed -i "s|'node'|'/usr/local/bin/node'|g" "$REANIMATED_BUILD"
+    echo "  ✅ Reanimated build.gradle patched (Node path fixed)"
+fi
+
+# ==================================================
 # 🔧 FIX: MediaPipe
 # ==================================================
 echo ""
@@ -353,7 +382,8 @@ echo ""
 echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
-echo "  ✅ buildFromSource enabled (reduces .aar files)"
-echo "  ✅ Aggressive Exclusions: firebase-encoders-proto, transport-runtime"
-echo "  ✅ Crash Fix: pickFirst libc++_shared.so"
+echo "  ✅ buildFromSource enabled in app.json"
+echo "  ✅ ALL .aar/.jar files deleted after prebuild"
+echo "  ✅ Reanimated Node PATH fixed"
+echo "  ✅ Aggressive Exclusions applied"
 echo "🚀 Ready for F-Droid build!"
