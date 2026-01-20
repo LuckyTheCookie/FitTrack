@@ -161,7 +161,7 @@ echo "📦 Installing dependencies (including stubs)..."
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
-npm install --force
+npm install
 
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 npx expo prebuild --clean --platform android
