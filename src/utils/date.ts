@@ -107,45 +107,51 @@ export function calculateStreak(activityDates: string[]): { current: number; bes
     return { current: 0, best: 0 };
   }
 
-  // Trier les dates (plus récentes d'abord)
-  const sortedDates = [...new Set(activityDates)]
-    .sort((a, b) => b.localeCompare(a));
+  // Enlever les doublons et trier par ordre croissant (ancien -> récent)
+  const uniqueDates = Array.from(new Set(activityDates)).sort((a, b) => a.localeCompare(b));
 
   const today = getTodayDateString();
   const yesterday = format(addDays(new Date(), -1), 'yyyy-MM-dd');
-  
-  let currentStreak = 0;
-  let bestStreak = 0;
-  let tempStreak = 0;
-  let expectedDate = today;
 
-  // Si pas d'activité aujourd'hui, on commence à hier
-  if (sortedDates[0] !== today) {
-    if (sortedDates[0] === yesterday) {
-      expectedDate = yesterday;
-    } else {
-      // Streak cassé
-      currentStreak = 0;
+  // Set pour lookup rapide
+  const dateSet = new Set(uniqueDates);
+
+  // --- Calcul du streak courant (doit se terminer aujourd'hui ou hier) ---
+  let current = 0;
+  let dayToCheck = today;
+
+  if (dateSet.has(dayToCheck)) {
+    while (dateSet.has(dayToCheck)) {
+      current++;
+      dayToCheck = format(addDays(parseISO(dayToCheck), -1), 'yyyy-MM-dd');
+    }
+  } else if (dateSet.has(yesterday)) {
+    dayToCheck = yesterday;
+    while (dateSet.has(dayToCheck)) {
+      current++;
+      dayToCheck = format(addDays(parseISO(dayToCheck), -1), 'yyyy-MM-dd');
     }
   }
 
-  for (const date of sortedDates) {
-    if (date === expectedDate) {
-      tempStreak++;
-      if (currentStreak === 0 || tempStreak <= currentStreak + 1) {
-        currentStreak = tempStreak;
-      }
-      expectedDate = format(addDays(parseISO(date), -1), 'yyyy-MM-dd');
+  // --- Calcul du meilleur streak (n'importe où dans l'historique) ---
+  let best = 0;
+  let run = 1;
+
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prev = parseISO(uniqueDates[i - 1]);
+    const curr = parseISO(uniqueDates[i]);
+
+    if (differenceInDays(curr, prev) === 1) {
+      run++;
     } else {
-      bestStreak = Math.max(bestStreak, tempStreak);
-      tempStreak = 1;
-      expectedDate = format(addDays(parseISO(date), -1), 'yyyy-MM-dd');
+      best = Math.max(best, run);
+      run = 1;
     }
   }
 
-  bestStreak = Math.max(bestStreak, tempStreak, currentStreak);
+  best = Math.max(best, run, current);
 
-  return { current: currentStreak, best: bestStreak };
+  return { current, best };
 }
 
 // Obtenir les dates de la semaine pour export
