@@ -129,6 +129,7 @@
     "goalAchieved": "GOAL ACHIEVED!",
     "daysActive": "Active",
     "longPressHint": "Long press for rep counter",
+    "quickCheck": "Quick Check",
     "motivational": {
       "morning": "Ready for a morning workout?",
       "afternoon": "Great time to exercise!",
@@ -774,6 +775,13 @@
       "title": "Enhanced Meal Page",
       "description": "Beautiful new meal page with AI analysis by Ploppy",
       "enabledInfo": "When you add a meal from the home screen, the new enhanced page will open instead of the classic form."
+    },
+    "openFoodFacts": {
+      "sectionTitle": "PRODUCT SCANNER",
+      "title": "OpenFoodFacts",
+      "description": "Scan barcodes to view nutritional information",
+      "enabledInfo": "A \"Quick Check\" button will appear on the home screen to scan food products.",
+      "attribution": "Data provided by OpenFoodFacts (open database)"
     }
   },
   "addEntry": {
@@ -844,6 +852,10 @@
     "authSubtitle": "Compare your performance with friends, send encouragements and climb the leaderboard!",
     "notConfiguredTitle": "Social features not configured",
     "notConfiguredSubtitle": "This project is open-source. To enable social features, configure Supabase in the .env file",
+    "fossTitle": "FOSS Edition",
+    "fossSubtitle": "You are using the FOSS edition of Spix, built for F-Droid.",
+    "fossInfo": "This version complies with F-Droid guidelines and doesn't include proprietary services. Social features (leaderboard, friends) are not available in this version.",
+    "fossUpgrade": "Download full version",
     "disabledTitle": "Social features disabled",
     "disabledSubtitle": "You can re-enable social features in Settings.",
     "syncSuccess": "Your local data was sent to the leaderboard.",
@@ -1232,6 +1244,31 @@
     "galleryPermissionMessage": "Please allow gallery access to select a photo.",
     "chooseSource": "Choose source",
     "chooseSourceMessage": "Where do you want to get the image from?"
+  },
+  "barcodeScanner": {
+    "title": "Scan a Product",
+    "hint": "Place the barcode in the frame",
+    "searching": "Searching...",
+    "notFound": "Product not found",
+    "viewDetails": "View details",
+    "scanAgain": "Scan again",
+    "scanAnother": "Scan another product",
+    "noPermission": "Camera permission denied",
+    "noPermissionDesc": "Please allow camera access to scan barcodes.",
+    "scores": "Scores",
+    "nutrition": "Nutritional Values",
+    "per100g": "Per 100g",
+    "energy": "Energy",
+    "fat": "Fat",
+    "saturatedFat": "of which saturates",
+    "carbs": "Carbohydrates",
+    "sugars": "of which sugars",
+    "proteins": "Proteins",
+    "salt": "Salt",
+    "fiber": "Fiber",
+    "allergens": "Allergens",
+    "viewOnOpenFoodFacts": "View on OpenFoodFacts",
+    "attribution": "Data provided by OpenFoodFacts - open database"
   },
   "errors": {
     "generic": "An error occurred",

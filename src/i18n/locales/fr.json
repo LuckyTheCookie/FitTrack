@@ -129,6 +129,7 @@
     "goalAchieved": "OBJECTIF ATTEINT !",
     "daysActive": "Actifs",
     "longPressHint": "Appui long pour le compteur",
+    "quickCheck": "Check rapide",
     "motivational": {
       "morning": "Prêt pour une séance matinale ?",
       "afternoon": "Un bon moment pour s'entraîner !",
@@ -769,6 +770,13 @@
       "title": "Nouvelle page repas",
       "description": "Belle nouvelle page repas avec analyse IA par Ploppy",
       "enabledInfo": "Quand tu ajoutes un repas depuis l'accueil, la nouvelle page améliorée s'ouvrira à la place du formulaire classique."
+    },
+    "openFoodFacts": {
+      "sectionTitle": "SCANNER DE PRODUITS",
+      "title": "OpenFoodFacts",
+      "description": "Scanner les codes-barres pour voir les infos nutritionnelles",
+      "enabledInfo": "Un bouton \"Check rapide\" apparaîtra sur l'écran d'accueil pour scanner les produits alimentaires.",
+      "attribution": "Données fournies par OpenFoodFacts (base de données libre)"
     }
   },
   "addEntry": {
@@ -839,6 +847,10 @@
     "authSubtitle": "Compare tes performances avec tes amis, envoie des encouragements et grimpe le classement !",
     "notConfiguredTitle": "Fonctions sociales non configurées",
     "notConfiguredSubtitle": "Ce projet est open-source. Pour activer les fonctions sociales, configurez Supabase dans le fichier .env",
+    "fossTitle": "Version FOSS",
+    "fossSubtitle": "Tu utilises la version FOSS de Spix, conçue pour F-Droid.",
+    "fossInfo": "Cette version respecte les directives de F-Droid et ne contient pas de services propriétaires. Les fonctions sociales (classement, amis) ne sont pas disponibles dans cette version.",
+    "fossUpgrade": "Télécharger la version complète",
     "disabledTitle": "Fonctions sociales désactivées",
     "disabledSubtitle": "Tu peux réactiver les fonctions sociales dans les paramètres.",
     "syncSuccess": "Tes données locales ont été envoyées au classement.",
@@ -1227,6 +1239,31 @@
     "galleryPermissionMessage": "Autorise l'accès à la galerie pour sélectionner une photo.",
     "chooseSource": "Choisir la source",
     "chooseSourceMessage": "D'où veux-tu récupérer l'image ?"
+  },
+  "barcodeScanner": {
+    "title": "Scanner un produit",
+    "hint": "Place le code-barres dans le cadre",
+    "searching": "Recherche en cours...",
+    "notFound": "Produit non trouvé",
+    "viewDetails": "Voir les détails",
+    "scanAgain": "Scanner à nouveau",
+    "scanAnother": "Scanner un autre produit",
+    "noPermission": "Permission caméra refusée",
+    "noPermissionDesc": "Autorise l'accès à la caméra pour scanner les codes-barres.",
+    "scores": "Scores",
+    "nutrition": "Valeurs nutritionnelles",
+    "per100g": "Pour 100g",
+    "energy": "Énergie",
+    "fat": "Matières grasses",
+    "saturatedFat": "dont saturées",
+    "carbs": "Glucides",
+    "sugars": "dont sucres",
+    "proteins": "Protéines",
+    "salt": "Sel",
+    "fiber": "Fibres",
+    "allergens": "Allergènes",
+    "viewOnOpenFoodFacts": "Voir sur OpenFoodFacts",
+    "attribution": "Données fournies par OpenFoodFacts - base de données libre"
   },
   "errors": {
     "generic": "Une erreur s'est produite",
