@@ -2,21 +2,43 @@
 // NOTIFICATION SERVICE - Android native notifications
 // ============================================================================
 
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import i18n from '../../i18n';
 import { BuildConfig } from '../../config';
 
-// Configuration handler - affichage même en foreground
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowBanner: true,
-        shouldShowList: true,
-    }),
-});
+// Dynamic import helper for expo-notifications to avoid native module errors in FOSS builds
+let _notificationsModule: any | null = null;
+async function importNotifications() {
+    if (_notificationsModule) return _notificationsModule;
+    try {
+        _notificationsModule = await import('expo-notifications');
+        return _notificationsModule;
+    } catch (error: any) {
+        console.warn('[notifications] expo-notifications import failed:', error?.message || error);
+        _notificationsModule = null;
+        return null;
+    }
+}
+
+// Initialize notification handler if module available
+(async () => {
+    const Notifications = await importNotifications();
+    if (Notifications?.setNotificationHandler) {
+        try {
+            Notifications.setNotificationHandler({
+                handleNotification: async () => ({
+                    shouldPlaySound: true,
+                    shouldSetBadge: true,
+                    shouldShowBanner: true,
+                    shouldShowList: true,
+                }),
+            });
+        } catch (error: any) {
+            console.warn('[notifications] Failed to set notification handler:', error?.message || error);
+        }
+    }
+})();
 
 export type PushTokenResult = 
     | { success: true; token: string }
@@ -31,6 +53,13 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
     // En mode FOSS, les push notifications ne sont pas disponibles
     if (!BuildConfig.pushNotificationsEnabled) {
         console.log('Push notifications disabled in FOSS build');
+        return { success: false, reason: 'foss_build' };
+    }
+
+    // Try to import expo-notifications (may be unavailable on FOSS builds)
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.log('expo-notifications module not available');
         return { success: false, reason: 'foss_build' };
     }
 
@@ -131,6 +160,11 @@ export async function showEncouragementNotification(
     message: string,
     emoji: string = '💪'
 ): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - cannot show encouragement notification');
+        return;
+    }
     await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.encouragementTitle', { emoji, senderName }),
@@ -148,6 +182,11 @@ export async function showEncouragementNotification(
 export async function showFriendRequestNotification(
     senderName: string
 ): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - cannot show friend request notification');
+        return;
+    }
     await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.friendRequestTitle'),
@@ -165,6 +204,11 @@ export async function showFriendRequestNotification(
 export async function showFriendAcceptedNotification(
     friendName: string
 ): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - cannot show friend accepted notification');
+        return;
+    }
     await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.friendAcceptedTitle'),
@@ -186,6 +230,12 @@ export async function scheduleStreakReminder(
     // Annuler les rappels précédents
     await cancelStreakReminder();
 
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - skipping scheduleStreakReminder');
+        return '';
+    }
+
     const identifier = await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.streakReminderTitle'),
@@ -194,7 +244,7 @@ export async function scheduleStreakReminder(
             data: { type: 'streak_reminder' },
         },
         trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            type: 'daily',
             hour,
             minute,
         },
@@ -207,6 +257,8 @@ export async function scheduleStreakReminder(
  * Annule le rappel de streak
  */
 export async function cancelStreakReminder(): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) return;
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const notif of scheduled) {
         if (notif.content.data?.type === 'streak_reminder') {
@@ -226,6 +278,12 @@ export async function scheduleMealReminder(
     // Annuler le rappel précédent pour cet index
     await cancelMealReminder(index);
 
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - skipping scheduleMealReminder');
+        return '';
+    }
+
     const identifier = await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.mealReminder.title'),
@@ -234,7 +292,7 @@ export async function scheduleMealReminder(
             data: { type: 'meal_reminder', index },
         },
         trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            type: 'daily',
             hour,
             minute,
         },
@@ -247,6 +305,8 @@ export async function scheduleMealReminder(
  * Annule un rappel de repas spécifique
  */
 export async function cancelMealReminder(index: number): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) return;
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const notif of scheduled) {
         if (notif.content.data?.type === 'meal_reminder' && notif.content.data?.index === index) {
@@ -259,6 +319,8 @@ export async function cancelMealReminder(index: number): Promise<void> {
  * Annule tous les rappels de repas
  */
 export async function cancelAllMealReminders(): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) return;
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const notif of scheduled) {
         if (notif.content.data?.type === 'meal_reminder') {
@@ -277,6 +339,12 @@ export async function scheduleWeightReminderDaily(
     // Annuler les rappels de poids précédents
     await cancelWeightReminder();
 
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - skipping scheduleWeightReminderDaily');
+        return '';
+    }
+
     const identifier = await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.weightReminder.title'),
@@ -285,7 +353,7 @@ export async function scheduleWeightReminderDaily(
             data: { type: 'weight_reminder' },
         },
         trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            type: 'daily',
             hour,
             minute,
         },
@@ -305,6 +373,12 @@ export async function scheduleWeightReminderWeekly(
     // Annuler les rappels de poids précédents
     await cancelWeightReminder();
 
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - skipping scheduleWeightReminderWeekly');
+        return '';
+    }
+
     const identifier = await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.weightReminder.title'),
@@ -313,7 +387,7 @@ export async function scheduleWeightReminderWeekly(
             data: { type: 'weight_reminder' },
         },
         trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            type: 'weekly',
             hour,
             minute,
             weekday,
@@ -334,6 +408,12 @@ export async function scheduleWeightReminderMonthly(
     // Annuler les rappels de poids précédents
     await cancelWeightReminder();
 
+    const Notifications = await importNotifications();
+    if (!Notifications) {
+        console.warn('[notifications] Module not available - skipping scheduleWeightReminderMonthly');
+        return '';
+    }
+
     const identifier = await Notifications.scheduleNotificationAsync({
         content: {
             title: i18n.t('notifications.weightReminder.title'),
@@ -342,7 +422,7 @@ export async function scheduleWeightReminderMonthly(
             data: { type: 'weight_reminder' },
         },
         trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.MONTHLY,
+            type: 'monthly',
             hour,
             minute,
             day,
@@ -356,6 +436,8 @@ export async function scheduleWeightReminderMonthly(
  * Annule le rappel de pesée
  */
 export async function cancelWeightReminder(): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications) return;
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const notif of scheduled) {
         if (notif.content.data?.type === 'weight_reminder') {
@@ -368,24 +450,35 @@ export async function cancelWeightReminder(): Promise<void> {
  * Écoute les notifications reçues
  */
 export function addNotificationReceivedListener(
-    handler: (notification: Notifications.Notification) => void
-): Notifications.EventSubscription {
-    return Notifications.addNotificationReceivedListener(handler);
+    handler: (notification: any) => void
+): { remove: () => void } {
+    if (_notificationsModule) {
+        return _notificationsModule.addNotificationReceivedListener(handler);
+    }
+    // Try to import for future calls but return a no-op subscription for now
+    importNotifications();
+    return { remove: () => {} };
 }
 
 /**
  * Écoute les notifications tapées (quand l'utilisateur clique)
  */
 export function addNotificationResponseListener(
-    handler: (response: Notifications.NotificationResponse) => void
-): Notifications.EventSubscription {
-    return Notifications.addNotificationResponseReceivedListener(handler);
+    handler: (response: any) => void
+): { remove: () => void } {
+    if (_notificationsModule) {
+        return _notificationsModule.addNotificationResponseReceivedListener(handler);
+    }
+    importNotifications();
+    return { remove: () => {} };
 }
 
 /**
  * Obtient le nombre de badges actuels
  */
 export async function getBadgeCount(): Promise<number> {
+    const Notifications = await importNotifications();
+    if (!Notifications || !Notifications.getBadgeCountAsync) return 0;
     return await Notifications.getBadgeCountAsync();
 }
 
@@ -393,6 +486,8 @@ export async function getBadgeCount(): Promise<number> {
  * Définit le nombre de badges
  */
 export async function setBadgeCount(count: number): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications || !Notifications.setBadgeCountAsync) return;
     await Notifications.setBadgeCountAsync(count);
 }
 
@@ -400,5 +495,7 @@ export async function setBadgeCount(count: number): Promise<void> {
  * Efface tous les badges
  */
 export async function clearBadges(): Promise<void> {
+    const Notifications = await importNotifications();
+    if (!Notifications || !Notifications.setBadgeCountAsync) return;
     await Notifications.setBadgeCountAsync(0);
 }

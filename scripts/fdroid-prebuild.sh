@@ -54,14 +54,18 @@ console.log('✅ app.json configured for FOSS build');
 "
 
 # ==================================================
-# 📦 Create Local FOSS Stubs
+# 📦 Create Local FOSS Stubs WITH NATIVE MODULES
 # ==================================================
 echo ""
-echo "📦 Creating local FOSS stubs..."
-mkdir -p stubs/expo-notifications
+echo "📦 Creating local FOSS stubs with native Android modules..."
+mkdir -p stubs/expo-notifications/android/src/main/java/expo/modules/notifications
 mkdir -p stubs/expo-application
 
-# Stub: expo-notifications
+# ==================================================
+# Stub: expo-notifications (JS + ANDROID)
+# ==================================================
+
+# package.json
 cat > stubs/expo-notifications/package.json <<'EOF'
 {
   "name": "expo-notifications",
@@ -71,6 +75,7 @@ cat > stubs/expo-notifications/package.json <<'EOF'
 }
 EOF
 
+# index.js
 cat > stubs/expo-notifications/index.js <<'EOF'
 console.warn('[FOSS] Push notifications disabled');
 export const setNotificationHandler = () => {};
@@ -85,6 +90,7 @@ export const addNotificationResponseReceivedListener = () => ({ remove: () => {}
 export const removeNotificationSubscription = () => {};
 EOF
 
+# index.d.ts
 cat > stubs/expo-notifications/index.d.ts <<'EOF'
 export type NotificationPermissionsStatus = { status: 'granted' | 'denied' | 'undetermined' };
 export function setNotificationHandler(handler: any): void;
@@ -99,7 +105,73 @@ export function addNotificationResponseReceivedListener(listener: any): { remove
 export function removeNotificationSubscription(subscription: any): void;
 EOF
 
-# Stub: expo-application
+# 🔥 ANDROID MODULE (EMPTY BUT VALID)
+cat > stubs/expo-notifications/android/build.gradle <<'EOF'
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+  namespace "expo.modules.notifications"
+  compileSdkVersion 36
+  
+  defaultConfig {
+    minSdkVersion 26
+    targetSdkVersion 36
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+}
+EOF
+
+# expo-module.config.json
+cat > stubs/expo-notifications/expo-module.config.json <<'EOF'
+{
+  "platforms": ["android"],
+  "android": {
+    "modules": ["expo.modules.notifications.NotificationsPackage"]
+  }
+}
+EOF
+
+# NotificationsPackage.kt (module natif vide)
+cat > stubs/expo-notifications/android/src/main/java/expo/modules/notifications/NotificationsPackage.kt <<'EOF'
+package expo.modules.notifications
+
+import expo.modules.core.BasePackage
+
+class NotificationsPackage : BasePackage() {
+  override fun createExportedModules(context: android.content.Context) = listOf(
+    ExpoPushTokenManagerModule(context)
+  )
+}
+EOF
+
+# ExpoPushTokenManagerModule.kt (le module qui manque)
+cat > stubs/expo-notifications/android/src/main/java/expo/modules/notifications/ExpoPushTokenManagerModule.kt <<'EOF'
+package expo.modules.notifications
+
+import android.content.Context
+import expo.modules.core.ExportedModule
+import expo.modules.core.interfaces.ExpoMethod
+import expo.modules.core.Promise
+
+class ExpoPushTokenManagerModule(context: Context) : ExportedModule(context) {
+  override fun getName() = "ExpoPushTokenManager"
+  
+  @ExpoMethod
+  fun getDevicePushTokenAsync(promise: Promise) {
+    promise.reject("ERR_UNAVAILABLE", "[FOSS] Push notifications are disabled")
+  }
+}
+EOF
+
+echo "  ✅ expo-notifications stub with native Android module"
+
+# ==================================================
+# Stub: expo-application (unchanged)
+# ==================================================
 cat > stubs/expo-application/package.json <<'EOF'
 {
   "name": "expo-application",
@@ -152,10 +224,10 @@ packageJson.dependencies['expo-application'] = 'file:./stubs/expo-application';
 console.log('✅ expo-notifications -> file:./stubs/expo-notifications');
 console.log('✅ expo-application -> file:./stubs/expo-application');
 
-// 3. Disable autolinking for blocked modules
+// 3. KEEP expo-notifications in autolinking (we need the stub native module)
 packageJson.expo = packageJson.expo || {};
 packageJson.expo.autolinking = packageJson.expo.autolinking || {};
-packageJson.expo.autolinking.exclude = ['expo-notifications', 'expo-application'];
+packageJson.expo.autolinking.exclude = ['expo-application'];  // Only exclude application
 
 // 4. 🔥 CRITICAL: Force ALL Expo modules to build from source (SDK 53+)
 packageJson.expo.autolinking.android = packageJson.expo.autolinking.android || {};
@@ -181,19 +253,11 @@ npm install --force
 echo ""
 echo "🔧 Patching node_modules Gradle files..."
 
-# Patch expo-application
+# Patch expo-application (stub doesn't need patching but original might exist)
 EXPO_APP_GRADLE="node_modules/expo-application/android/build.gradle"
 if [ -f "$EXPO_APP_GRADLE" ]; then
   sed -i '/com\.android\.installreferrer/d' "$EXPO_APP_GRADLE"
   echo "  ✅ Removed installreferrer from expo-application"
-fi
-
-# Patch expo-notifications
-EXPO_NOTIF_GRADLE="node_modules/expo-notifications/android/build.gradle"
-if [ -f "$EXPO_NOTIF_GRADLE" ]; then
-  sed -i '/com\.google\.firebase/d' "$EXPO_NOTIF_GRADLE"
-  sed -i '/com\.google\.gms/d' "$EXPO_NOTIF_GRADLE"
-  echo "  ✅ Removed Firebase from expo-notifications"
 fi
 
 # ==================================================
@@ -230,7 +294,7 @@ fi
 # ==================================================
 echo ""
 echo "🔥 Verifying native cleanup..."
-rm -rf android/app/src/main/java/expo/modules/notifications
+# NE PAS supprimer expo-notifications car on utilise notre stub !
 rm -rf android/app/src/main/java/expo/modules/application
 echo "  ✅ Native code verification complete"
 
@@ -382,6 +446,28 @@ EOF
 fi
 
 # ==================================================
+# 🔧 FIX: Restore Hermes Compiler Permissions
+# ==================================================
+echo ""
+echo "🔧 Restoring hermesc executable permissions..."
+
+HERMESC_LINUX="node_modules/react-native/sdks/hermesc/linux64-bin/hermesc"
+
+if [ -f "$HERMESC_LINUX" ]; then
+  chmod +x "$HERMESC_LINUX"
+  echo "  ✅ hermesc permissions restored: $HERMESC_LINUX"
+  
+  # Vérifier que le binaire fonctionne
+  if "$HERMESC_LINUX" --version &>/dev/null; then
+    echo "  ✅ hermesc is working correctly"
+  else
+    echo "  ⚠️ WARNING: hermesc exists but might not work"
+  fi
+else
+  echo "  ❌ ERROR: hermesc not found at $HERMESC_LINUX"
+fi
+
+# ==================================================
 # 🧹 FINAL CLEANUP
 # ==================================================
 echo ""
@@ -415,6 +501,7 @@ echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
 echo "  ✅ buildFromSource: ['.*'] configured in package.json"
+echo "  ✅ expo-notifications stub with native module created"
 echo "  ✅ ALL Expo modules will compile from source"
 echo "  ✅ No prebuilt AAR files will be used"
 echo "🚀 Ready for F-Droid build!"
