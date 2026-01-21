@@ -161,10 +161,55 @@ echo "📦 Installing dependencies (including stubs)..."
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
-npm install --force
 
+# ==================================================
+npm install --force
+# ==================================================
+
+# ==================================================
+# 🔥 CRITICAL: Block Expo Autolinking
+# ==================================================
+echo ""
+echo "🚫 Disabling Expo autolinking for blocked modules..."
+
+# 1. Prevent autolinking in package.json
+node -e "
+const fs = require('fs');
+const packageJsonPath = '$ROOT_DIR/package.json';
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+packageJson.expo = packageJson.expo || {};
+packageJson.expo.autolinking = {
+  exclude: ['expo-notifications', 'expo-application']
+};
+
+fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
+console.log('✅ Autolinking disabled for expo-notifications & expo-application');
+"
+
+# 2. Patch native Gradle files BEFORE prebuild
+echo "🔧 Patching node_modules Gradle files..."
+
+# Patch expo-application
+EXPO_APP_GRADLE="node_modules/expo-application/android/build.gradle"
+if [ -f "$EXPO_APP_GRADLE" ]; then
+  sed -i '/com\.android\.installreferrer/d' "$EXPO_APP_GRADLE"
+  echo "  ✅ Removed installreferrer from expo-application"
+fi
+
+# Patch expo-notifications
+EXPO_NOTIF_GRADLE="node_modules/expo-notifications/android/build.gradle"
+if [ -f "$EXPO_NOTIF_GRADLE" ]; then
+  sed -i '/com\.google\.firebase/d' "$EXPO_NOTIF_GRADLE"
+  sed -i '/com\.google\.gms/d' "$EXPO_NOTIF_GRADLE"
+  echo "  ✅ Removed Firebase from expo-notifications"
+fi
+
+# ==================================================
+# 🔧 Run Expo Prebuild
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 npx expo prebuild --clean --platform android
+# ==================================================
 
 # ==================================================
 # 🔥 CLEANUP: Native modules
