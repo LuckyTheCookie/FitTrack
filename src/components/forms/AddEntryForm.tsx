@@ -16,6 +16,7 @@ import {
     Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Video, Calendar, Clock, ChevronLeft, Dumbbell } from 'lucide-react-native';
@@ -227,6 +228,45 @@ export function AddEntryForm({
     const [useCustomDateTime, setUseCustomDateTime] = useState(!!editEntry);
     const [customDate, setCustomDate] = useState(editEntry?.date || format(new Date(), 'yyyy-MM-dd'));
     const [customTime, setCustomTime] = useState(editEntry ? format(new Date(editEntry.createdAt), 'HH:mm') : format(new Date(), 'HH:mm'));
+    
+    // Date/Time picker visibility (for native pickers)
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    
+    // Helper to convert customDate string to Date object
+    const customDateAsDate = useMemo(() => {
+        const parts = customDate.split('-');
+        if (parts.length === 3) {
+            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+        return new Date();
+    }, [customDate]);
+    
+    // Helper to convert customTime string to Date object
+    const customTimeAsDate = useMemo(() => {
+        const parts = customTime.split(':');
+        const date = new Date();
+        if (parts.length === 2) {
+            date.setHours(parseInt(parts[0]), parseInt(parts[1]));
+        }
+        return date;
+    }, [customTime]);
+    
+    // Date picker change handler
+    const onDateChange = useCallback((event: any, selectedDate?: Date) => {
+        setShowDatePicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setCustomDate(format(selectedDate, 'yyyy-MM-dd'));
+        }
+    }, []);
+    
+    // Time picker change handler
+    const onTimeChange = useCallback((event: any, selectedTime?: Date) => {
+        setShowTimePicker(Platform.OS === 'ios');
+        if (selectedTime) {
+            setCustomTime(format(selectedTime, 'HH:mm'));
+        }
+    }, []);
 
     // Home workout - nouveau format
     const [homeName, setHomeName] = useState(initialHome.name);
@@ -830,64 +870,53 @@ export function AddEntryForm({
                     </TouchableOpacity>
                     
                     {useCustomDateTime && (
-                            <View style={styles.customDateInputs}>
-                                <View style={styles.customDateRow}>
-                                    <InputField
-                                        label={t('addEntry.date')}
-                                        placeholder="31/12/2024"
-                                        value={(() => {
-                                            // Convert YYYY-MM-DD to DD/MM/YYYY for display
-                                            const parts = customDate.split('-');
-                                            if (parts.length === 3) {
-                                                return `${parts[2]}/${parts[1]}/${parts[0]}`;
-                                            }
-                                            return customDate;
-                                        })()}
-                                        onChangeText={(text) => {
-                                            // Parse DD/MM/YYYY format and store as YYYY-MM-DD
-                                            const parts = text.split('/');
-                                            if (parts.length === 3) {
-                                                const day = parts[0].padStart(2, '0');
-                                                const month = parts[1].padStart(2, '0');
-                                                const year = parts[2];
-                                                if (day.length === 2 && month.length === 2 && year.length === 4) {
-                                                    // Validate the date
-                                                    const d = parseInt(day, 10);
-                                                    const m = parseInt(month, 10);
-                                                    const y = parseInt(year, 10);
-                                                    if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 2020 && y <= 2099) {
-                                                        setCustomDate(`${year}-${month}-${day}`);
-                                                    }
-                                                }
-                                            }
-                                        }}
-                                        keyboardType="numbers-and-punctuation"
-                                        containerStyle={styles.dateInput}
-                                    />
-                                    <InputField
-                                        label={t('addEntry.time')}
-                                        placeholder="14:30"
-                                        value={customTime}
-                                        onChangeText={(text) => {
-                                            // Validate HH:MM format
-                                            const parts = text.split(':');
-                                            if (parts.length === 2) {
-                                                const hours = parseInt(parts[0], 10);
-                                                const minutes = parseInt(parts[1], 10);
-                                                if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
-                                                    setCustomTime(`${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`);
-                                                }
-                                            } else {
-                                                // Allow partial input
-                                                setCustomTime(text);
-                                            }
-                                        }}
-                                        keyboardType="numbers-and-punctuation"
-                                        containerStyle={styles.timeInput}
-                                    />
-                                </View>
+                        <View style={styles.customDateInputs}>
+                            <View style={styles.customDateRow}>
+                                {/* Date Picker Button */}
+                                <TouchableOpacity
+                                    style={styles.datePickerButton}
+                                    onPress={() => setShowDatePicker(true)}
+                                >
+                                    <Calendar size={16} color={Colors.cta} />
+                                    <Text style={styles.datePickerButtonText}>
+                                        {format(customDateAsDate, 'dd MMMM yyyy', { locale: fr })}
+                                    </Text>
+                                </TouchableOpacity>
+                                
+                                {/* Time Picker Button */}
+                                <TouchableOpacity
+                                    style={styles.timePickerButton}
+                                    onPress={() => setShowTimePicker(true)}
+                                >
+                                    <Clock size={16} color={Colors.cta} />
+                                    <Text style={styles.datePickerButtonText}>{customTime}</Text>
+                                </TouchableOpacity>
                             </View>
-                        )}
+                            
+                            {/* Native Date Picker */}
+                            {showDatePicker && (
+                                <DateTimePicker
+                                    value={customDateAsDate}
+                                    mode="date"
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    onChange={onDateChange}
+                                    maximumDate={new Date()}
+                                    minimumDate={new Date(2020, 0, 1)}
+                                />
+                            )}
+                            
+                            {/* Native Time Picker */}
+                            {showTimePicker && (
+                                <DateTimePicker
+                                    value={customTimeAsDate}
+                                    mode="time"
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    onChange={onTimeChange}
+                                    is24Hour={true}
+                                />
+                            )}
+                        </View>
+                    )}
                 </View>
 
                 {/* HOME WORKOUT - Nouveau format */}
@@ -1700,6 +1729,36 @@ const styles = StyleSheet.create({
     },
     timeInput: {
         flex: 1,
+    },
+    datePickerButton: {
+        flex: 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        backgroundColor: Colors.card,
+        borderRadius: BorderRadius.lg,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        borderWidth: 1,
+        borderColor: Colors.stroke,
+    },
+    timePickerButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+        backgroundColor: Colors.card,
+        borderRadius: BorderRadius.lg,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        borderWidth: 1,
+        borderColor: Colors.stroke,
+    },
+    datePickerButtonText: {
+        fontSize: FontSize.md,
+        color: Colors.text,
+        fontWeight: FontWeight.medium,
     },
     // Custom sport styles
     customSportHeader: {

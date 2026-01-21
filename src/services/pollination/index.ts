@@ -65,6 +65,56 @@ export const isPollinationConnected = async (): Promise<boolean> => {
 };
 
 // ============================================================================
+// ACCOUNT INFO
+// ============================================================================
+
+export interface PollinationAccountInfo {
+  connected: boolean;
+  balance?: number;
+  error?: string;
+}
+
+/**
+ * Récupère les informations du compte Pollination (balance, etc.)
+ * Utilise l'endpoint /v1/balance si disponible
+ */
+export const getPollinationAccountInfo = async (): Promise<PollinationAccountInfo> => {
+  const apiKey = await getPollinationApiKey();
+  
+  if (!apiKey) {
+    return { connected: false };
+  }
+  
+  try {
+    // Essayer de récupérer la balance via l'API
+    const response = await fetch('https://gen.pollinations.ai/v1/balance', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        connected: true,
+        balance: data.balance ?? data.pollen ?? data.credits,
+      };
+    }
+    
+    // Si l'endpoint balance n'existe pas, on retourne juste connected
+    return { connected: true };
+  } catch (error) {
+    console.error('[Pollination] Error getting account info:', error);
+    return { 
+      connected: true, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
+
+// ============================================================================
 // AUTH FLOW
 // ============================================================================
 

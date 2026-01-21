@@ -27,6 +27,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  ScanBarcode,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores';
@@ -284,6 +285,46 @@ export default function LabsScreen() {
           </Animated.View>
         </GlassCard>
 
+        {/* OpenFoodFacts Integration */}
+        <Text style={styles.sectionTitle}>{t('settings.openFoodFacts.sectionTitle')}</Text>
+        
+        <GlassCard style={styles.settingsCard}>
+          <Animated.View entering={FadeInDown.delay(200).springify()}>
+            <View style={styles.settingItem}>
+              <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}> 
+                <ScanBarcode size={20} color="#22c55e" />
+              </View>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>{t('settings.openFoodFacts.title')}</Text>
+                <Text style={styles.settingSubtitle}>{t('settings.openFoodFacts.description')}</Text>
+              </View>
+              <View>
+                <Switch
+                  value={settings.openFoodFactsEnabled ?? false}
+                  onValueChange={(value) => updateSettings({ openFoodFactsEnabled: value })}
+                  trackColor={{ false: Colors.card, true: Colors.teal }}
+                  thumbColor="#fff"
+                />
+              </View>
+            </View>
+
+            {settings.openFoodFactsEnabled && (
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureInfoText}>
+                  {t('settings.openFoodFacts.enabledInfo')}
+                </Text>
+              </View>
+            )}
+            
+            {/* OpenFoodFacts Attribution */}
+            <View style={styles.attributionBox}>
+              <Text style={styles.attributionText}>
+                {t('settings.openFoodFacts.attribution')}
+              </Text>
+            </View>
+          </Animated.View>
+        </GlassCard>
+
         {/* Spacer */}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -447,5 +488,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.teal,
     lineHeight: 18,
+  },
+  
+  // Attribution Box
+  attributionBox: {
+    backgroundColor: 'rgba(128, 128, 128, 0.1)',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    marginHorizontal: Spacing.sm,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: BorderRadius.md,
+  },
+  attributionText: {
+    fontSize: FontSize.xs,
+    color: Colors.muted,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
 });

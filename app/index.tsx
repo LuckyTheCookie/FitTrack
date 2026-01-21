@@ -9,12 +9,14 @@ import {
     StyleSheet,
     ScrollView,
     Pressable,
+    TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { ScanBarcode } from 'lucide-react-native';
 import {
     GlassCard,
     ProgressRing,
@@ -249,6 +251,18 @@ export default function TodayScreen() {
                     )}
                 </Pressable>
 
+                {/* Quick Check Button - OpenFoodFacts */}
+                {settings.openFoodFactsEnabled && (
+                    <TouchableOpacity
+                        style={styles.quickCheckButton}
+                        onPress={() => router.push('/barcode-scanner')}
+                        activeOpacity={0.8}
+                    >
+                        <ScanBarcode size={20} color="#22c55e" />
+                        <Text style={styles.quickCheckText}>{t('home.quickCheck')}</Text>
+                    </TouchableOpacity>
+                )}
+
 
                 {/* ACTIVITÉ RÉCENTE */}
                 <View style={styles.section}>
@@ -429,7 +443,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         paddingHorizontal: 14,
         borderRadius: BorderRadius.xl,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.md,
         shadowColor: '#d79686',
         shadowOffset: { width: 0, height: 12 },
         shadowOpacity: 0.25,
@@ -449,6 +463,26 @@ const styles = StyleSheet.create({
         color: '#1b0f0c',
         fontSize: FontSize.xl,
         fontWeight: FontWeight.extrabold,
+    },
+    
+    // Quick Check Button (OpenFoodFacts)
+    quickCheckButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+        backgroundColor: 'rgba(34, 197, 94, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(34, 197, 94, 0.3)',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: BorderRadius.lg,
+        marginBottom: Spacing.lg,
+    },
+    quickCheckText: {
+        color: '#22c55e',
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.semibold,
     },
 
     // Sections
