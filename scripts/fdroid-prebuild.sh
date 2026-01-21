@@ -199,60 +199,74 @@ echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 npx expo prebuild --clean --platform android
 
 # ==================================================
-# 🔥 CRITICAL: Rewrite :expo project to use source dependencies
+# 🔥 CRITICAL: Patch existing :expo project dependencies
 # ==================================================
 echo ""
-echo "🔥 Rewriting :expo project dependencies (no Maven)..."
+echo "🔥 Patching existing :expo project (no Maven)..."
 
 # Découverte automatique des modules Expo
 echo "📦 Auto-discovering Expo modules..."
 EXPO_MODULES=()
 for dir in node_modules/expo-*; do
-  if [ -d "$dir/android" ]; then
+  if [ -d "$dir/android" ] && [ -f "$dir/android/build.gradle" ]; then
     module_name=$(basename "$dir")
-    # Skip les stubs et modules bloqués
-    if [[ "$module_name" != "expo-notifications" ]] && [[ "$module_name" != "expo-application" ]]; then
+    # Skip les stubs, modules bloqués, et plugins
+    if [[ "$module_name" != "expo-notifications" ]] && \
+       [[ "$module_name" != "expo-application" ]] && \
+       [[ "$module_name" != "expo-modules-autolinking" ]] && \
+       [[ "$module_name" != "expo-modules-core" ]]; then
       EXPO_MODULES+=("$module_name")
       echo "  🔍 Found: $module_name"
     fi
   fi
 done
 
-# Créer un build.gradle personnalisé pour :expo
-EXPO_BUILD_GRADLE="android/expo/build.gradle"
-mkdir -p "android/expo"
+# Trouver le projet :expo généré par prebuild
+EXPO_BUILD_GRADLE=$(find android -name "build.gradle" -path "*/expo/build.gradle" | head -n 1)
 
-cat > "$EXPO_BUILD_GRADLE" <<'GRADLE_START'
-apply plugin: 'com.android.library'
+if [ -z "$EXPO_BUILD_GRADLE" ]; then
+  echo "❌ ERROR: Could not find :expo build.gradle"
+  echo "Searching in common locations..."
+  
+  # Essayer les emplacements communs
+  for possible_path in \
+    "android/.expo-internal/expo/build.gradle" \
+    "android/expo/build.gradle" \
+    "android/app/.expo-internal/expo/build.gradle"; do
+    if [ -f "$possible_path" ]; then
+      EXPO_BUILD_GRADLE="$possible_path"
+      echo "✅ Found at: $EXPO_BUILD_GRADLE"
+      break
+    fi
+  done
+fi
 
-android {
-    namespace "expo.modules"
-    compileSdkVersion 36
-    
-    defaultConfig {
-        minSdkVersion 26
-        targetSdkVersion 36
-    }
-}
-
-dependencies {
-    implementation project(':expo-modules-core')
-    implementation project(':expo-constants')
-    
-GRADLE_START
-
-# Ajouter chaque module découvert comme dépendance de projet
-echo "📦 Generating :expo dependencies from source..."
-for module in "${EXPO_MODULES[@]}"; do
-  echo "    implementation project(':$module')" >> "$EXPO_BUILD_GRADLE"
-  echo "  ✅ $module - BUILD FROM SOURCE - SUCCEED"
-done
-
-cat >> "$EXPO_BUILD_GRADLE" <<'GRADLE_END'
-}
-GRADLE_END
-
-echo "  ✅ Created custom :expo build.gradle with ${#EXPO_MODULES[@]} modules"
+if [ -z "$EXPO_BUILD_GRADLE" ]; then
+  echo "⚠️ WARNING: :expo build.gradle not found, Expo might handle dependencies automatically"
+else
+  echo "📝 Patching: $EXPO_BUILD_GRADLE"
+  
+  # Backup
+  cp "$EXPO_BUILD_GRADLE" "${EXPO_BUILD_GRADLE}.fdroid-backup"
+  
+  # Supprimer toutes les références à local-maven-repo
+  sed -i '/local-maven-repo/d' "$EXPO_BUILD_GRADLE"
+  
+  # Ajouter les dépendances de projet à la fin du fichier dependencies
+  # (en cherchant le bloc dependencies existant)
+  if grep -q "dependencies {" "$EXPO_BUILD_GRADLE"; then
+    # Insérer avant le dernier }
+    for module in "${EXPO_MODULES[@]}"; do
+      # Vérifier si la dépendance n'existe pas déjà
+      if ! grep -q "project(':$module')" "$EXPO_BUILD_GRADLE"; then
+        sed -i "/dependencies {/a\    implementation project(':$module')" "$EXPO_BUILD_GRADLE"
+        echo "  ✅ $module - BUILD FROM SOURCE - SUCCEED"
+      fi
+    done
+  fi
+  
+  echo "  ✅ Patched :expo with ${#EXPO_MODULES[@]} modules"
+fi
 
 # Inclure tous les modules dans settings.gradle
 echo ""
@@ -263,11 +277,9 @@ if [ -f "$SETTINGS_GRADLE" ]; then
   # Backup
   cp "$SETTINGS_GRADLE" "$SETTINGS_GRADLE.fdroid-backup"
   
-  # Ajouter les includes APRÈS l'autolinking
+  # Ajouter les includes à la fin
   echo "" >> "$SETTINGS_GRADLE"
   echo "// F-Droid: Manual Expo module includes" >> "$SETTINGS_GRADLE"
-  echo "include ':expo'" >> "$SETTINGS_GRADLE"
-  echo "project(':expo').projectDir = new File(rootProject.projectDir, 'expo')" >> "$SETTINGS_GRADLE"
   
   for module in "${EXPO_MODULES[@]}"; do
     if ! grep -q "include ':$module'" "$SETTINGS_GRADLE"; then
