@@ -167,6 +167,28 @@ npm install --force
 # ==================================================
 
 # ==================================================
+# 🧹 Remove Pre-built Binaries (F-Droid Requirement)
+# ==================================================
+echo ""
+echo "🧹 Removing pre-built AAR/JAR files..."
+
+# Supprime tous les local-maven-repo (Expo prebuilt modules)
+find node_modules -type d -name "local-maven-repo" -exec rm -rf {} + 2>/dev/null || true
+
+# Supprime les gradle-wrapper.jar
+find node_modules -name "gradle-wrapper.jar" -delete 2>/dev/null || true
+
+# Supprime les binaires Hermes (sauf Linux qui est nécessaire)
+rm -rf node_modules/react-native/sdks/hermesc/win64-bin 2>/dev/null || true
+rm -rf node_modules/react-native/sdks/hermesc/osx-bin 2>/dev/null || true
+
+# Supprime le template Expo
+rm -f node_modules/expo/template.tgz 2>/dev/null || true
+
+echo "  ✅ Pre-built binaries removed"
+
+
+# ==================================================
 # 🔥 CRITICAL: Block Expo Autolinking
 # ==================================================
 echo ""
