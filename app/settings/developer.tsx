@@ -2,7 +2,7 @@
 // SETTINGS - DEVELOPER SUB-SCREEN (Hidden developer options)
 // ============================================================================
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -24,10 +25,15 @@ import {
   AlertTriangle,
   RefreshCw,
   Trash2,
+  Flower2,
+  Coins,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore, useGamificationStore } from '../../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
+import { getPollinationAccountInfo, PollinationAccountInfo } from '../../src/services/pollination';
 
 // Setting Item Component
 function SettingItem({
@@ -81,6 +87,20 @@ export default function DeveloperScreen() {
   const { t } = useTranslation();
   const { settings, updateSettings, entries, recalculateGamification } = useAppStore();
   const { xp, level, clearHistory, recalculateFromEntries } = useGamificationStore();
+  
+  // Pollination account info
+  const [pollinationInfo, setPollinationInfo] = useState<PollinationAccountInfo | null>(null);
+  const [loadingPollination, setLoadingPollination] = useState(true);
+  
+  useEffect(() => {
+    const loadPollinationInfo = async () => {
+      setLoadingPollination(true);
+      const info = await getPollinationAccountInfo();
+      setPollinationInfo(info);
+      setLoadingPollination(false);
+    };
+    loadPollinationInfo();
+  }, []);
 
   // Handle recalculate gamification
   const handleRecalculateGamification = () => {
@@ -192,6 +212,52 @@ export default function DeveloperScreen() {
             delay={120}
           />
         </GlassCard>
+
+        {/* Pollination Status */}
+        <SectionTitle title="Pollination AI" delay={130} />
+        <Animated.View entering={FadeInDown.delay(140).springify()}>
+          <GlassCard style={styles.pollinationCard}>
+            <View style={styles.pollinationHeader}>
+              <View style={styles.pollinationIconContainer}>
+                <Flower2 size={24} color="#8B5CF6" />
+              </View>
+              <View style={styles.pollinationInfo}>
+                <Text style={styles.pollinationTitle}>Pollen Balance</Text>
+                {loadingPollination ? (
+                  <ActivityIndicator size="small" color={Colors.muted} style={{ marginTop: 4 }} />
+                ) : pollinationInfo?.connected ? (
+                  <View style={styles.pollinationStatus}>
+                    <CheckCircle size={14} color="#22c55e" />
+                    <Text style={styles.pollinationStatusText}>Connecté</Text>
+                  </View>
+                ) : (
+                  <View style={styles.pollinationStatus}>
+                    <XCircle size={14} color={Colors.muted} />
+                    <Text style={[styles.pollinationStatusText, { color: Colors.muted }]}>Non connecté</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            
+            {!loadingPollination && pollinationInfo?.connected && (
+              <View style={styles.pollinationBalanceContainer}>
+                <Coins size={18} color="#fbbf24" />
+                <Text style={styles.pollinationBalanceLabel}>Crédit restant:</Text>
+                <Text style={styles.pollinationBalanceValue}>
+                  {pollinationInfo.balance !== undefined 
+                    ? `${pollinationInfo.balance} pollen` 
+                    : 'N/A'}
+                </Text>
+              </View>
+            )}
+            
+            {pollinationInfo?.error && (
+              <Text style={styles.pollinationError}>
+                Erreur: {pollinationInfo.error}
+              </Text>
+            )}
+          </GlassCard>
+        </Animated.View>
 
         {/* Onboarding */}
         <SectionTitle title="Interface" delay={140} />
@@ -354,5 +420,65 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.muted,
     marginTop: 2,
+  },
+  
+  // Pollination Card
+  pollinationCard: {
+    marginBottom: Spacing.md,
+    padding: Spacing.md,
+  },
+  pollinationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  pollinationIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pollinationInfo: {
+    flex: 1,
+  },
+  pollinationTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: Colors.text,
+  },
+  pollinationStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  pollinationStatusText: {
+    fontSize: FontSize.sm,
+    color: '#22c55e',
+  },
+  pollinationBalanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pollinationBalanceLabel: {
+    fontSize: FontSize.sm,
+    color: Colors.muted,
+  },
+  pollinationBalanceValue: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: '#fbbf24',
+  },
+  pollinationError: {
+    fontSize: FontSize.xs,
+    color: Colors.error,
+    marginTop: Spacing.sm,
   },
 });
