@@ -161,10 +161,10 @@ echo "📦 Installing dependencies (including stubs)..."
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
-yarn install --force
+bun install --force
 
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
-yarn expo prebuild --clean --platform android
+bunx expo prebuild --clean --platform android
 
 # ==================================================
 # 🔥 CLEANUP: Native modules
