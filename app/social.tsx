@@ -14,6 +14,7 @@ import {
     RefreshControl,
     ActivityIndicator,
     Modal,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,6 +37,7 @@ import {
     Settings,
     Bell,
     UserX,
+    ExternalLink,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { GlassCard } from '../src/components/ui';
@@ -249,9 +251,40 @@ function AuthPrompt({ onSignIn }: { onSignIn: () => void }) {
     );
 } 
 
-// Not configured prompt
+// Not configured prompt - Shows different message for FOSS builds
 function NotConfiguredPrompt() {
     const { t } = useTranslation();
+    
+    // Check if this is a FOSS build
+    if (BuildConfig.isFoss) {
+        return (
+            <View style={styles.authPrompt}>
+                <View style={styles.fossIconContainer}>
+                    <Users size={48} color={Colors.teal} />
+                </View>
+                <Text style={styles.authTitle}>{t('social.fossTitle')}</Text>
+                <Text style={styles.authSubtitle}>{t('social.fossSubtitle')}</Text>
+                
+                {/* Info box */}
+                <View style={styles.fossInfoBox}>
+                    <Text style={styles.fossInfoText}>
+                        {t('social.fossInfo')}
+                    </Text>
+                </View>
+                
+                {/* CTA to get standard build */}
+                <TouchableOpacity 
+                    style={styles.fossUpgradeButton}
+                    onPress={() => Linking.openURL(BuildConfig.githubReleasesUrl)}
+                >
+                    <ExternalLink size={18} color="#fff" />
+                    <Text style={styles.fossUpgradeButtonText}>{t('social.fossUpgrade')}</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+    
+    // Standard "not configured" message for devs
     return (
         <View style={styles.authPrompt}>
             <Settings size={64} color={Colors.muted} />
@@ -1629,6 +1662,47 @@ const styles = StyleSheet.create({
         marginTop: Spacing.md,
     },
     authButtonText: {
+        fontSize: FontSize.md,
+        fontWeight: FontWeight.bold,
+        color: '#fff',
+    },
+
+    // FOSS Build Prompt
+    fossIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(45, 212, 191, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    fossInfoBox: {
+        backgroundColor: 'rgba(45, 212, 191, 0.1)',
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        marginTop: Spacing.md,
+        marginHorizontal: Spacing.lg,
+        borderWidth: 1,
+        borderColor: 'rgba(45, 212, 191, 0.2)',
+    },
+    fossInfoText: {
+        fontSize: FontSize.sm,
+        color: Colors.teal,
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    fossUpgradeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        backgroundColor: Colors.teal,
+        paddingHorizontal: Spacing.xl,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        marginTop: Spacing.lg,
+    },
+    fossUpgradeButtonText: {
         fontSize: FontSize.md,
         fontWeight: FontWeight.bold,
         color: '#fff',
