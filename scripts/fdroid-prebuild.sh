@@ -169,12 +169,12 @@ NODEJS_PATCH
 
 # 3. Install dependencies
 echo ""
-echo "📦 Installing dependencies (yarn mode)..."
-yarn install --ignore-engines
+echo "📦 Installing dependencies (bun mode)..."
+bun install
 
 echo ""
 echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
-yarn expo prebuild --clean --platform android
+bunx expo prebuild --clean --platform android
 
 # ==================================================
 # 🔥 POST-PREBUILD: Delete generated .aar/.jar (Aggressive cleanup)
