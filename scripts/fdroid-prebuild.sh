@@ -4,7 +4,7 @@ set -e
 # ==================================================
 # 🔨 Spix F-Droid Prebuild Script
 # Flavor: FOSS (com.spix.app.foss)
-# Strategy: Auto-compile ALL Expo modules from source
+# Fix: Force ALL Expo modules to build from source
 # ==================================================
 
 echo "=================================================="
@@ -129,10 +129,10 @@ EOF
 echo "  ✅ Local stubs created in ./stubs/"
 
 # ==================================================
-# 📦 Patch package.json to use Stubs
+# 📦 Patch package.json (CRITICAL FOR F-DROID)
 # ==================================================
 echo ""
-echo "📦 Redirecting dependencies to local stubs..."
+echo "📦 Configuring package.json for F-Droid..."
 
 node -e "
 const fs = require('fs');
@@ -154,9 +154,14 @@ console.log('✅ expo-application -> file:./stubs/expo-application');
 
 // 3. Disable autolinking for blocked modules
 packageJson.expo = packageJson.expo || {};
-packageJson.expo.autolinking = {
-  exclude: ['expo-notifications', 'expo-application']
-};
+packageJson.expo.autolinking = packageJson.expo.autolinking || {};
+packageJson.expo.autolinking.exclude = ['expo-notifications', 'expo-application'];
+
+// 4. 🔥 CRITICAL: Force ALL Expo modules to build from source (SDK 53+)
+packageJson.expo.autolinking.android = packageJson.expo.autolinking.android || {};
+packageJson.expo.autolinking.android.buildFromSource = ['.*'];
+
+console.log('✅ Forced buildFromSource for ALL Expo modules');
 
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
 "
@@ -199,97 +204,25 @@ echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 npx expo prebuild --clean --platform android
 
 # ==================================================
-# 🔥 CRITICAL: Patch existing :expo project dependencies
+# 🔥 Verify buildFromSource is working
 # ==================================================
 echo ""
-echo "🔥 Patching existing :expo project (no Maven)..."
+echo "🔍 Verifying Expo autolinking configuration..."
 
-# Découverte automatique des modules Expo
-echo "📦 Auto-discovering Expo modules..."
-EXPO_MODULES=()
-for dir in node_modules/expo-*; do
-  if [ -d "$dir/android" ] && [ -f "$dir/android/build.gradle" ]; then
-    module_name=$(basename "$dir")
-    # Skip les stubs, modules bloqués, et plugins
-    if [[ "$module_name" != "expo-notifications" ]] && \
-       [[ "$module_name" != "expo-application" ]] && \
-       [[ "$module_name" != "expo-modules-autolinking" ]] && \
-       [[ "$module_name" != "expo-modules-core" ]]; then
-      EXPO_MODULES+=("$module_name")
-      echo "  🔍 Found: $module_name"
-    fi
-  fi
-done
-
-# Trouver le projet :expo généré par prebuild
-EXPO_BUILD_GRADLE=$(find android -name "build.gradle" -path "*/expo/build.gradle" | head -n 1)
-
-if [ -z "$EXPO_BUILD_GRADLE" ]; then
-  echo "❌ ERROR: Could not find :expo build.gradle"
-  echo "Searching in common locations..."
-  
-  # Essayer les emplacements communs
-  for possible_path in \
-    "android/.expo-internal/expo/build.gradle" \
-    "android/expo/build.gradle" \
-    "android/app/.expo-internal/expo/build.gradle"; do
-    if [ -f "$possible_path" ]; then
-      EXPO_BUILD_GRADLE="$possible_path"
-      echo "✅ Found at: $EXPO_BUILD_GRADLE"
-      break
-    fi
-  done
-fi
-
-if [ -z "$EXPO_BUILD_GRADLE" ]; then
-  echo "⚠️ WARNING: :expo build.gradle not found, Expo might handle dependencies automatically"
+# Vérifier que les modules sont bien configurés pour build from source
+if grep -q "buildFromSource" package.json; then
+  echo "  ✅ buildFromSource configuration found in package.json"
 else
-  echo "📝 Patching: $EXPO_BUILD_GRADLE"
-  
-  # Backup
-  cp "$EXPO_BUILD_GRADLE" "${EXPO_BUILD_GRADLE}.fdroid-backup"
-  
-  # Supprimer toutes les références à local-maven-repo
-  sed -i '/local-maven-repo/d' "$EXPO_BUILD_GRADLE"
-  
-  # Ajouter les dépendances de projet à la fin du fichier dependencies
-  # (en cherchant le bloc dependencies existant)
-  if grep -q "dependencies {" "$EXPO_BUILD_GRADLE"; then
-    # Insérer avant le dernier }
-    for module in "${EXPO_MODULES[@]}"; do
-      # Vérifier si la dépendance n'existe pas déjà
-      if ! grep -q "project(':$module')" "$EXPO_BUILD_GRADLE"; then
-        sed -i "/dependencies {/a\    implementation project(':$module')" "$EXPO_BUILD_GRADLE"
-        echo "  ✅ $module - BUILD FROM SOURCE - SUCCEED"
-      fi
-    done
-  fi
-  
-  echo "  ✅ Patched :expo with ${#EXPO_MODULES[@]} modules"
-fi
-
-# Inclure tous les modules dans settings.gradle
-echo ""
-echo "🔧 Registering Expo modules in settings.gradle..."
-
-SETTINGS_GRADLE="android/settings.gradle"
-if [ -f "$SETTINGS_GRADLE" ]; then
-  # Backup
-  cp "$SETTINGS_GRADLE" "$SETTINGS_GRADLE.fdroid-backup"
-  
-  # Ajouter les includes à la fin
-  echo "" >> "$SETTINGS_GRADLE"
-  echo "// F-Droid: Manual Expo module includes" >> "$SETTINGS_GRADLE"
-  
-  for module in "${EXPO_MODULES[@]}"; do
-    if ! grep -q "include ':$module'" "$SETTINGS_GRADLE"; then
-      echo "include ':$module'" >> "$SETTINGS_GRADLE"
-      echo "project(':$module').projectDir = new File(rootProject.projectDir, '../node_modules/$module/android')" >> "$SETTINGS_GRADLE"
-      echo "  📝 Registered: $module"
-    fi
-  done
-  
-  echo "  ✅ All modules registered in settings.gradle"
+  echo "  ⚠️ WARNING: buildFromSource not found - adding it now"
+  node -e "
+  const fs = require('fs');
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  pkg.expo = pkg.expo || {};
+  pkg.expo.autolinking = pkg.expo.autolinking || {};
+  pkg.expo.autolinking.android = pkg.expo.autolinking.android || {};
+  pkg.expo.autolinking.android.buildFromSource = ['.*'];
+  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+  "
 fi
 
 # ==================================================
@@ -437,6 +370,7 @@ GRADLE_PATCH
     echo "  ✅ MediaPipe build.gradle patched"
 fi
 
+SETTINGS_GRADLE="android/settings.gradle"
 if [ -f "$SETTINGS_GRADLE" ]; then
     if ! grep -q "react-native-vision-camera" "$SETTINGS_GRADLE"; then
         cat >> "$SETTINGS_GRADLE" <<EOF
@@ -480,7 +414,10 @@ echo ""
 echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
-echo "  ✅ AUTO-DISCOVERED ${#EXPO_MODULES[@]} Expo modules"
-echo "  ✅ ALL modules configured for source compilation"
-echo "  ✅ Custom :expo project created"
+echo "  ✅ buildFromSource: ['.*'] configured in package.json"
+echo "  ✅ ALL Expo modules will compile from source"
+echo "  ✅ No prebuilt AAR files will be used"
 echo "🚀 Ready for F-Droid build!"
+echo ""
+echo "📝 VERIFY: Check build logs for absence of [📦] emojis"
+echo "    If you see [📦], something went wrong!"
