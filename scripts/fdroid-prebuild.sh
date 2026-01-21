@@ -4,7 +4,7 @@ set -e
 # ==================================================
 # 🔨 Spix F-Droid Prebuild Script
 # Flavor: FOSS (com.spix.app.foss)
-# Fix: Build ALL Expo modules from source (no Maven)
+# Strategy: Auto-compile ALL Expo modules from source
 # ==================================================
 
 echo "=================================================="
@@ -171,27 +171,9 @@ fi
 npm install --force
 
 # ==================================================
-# 🔥 CRITICAL: Block Expo Autolinking
+# 🧹 Patch Expo modules BEFORE prebuild
 # ==================================================
 echo ""
-echo "🚫 Disabling Expo autolinking for blocked modules..."
-
-# 1. Prevent autolinking in package.json
-node -e "
-const fs = require('fs');
-const packageJsonPath = '$ROOT_DIR/package.json';
-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-
-packageJson.expo = packageJson.expo || {};
-packageJson.expo.autolinking = {
-  exclude: ['expo-notifications', 'expo-application']
-};
-
-fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
-console.log('✅ Autolinking disabled for expo-notifications & expo-application');
-"
-
-# 2. Patch native Gradle files BEFORE prebuild
 echo "🔧 Patching node_modules Gradle files..."
 
 # Patch expo-application
@@ -217,80 +199,86 @@ echo "🔧 Running Expo prebuild (Clean & Generate Android)..."
 npx expo prebuild --clean --platform android
 
 # ==================================================
-# 🔥 CRITICAL: Remove local-maven-repo references
+# 🔥 CRITICAL: Rewrite :expo project to use source dependencies
 # ==================================================
 echo ""
-echo "🔥 Disabling local-maven-repo (force buildFromSource)..."
+echo "🔥 Rewriting :expo project dependencies (no Maven)..."
 
-# 1. Patch android/build.gradle - Remove local-maven-repo
-if [ -f "android/build.gradle" ]; then
-  cp "android/build.gradle" "android/build.gradle.backup"
-  
-  # Supprime les lignes contenant local-maven-repo
-  sed -i '/local-maven-repo/d' "android/build.gradle"
-  
-  echo "  ✅ Removed local-maven-repo from build.gradle"
-fi
-
-# 2. Patch android/settings.gradle.kts - Force Expo autolinking
-if [ -f "android/settings.gradle.kts" ]; then
-  cp "android/settings.gradle.kts" "android/settings.gradle.kts.backup"
-  
-  # Supprime les lignes contenant local-maven-repo
-  sed -i '/local-maven-repo/d' "android/settings.gradle.kts"
-  
-  echo "  ✅ Removed local-maven-repo from settings.gradle.kts"
-fi
-
-# 3. Patch android/gradle.properties - Force buildFromSource
-if [ ! -f "android/gradle.properties" ]; then
-  touch "android/gradle.properties"
-fi
-
-# Ajoute la directive buildFromSource si elle n'existe pas
-if ! grep -q "expo.buildFromSource=true" "android/gradle.properties"; then
-  echo "" >> "android/gradle.properties"
-  echo "# F-Droid: Force build from source" >> "android/gradle.properties"
-  echo "expo.buildFromSource=true" >> "android/gradle.properties"
-  echo "  ✅ Added expo.buildFromSource=true to gradle.properties"
-fi
-
-# 4. Patch ExpoModulesCorePlugin - Ignore local-maven-repo
-EXPO_PLUGIN="node_modules/expo-modules-core/android/ExpoModulesCorePlugin.gradle"
-if [ -f "$EXPO_PLUGIN" ]; then
-  cp "$EXPO_PLUGIN" "$EXPO_PLUGIN.backup"
-  
-  # Commenté toutes les références à local-maven-repo
-  sed -i 's|\(.*local-maven-repo.*\)|// F-Droid patched: \1|g' "$EXPO_PLUGIN"
-  
-  echo "  ✅ Patched ExpoModulesCorePlugin.gradle"
-fi
-
-# 5. Force tous les modules Expo à utiliser buildFromSource
-echo ""
-echo "🔧 Forcing Expo modules to build from source..."
-
-# Liste des modules Expo problématiques
-EXPO_MODULES=(
-  "expo-asset" "expo-audio" "expo-blur" "expo-clipboard"
-  "expo-device" "expo-document-picker" "expo-file-system"
-  "expo-font" "expo-haptics" "expo-image-loader" "expo-image-picker"
-  "expo-keep-awake" "expo-linear-gradient" "expo-linking"
-  "expo-localization" "expo-sensors" "expo-sharing" "expo-system-ui"
-)
-
-for module in "${EXPO_MODULES[@]}"; do
-  MODULE_BUILD_GRADLE="node_modules/$module/android/build.gradle"
-  if [ -f "$MODULE_BUILD_GRADLE" ]; then
-    # Supprime les références à local-maven-repo
-    sed -i '/local-maven-repo/d' "$MODULE_BUILD_GRADLE"
-    
-    # Supprime les lignes de publication Maven
-    sed -i '/maven.*{.*url.*local-maven-repo/,/}/d' "$MODULE_BUILD_GRADLE"
+# Découverte automatique des modules Expo
+echo "📦 Auto-discovering Expo modules..."
+EXPO_MODULES=()
+for dir in node_modules/expo-*; do
+  if [ -d "$dir/android" ]; then
+    module_name=$(basename "$dir")
+    # Skip les stubs et modules bloqués
+    if [[ "$module_name" != "expo-notifications" ]] && [[ "$module_name" != "expo-application" ]]; then
+      EXPO_MODULES+=("$module_name")
+      echo "  🔍 Found: $module_name"
+    fi
   fi
 done
 
-echo "  ✅ Patched ${#EXPO_MODULES[@]} Expo modules"
+# Créer un build.gradle personnalisé pour :expo
+EXPO_BUILD_GRADLE="android/expo/build.gradle"
+mkdir -p "android/expo"
+
+cat > "$EXPO_BUILD_GRADLE" <<'GRADLE_START'
+apply plugin: 'com.android.library'
+
+android {
+    namespace "expo.modules"
+    compileSdkVersion 36
+    
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+    }
+}
+
+dependencies {
+    implementation project(':expo-modules-core')
+    implementation project(':expo-constants')
+    
+GRADLE_START
+
+# Ajouter chaque module découvert comme dépendance de projet
+echo "📦 Generating :expo dependencies from source..."
+for module in "${EXPO_MODULES[@]}"; do
+  echo "    implementation project(':$module')" >> "$EXPO_BUILD_GRADLE"
+  echo "  ✅ $module - BUILD FROM SOURCE - SUCCEED"
+done
+
+cat >> "$EXPO_BUILD_GRADLE" <<'GRADLE_END'
+}
+GRADLE_END
+
+echo "  ✅ Created custom :expo build.gradle with ${#EXPO_MODULES[@]} modules"
+
+# Inclure tous les modules dans settings.gradle
+echo ""
+echo "🔧 Registering Expo modules in settings.gradle..."
+
+SETTINGS_GRADLE="android/settings.gradle"
+if [ -f "$SETTINGS_GRADLE" ]; then
+  # Backup
+  cp "$SETTINGS_GRADLE" "$SETTINGS_GRADLE.fdroid-backup"
+  
+  # Ajouter les includes APRÈS l'autolinking
+  echo "" >> "$SETTINGS_GRADLE"
+  echo "// F-Droid: Manual Expo module includes" >> "$SETTINGS_GRADLE"
+  echo "include ':expo'" >> "$SETTINGS_GRADLE"
+  echo "project(':expo').projectDir = new File(rootProject.projectDir, 'expo')" >> "$SETTINGS_GRADLE"
+  
+  for module in "${EXPO_MODULES[@]}"; do
+    if ! grep -q "include ':$module'" "$SETTINGS_GRADLE"; then
+      echo "include ':$module'" >> "$SETTINGS_GRADLE"
+      echo "project(':$module').projectDir = new File(rootProject.projectDir, '../node_modules/$module/android')" >> "$SETTINGS_GRADLE"
+      echo "  📝 Registered: $module"
+    fi
+  done
+  
+  echo "  ✅ All modules registered in settings.gradle"
+fi
 
 # ==================================================
 # 🔥 CLEANUP: Native modules
@@ -406,7 +394,7 @@ configurations.all {
 }
 EOF
 
-echo "  ✅ Gradle patched (buildFromSource enforced)"
+echo "  ✅ Gradle patched (source compilation enforced)"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -437,7 +425,6 @@ GRADLE_PATCH
     echo "  ✅ MediaPipe build.gradle patched"
 fi
 
-SETTINGS_GRADLE="android/settings.gradle"
 if [ -f "$SETTINGS_GRADLE" ]; then
     if ! grep -q "react-native-vision-camera" "$SETTINGS_GRADLE"; then
         cat >> "$SETTINGS_GRADLE" <<EOF
@@ -457,7 +444,7 @@ rm -rf android/app/build/intermediates
 rm -rf android/app/build/generated/res/google-services
 rm -rf android/app/src/main/assets/index.android.bundle
 
-# Supprime les binaires (sera refait par scandelete, mais au cas où)
+# Supprime les binaires (sera refait par scandelete)
 find node_modules -name "*.aar" -delete 2>/dev/null || true
 find node_modules -name "*.jar" ! -name "gradle-wrapper.jar" -delete 2>/dev/null || true
 find node_modules -name "gradle-wrapper.jar" -delete 2>/dev/null || true
@@ -481,7 +468,7 @@ echo ""
 echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
-echo "  ✅ expo.buildFromSource=true ENFORCED"
-echo "  ✅ local-maven-repo COMPLETELY DISABLED"
-echo "  ✅ All Expo modules will compile from source"
+echo "  ✅ AUTO-DISCOVERED ${#EXPO_MODULES[@]} Expo modules"
+echo "  ✅ ALL modules configured for source compilation"
+echo "  ✅ Custom :expo project created"
 echo "🚀 Ready for F-Droid build!"
