@@ -3,7 +3,7 @@
 // Design premium avec contraste noir/blanc et animations fluides
 // ============================================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -51,9 +51,12 @@ import {
     Info,
     ChevronRight,
     Zap,
+    Settings,
 } from 'lucide-react-native';
-import { CustomAlertModal } from '../src/components/ui';
+import { CustomAlertModal, PloppyOnboardingModal } from '../src/components/ui';
 import type { AlertButton } from '../src/components/ui';
+import { PloppySettingsSheet } from '../src/components/sheets';
+import type { PloppySettingsSheetRef } from '../src/components/sheets';
 import { useAppStore } from '../src/stores';
 import { 
     isPollinationConnected, 
@@ -199,9 +202,17 @@ const TimeCard = ({
 
 export default function EnhancedMealScreen() {
     const { t } = useTranslation();
-    const { addMeal } = useAppStore();
+    const { addMeal, settings } = useAppStore();
+    
+    // Refs
+    const settingsSheetRef = useRef<PloppySettingsSheetRef>(null);
+    
+    // Ploppy settings
+    const ploppyEnabled = settings.ploppyEnabled ?? false;
+    const ploppyOnboardingShown = settings.ploppyOnboardingShown ?? false;
     
     // State
+    const [showOnboarding, setShowOnboarding] = useState(!ploppyOnboardingShown);
     const [selectedTime, setSelectedTime] = useState<MealTime>(() => {
         const hour = new Date().getHours();
         return getMealTimeFromHour(hour);
@@ -498,7 +509,15 @@ export default function EnhancedMealScreen() {
                                 <Text style={styles.headerBadgeText}>IA</Text>
                             </View>
                         </View>
-                        <View style={styles.headerRight} />
+                        <TouchableOpacity
+                            style={styles.settingsButton}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                settingsSheetRef.current?.present();
+                            }}
+                        >
+                            <Settings size={20} color={PREMIUM.white} strokeWidth={2} />
+                        </TouchableOpacity>
                     </Animated.View>
 
                     {/* Meal Time Selection - 2x2 Grid */}
@@ -547,115 +566,119 @@ export default function EnhancedMealScreen() {
                         />
                     )}
 
-                    {/* Image Section - Premium Design */}
-                    <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-                        <Text style={styles.sectionTitle}>Photo du repas</Text>
-                        
-                        {selectedImage ? (
-                            <View style={styles.imageContainer}>
-                                <Image 
-                                    source={{ uri: selectedImage }} 
-                                    style={styles.imagePreview}
-                                    resizeMode="cover"
-                                />
-                                <LinearGradient
-                                    colors={['transparent', 'rgba(0,0,0,0.8)']}
-                                    style={styles.imageOverlay}
-                                />
-                                <TouchableOpacity 
-                                    style={styles.clearImageButton}
-                                    onPress={clearImage}
-                                >
-                                    <BlurView intensity={40} tint="dark" style={styles.clearImageBlur}>
-                                        <X size={16} color={PREMIUM.white} strokeWidth={2.5} />
-                                    </BlurView>
-                                </TouchableOpacity>
-                                
-                                {!analysis && (
-                                    <View style={styles.imageReadyBadge}>
-                                        <Check size={14} color={PREMIUM.accent} strokeWidth={3} />
-                                        <Text style={styles.imageReadyText}>Prête pour analyse</Text>
-                                    </View>
-                                )}
-                            </View>
-                        ) : (
-                            <View style={styles.imagePickerContainer}>
-                                <TouchableOpacity
-                                    style={styles.imagePickerButton}
-                                    onPress={pickFromCamera}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={styles.imagePickerIconContainer}>
-                                        <Camera size={28} color={PREMIUM.white} strokeWidth={1.5} />
-                                    </View>
-                                    <Text style={styles.imagePickerLabel}>Appareil photo</Text>
-                                </TouchableOpacity>
-                                
-                                <View style={styles.imageDivider}>
-                                    <View style={styles.imageDividerLine} />
-                                    <Text style={styles.imageDividerText}>ou</Text>
-                                    <View style={styles.imageDividerLine} />
-                                </View>
-                                
-                                <TouchableOpacity
-                                    style={styles.imagePickerButton}
-                                    onPress={pickFromGallery}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={styles.imagePickerIconContainer}>
-                                        <ImageIcon size={28} color={PREMIUM.white} strokeWidth={1.5} />
-                                    </View>
-                                    <Text style={styles.imagePickerLabel}>Galerie</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </Animated.View>
-
-                    {/* Details for Ploppy - NEW SECTION */}
-                    <Animated.View entering={FadeInDown.delay(250).duration(400)}>
-                        <View style={styles.detailsHeader}>
-                            <Text style={styles.sectionTitle}>Infos pour Ploppy</Text>
-                            <View style={styles.detailsOptional}>
-                                <Text style={styles.detailsOptionalText}>Optionnel</Text>
-                            </View>
-                        </View>
-                        <View style={styles.detailsContainer}>
-                            <View style={styles.detailsIconRow}>
-                                <Info size={16} color={PREMIUM.purple} />
-                                <Text style={styles.detailsHint}>
-                                    Aide Ploppy à mieux évaluer ton repas
-                                </Text>
-                            </View>
-                            <TextInput
-                                style={styles.detailsInput}
-                                value={additionalDetails}
-                                onChangeText={setAdditionalDetails}
-                                placeholder="Ex: Fait maison, régime IG bas, végétarien..."
-                                placeholderTextColor={PREMIUM.gray600}
-                                multiline
-                                numberOfLines={2}
-                            />
-                            <View style={styles.detailsTags}>
-                                {['🏠 Fait maison', '🥗 Healthy', '🍖 Protéiné'].map((tag) => (
+                    {/* Image Section - Premium Design - Only if Ploppy enabled */}
+                    {ploppyEnabled && (
+                        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+                            <Text style={styles.sectionTitle}>Photo du repas</Text>
+                            
+                            {selectedImage ? (
+                                <View style={styles.imageContainer}>
+                                    <Image 
+                                        source={{ uri: selectedImage }} 
+                                        style={styles.imagePreview}
+                                        resizeMode="cover"
+                                    />
+                                    <LinearGradient
+                                        colors={['transparent', 'rgba(0,0,0,0.8)']}
+                                        style={styles.imageOverlay}
+                                    />
                                     <TouchableOpacity 
-                                        key={tag}
-                                        style={styles.detailsTag}
-                                        onPress={() => {
-                                            Haptics.selectionAsync();
-                                            setAdditionalDetails(prev => 
-                                                prev ? `${prev}, ${tag.slice(2)}` : tag.slice(2)
-                                            );
-                                        }}
+                                        style={styles.clearImageButton}
+                                        onPress={clearImage}
                                     >
-                                        <Text style={styles.detailsTagText}>{tag}</Text>
+                                        <BlurView intensity={40} tint="dark" style={styles.clearImageBlur}>
+                                            <X size={16} color={PREMIUM.white} strokeWidth={2.5} />
+                                        </BlurView>
                                     </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                    </Animated.View>
+                                    
+                                    {!analysis && (
+                                        <View style={styles.imageReadyBadge}>
+                                            <Check size={14} color={PREMIUM.accent} strokeWidth={3} />
+                                            <Text style={styles.imageReadyText}>Prête pour analyse</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            ) : (
+                                <View style={styles.imagePickerContainer}>
+                                    <TouchableOpacity
+                                        style={styles.imagePickerButton}
+                                        onPress={pickFromCamera}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.imagePickerIconContainer}>
+                                            <Camera size={28} color={PREMIUM.white} strokeWidth={1.5} />
+                                        </View>
+                                        <Text style={styles.imagePickerLabel}>Appareil photo</Text>
+                                    </TouchableOpacity>
+                                    
+                                    <View style={styles.imageDivider}>
+                                        <View style={styles.imageDividerLine} />
+                                        <Text style={styles.imageDividerText}>ou</Text>
+                                        <View style={styles.imageDividerLine} />
+                                    </View>
+                                    
+                                    <TouchableOpacity
+                                        style={styles.imagePickerButton}
+                                        onPress={pickFromGallery}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.imagePickerIconContainer}>
+                                            <ImageIcon size={28} color={PREMIUM.white} strokeWidth={1.5} />
+                                        </View>
+                                        <Text style={styles.imagePickerLabel}>Galerie</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </Animated.View>
+                    )}
 
-                    {/* Ploppy Analysis Button - Premium CTA */}
-                    {selectedImage && !analysis && (
+                    {/* Details for Ploppy - Only if Ploppy enabled */}
+                    {ploppyEnabled && (
+                        <Animated.View entering={FadeInDown.delay(250).duration(400)}>
+                            <View style={styles.detailsHeader}>
+                                <Text style={styles.sectionTitle}>Infos pour Ploppy</Text>
+                                <View style={styles.detailsOptional}>
+                                    <Text style={styles.detailsOptionalText}>Optionnel</Text>
+                                </View>
+                            </View>
+                            <View style={styles.detailsContainer}>
+                                <View style={styles.detailsIconRow}>
+                                    <Info size={16} color={PREMIUM.purple} />
+                                    <Text style={styles.detailsHint}>
+                                        Aide Ploppy à mieux évaluer ton repas
+                                    </Text>
+                                </View>
+                                <TextInput
+                                    style={styles.detailsInput}
+                                    value={additionalDetails}
+                                    onChangeText={setAdditionalDetails}
+                                    placeholder="Ex: Fait maison, régime IG bas, végétarien..."
+                                    placeholderTextColor={PREMIUM.gray600}
+                                    multiline
+                                    numberOfLines={2}
+                                />
+                                <View style={styles.detailsTags}>
+                                    {['🏠 Fait maison', '🥗 Healthy', '🍖 Protéiné'].map((tag) => (
+                                        <TouchableOpacity 
+                                            key={tag}
+                                            style={styles.detailsTag}
+                                            onPress={() => {
+                                                Haptics.selectionAsync();
+                                                setAdditionalDetails(prev => 
+                                                    prev ? `${prev}, ${tag.slice(2)}` : tag.slice(2)
+                                                );
+                                            }}
+                                        >
+                                            <Text style={styles.detailsTagText}>{tag}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+                        </Animated.View>
+                    )}
+
+                    {/* Ploppy Analysis Button - Premium CTA - Only if Ploppy enabled */}
+                    {ploppyEnabled && selectedImage && !analysis && (
                         <Animated.View entering={FadeInUp.delay(300).springify()}>
                             <TouchableOpacity
                                 style={[
@@ -826,6 +849,16 @@ export default function EnhancedMealScreen() {
                 buttons={alertState.buttons}
                 onClose={hideAlert}
             />
+            
+            {/* Ploppy Onboarding Modal */}
+            <PloppyOnboardingModal
+                visible={showOnboarding}
+                onAccept={() => setShowOnboarding(false)}
+                onDecline={() => setShowOnboarding(false)}
+            />
+            
+            {/* Ploppy Settings Sheet */}
+            <PloppySettingsSheet ref={settingsSheetRef} />
         </View>
     );
 }
@@ -892,6 +925,16 @@ const styles = StyleSheet.create({
     },
     headerRight: {
         width: 44,
+    },
+    settingsButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: PREMIUM.gray900,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: PREMIUM.gray800,
     },
 
     // Section Titles

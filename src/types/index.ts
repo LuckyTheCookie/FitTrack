@@ -228,6 +228,14 @@ export interface UserSettings {
   enhancedMealEnabled?: boolean;
   // Labs: Pollination API connected
   pollinationConnected?: boolean;
+  // Labs: Ploppy authorization for meal analysis (separate from connection)
+  ploppyEnabled?: boolean;
+  // Labs: Ploppy onboarding shown
+  ploppyOnboardingShown?: boolean;
+  // Preferences: Hide progress ring during rep counter activity
+  hideProgressRing?: boolean;
+  // Labs: OpenFoodFacts barcode scanner enabled
+  openFoodFactsEnabled?: boolean;
 }
 
 // ============================================================================

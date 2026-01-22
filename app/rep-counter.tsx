@@ -850,6 +850,12 @@ export default function RepCounterScreen() {
 
     // Handle elliptical movement state change (from pose detection)
     const handleEllipticalStateChange = useCallback((state: EllipticalState) => {
+        // Safety check for valid state object
+        if (!state || typeof state.isMoving !== 'boolean') {
+            console.warn('[Elliptical] Received invalid state object');
+            return;
+        }
+        
         setEllipticalState(state);
         
         if (!isTracking || selectedExercise?.id !== 'elliptical') return;
@@ -1274,8 +1280,12 @@ export default function RepCounterScreen() {
 
         const exerciseId = selectedExercise.id;
         const displayName = t(`repCounter.exercises.${exerciseId}`);
+        // Format time as min:sec for time-based exercises
+        const formattedTime = isTimeBased 
+            ? `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`
+            : null;
         const exerciseText = isTimeBased 
-            ? `${displayName}: ${seconds}s`
+            ? `${displayName}: ${formattedTime}`
             : `${displayName}: ${repCount} reps`;
         const durationMinutes = isTimeBased 
             ? Math.ceil(seconds / 60) 
@@ -1416,7 +1426,27 @@ export default function RepCounterScreen() {
         return Math.round(repCount * 0.5); // ~0.5 cal/rep for other exercises
     };
     const calories = getCalories();
-    const progress = Math.min(repCount / 50, 1); // Objectif de 50 reps
+    
+    // Progress ring calculation - cycles back to 0 after reaching limit
+    // Elliptical: 5 min goal (300s), Plank: 60s goal, Reps: 100 reps goal
+    const getProgress = () => {
+        if (!selectedExercise) return 0;
+        if (settings.hideProgressRing) return 0; // Hide ring if user disabled it
+        
+        if (selectedExercise.id === 'elliptical') {
+            // 5 min goal, cycle back after reaching it
+            const goalSeconds = 300;
+            return (ellipticalSeconds % goalSeconds) / goalSeconds;
+        } else if (selectedExercise.isTimeBased) {
+            // 60s goal for plank, cycle back after reaching it
+            const goalSeconds = 60;
+            return (plankSeconds % goalSeconds) / goalSeconds;
+        }
+        // 100 reps goal, cycle back after reaching it
+        const goalReps = 100;
+        return (repCount % goalReps) / goalReps;
+    };
+    const progress = getProgress();
 
     return (
         <View style={styles.container}>
@@ -1785,13 +1815,7 @@ export default function RepCounterScreen() {
                                 <View style={styles.counterWrapper}>
                                     <Animated.View style={[styles.pulseRing, pulseStyle, { borderColor: selectedExercise.color }]} />
                                     <ProgressRing 
-                                        progress={
-                                            selectedExercise.id === 'elliptical' 
-                                                ? Math.min(ellipticalSeconds / 300, 1) // 5 minutes goal for elliptical
-                                                : selectedExercise.isTimeBased 
-                                                    ? Math.min(plankSeconds / 60, 1) 
-                                                    : progress
-                                        } 
+                                        progress={settings.hideProgressRing ? 0 : progress} 
                                         size={240}
                                     >
                                         <Animated.View style={[styles.counterInner, countStyle]}>

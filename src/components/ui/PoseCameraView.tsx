@@ -128,62 +128,67 @@ export const PoseCameraView: React.FC<PoseCameraViewProps> = ({
     const poseDetection = usePoseDetection(
         {
             onResults: useCallback((result: PoseDetectionResultBundle) => {
-                // Get the first detected pose (if any)
-                // Structure: result.results[0]?.landmarks[0] -> Landmark[]
-                const poseResult = result.results?.[0];
-                const landmarks = poseResult?.landmarks?.[0] as PoseLandmarks | undefined;
-                
-                // For elliptical, we only need the nose landmark, not full body validation
-                const isElliptical = exerciseTypeRef.current === 'elliptical';
-                const hasValidLandmarks = landmarks && landmarks.length >= 33;
-                const poseIsValid = hasValidLandmarks && (isElliptical || isPoseValid(landmarks));
-                
-                if (poseIsValid && landmarks) {
-                    setCurrentPose(landmarks);
-                    setPoseStatus('pose');
-                    onPoseDetected?.(landmarks);
-
-                    // Handle plank exercise separately
-                    if (exerciseTypeRef.current === 'plank') {
-                        const plankState = detectPlankPosition(landmarks, debugPlank);
-                        // Notify on state change or always if debug mode
-                        if (plankState.isInPlankPosition !== prevPlankStateRef.current || debugPlank) {
-                            if (plankState.isInPlankPosition !== prevPlankStateRef.current) {
-                                prevPlankStateRef.current = plankState.isInPlankPosition;
-                                if (plankState.isInPlankPosition) {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                }
-                            }
-                            onPlankStateChange?.(plankState.isInPlankPosition, plankState.confidence, plankState.debugInfo);
-                        }
-                    } else if (exerciseTypeRef.current === 'elliptical') {
-                        // Handle elliptical exercise - detect head movement
-                        const ellipticalState = detectEllipticalMovement(landmarks);
-                        onEllipticalStateChange?.(ellipticalState);
-                    } else if (exerciseTypeRef.current) {
-                        // Count reps for other exercises
-                        const repResult = countRepsFromPose(
-                            landmarks, 
-                            exerciseTypeRef.current, 
-                            countRef.current
-                        );
-                        
-                        if (repResult.count > countRef.current) {
-                            countRef.current = repResult.count;
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                            onRepDetected?.(repResult.count, repResult.feedback);
-                        }
-                    }
-                } else {
-                    setCurrentPose(null);
-                    setPoseStatus('no-pose');
-                    onPoseDetected?.(null);
+                try {
+                    // Get the first detected pose (if any)
+                    // Structure: result.results[0]?.landmarks[0] -> Landmark[]
+                    const poseResult = result.results?.[0];
+                    const landmarks = poseResult?.landmarks?.[0] as PoseLandmarks | undefined;
                     
-                    // If no pose detected during plank, consider it as "not in plank"
-                    if (exerciseTypeRef.current === 'plank' && prevPlankStateRef.current) {
-                        prevPlankStateRef.current = false;
-                        onPlankStateChange?.(false, 0);
+                    // For elliptical, we only need the nose landmark, not full body validation
+                    const isElliptical = exerciseTypeRef.current === 'elliptical';
+                    const hasValidLandmarks = landmarks && Array.isArray(landmarks) && landmarks.length >= 33;
+                    const poseIsValid = hasValidLandmarks && (isElliptical || isPoseValid(landmarks));
+                    
+                    if (poseIsValid && landmarks) {
+                        setCurrentPose(landmarks);
+                        setPoseStatus('pose');
+                        onPoseDetected?.(landmarks);
+
+                        // Handle plank exercise separately
+                        if (exerciseTypeRef.current === 'plank') {
+                            const plankState = detectPlankPosition(landmarks, debugPlank);
+                            // Notify on state change or always if debug mode
+                            if (plankState.isInPlankPosition !== prevPlankStateRef.current || debugPlank) {
+                                if (plankState.isInPlankPosition !== prevPlankStateRef.current) {
+                                    prevPlankStateRef.current = plankState.isInPlankPosition;
+                                    if (plankState.isInPlankPosition) {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    }
+                                }
+                                onPlankStateChange?.(plankState.isInPlankPosition, plankState.confidence, plankState.debugInfo);
+                            }
+                        } else if (exerciseTypeRef.current === 'elliptical') {
+                            // Handle elliptical exercise - detect head movement
+                            const ellipticalState = detectEllipticalMovement(landmarks);
+                            onEllipticalStateChange?.(ellipticalState);
+                        } else if (exerciseTypeRef.current) {
+                            // Count reps for other exercises
+                            const repResult = countRepsFromPose(
+                                landmarks, 
+                                exerciseTypeRef.current, 
+                                countRef.current
+                            );
+                            
+                            if (repResult.count > countRef.current) {
+                                countRef.current = repResult.count;
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                onRepDetected?.(repResult.count, repResult.feedback);
+                            }
+                        }
+                    } else {
+                        setCurrentPose(null);
+                        setPoseStatus('no-pose');
+                        onPoseDetected?.(null);
+                        
+                        // If no pose detected during plank, consider it as "not in plank"
+                        if (exerciseTypeRef.current === 'plank' && prevPlankStateRef.current) {
+                            prevPlankStateRef.current = false;
+                            onPlankStateChange?.(false, 0);
+                        }
                     }
+                } catch (error) {
+                    console.error('[PoseCamera] Error processing pose results:', error);
+                    setPoseStatus('no-pose');
                 }
             }, [onPoseDetected, onRepDetected, onPlankStateChange, onEllipticalStateChange, debugPlank]),
             onError: useCallback((error: any) => {

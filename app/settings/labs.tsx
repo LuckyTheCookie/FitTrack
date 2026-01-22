@@ -252,44 +252,11 @@ export default function LabsScreen() {
           </Animated.View>
         </GlassCard>
 
-        {/* Enhanced Meal Page Toggle */}
-        <Text style={styles.sectionTitle}>{t('settings.enhancedMeal.sectionTitle')}</Text>
-        
-        <GlassCard style={styles.settingsCard}>
-          <Animated.View entering={FadeInDown.delay(160).springify()}>
-            <View style={styles.settingItem}>
-              <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(215, 150, 134, 0.15)' }]}> 
-                <ChefHat size={20} color={Colors.cta} />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>{t('settings.enhancedMeal.title')}</Text>
-                <Text style={styles.settingSubtitle}>{t('settings.enhancedMeal.description')}</Text>
-              </View>
-              <View>
-                <Switch
-                  value={settings.enhancedMealEnabled ?? false}
-                  onValueChange={(value) => updateSettings({ enhancedMealEnabled: value })}
-                  trackColor={{ false: Colors.card, true: Colors.teal }}
-                  thumbColor="#fff"
-                />
-              </View>
-            </View>
-
-            {settings.enhancedMealEnabled && (
-              <View style={styles.featureInfo}>
-                <Text style={styles.featureInfoText}>
-                  {t('settings.enhancedMeal.enabledInfo')}
-                </Text>
-              </View>
-            )}
-          </Animated.View>
-        </GlassCard>
-
         {/* OpenFoodFacts Integration */}
         <Text style={styles.sectionTitle}>{t('settings.openFoodFacts.sectionTitle')}</Text>
         
         <GlassCard style={styles.settingsCard}>
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <Animated.View entering={FadeInDown.delay(160).springify()}>
             <View style={styles.settingItem}>
               <View style={[styles.settingIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}> 
                 <ScanBarcode size={20} color="#22c55e" />

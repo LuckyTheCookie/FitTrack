@@ -671,8 +671,8 @@ export function AddEntryForm({
 
     const handleSelectCategory = (category: CategoryType) => {
         if (category === 'meal') {
-            // Check if enhanced meal page is enabled
-            if (settings.enhancedMealEnabled && !isEditMode) {
+            // Always use enhanced meal page (not in edit mode)
+            if (!isEditMode) {
                 // Dismiss sheet and navigate to enhanced meal page
                 onDismiss?.();
                 router.push('/enhanced-meal');

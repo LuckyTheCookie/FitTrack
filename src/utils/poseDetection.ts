@@ -355,10 +355,15 @@ const ELLIPTICAL_MAX_SAMPLES = 300; // Maximum samples to keep in memory to prev
  * Calculate variance of an array of numbers
  */
 const calculateVariance = (values: number[]): number => {
-    if (values.length < 2) return 0;
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
-    return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+    if (!values || !Array.isArray(values) || values.length < 2) return 0;
+    
+    // Filter out any NaN or non-finite values
+    const validValues = values.filter(v => typeof v === 'number' && isFinite(v));
+    if (validValues.length < 2) return 0;
+    
+    const mean = validValues.reduce((a, b) => a + b, 0) / validValues.length;
+    const squaredDiffs = validValues.map(v => Math.pow(v - mean, 2));
+    return squaredDiffs.reduce((a, b) => a + b, 0) / validValues.length;
 };
 
 /**
@@ -366,11 +371,16 @@ const calculateVariance = (values: number[]): number => {
  * Returns true if sample was added successfully
  */
 export const addEllipticalHeadSample = (landmarks: PoseLandmarks): boolean => {
+    // Safety check for landmarks array
+    if (!landmarks || !Array.isArray(landmarks) || landmarks.length < 33) {
+        return false;
+    }
+    
     // Get nose position (most stable head landmark)
     // Use direct access for elliptical - visibility threshold is less critical for calibration
     const nose = landmarks[KnownPoseLandmarks.nose];
-    if (!nose || nose.y === undefined) {
-        console.log('[Elliptical] No nose landmark found');
+    if (!nose || typeof nose.y !== 'number' || isNaN(nose.y)) {
+        console.log('[Elliptical] No valid nose landmark found');
         return false;
     }
     

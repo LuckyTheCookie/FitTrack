@@ -22,3 +22,4 @@ export { HealthConnectPromptModal } from './HealthConnectPromptModal';
 export { SessionRecoveryModal } from './SessionRecoveryModal';
 export { CustomAlertModal } from './CustomAlertModal';
 export type { AlertType, AlertButton, CustomAlertModalProps } from './CustomAlertModal';
+export { PloppyOnboardingModal } from './PloppyOnboardingModal';
