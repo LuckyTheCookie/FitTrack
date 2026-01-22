@@ -504,10 +504,12 @@ export default function EnhancedMealScreen() {
                         </TouchableOpacity>
                         <View style={styles.headerCenter}>
                             <Text style={styles.headerTitle}>Nouveau repas</Text>
-                            <View style={styles.headerBadge}>
-                                <Sparkles size={10} color={PREMIUM.accent} />
-                                <Text style={styles.headerBadgeText}>IA</Text>
-                            </View>
+                            {ploppyEnabled && (
+                                <View style={styles.headerBadge}>
+                                    <Sparkles size={10} color={PREMIUM.accent} />
+                                    <Text style={styles.headerBadgeText}>IA</Text>
+                                </View>
+                            )}
                         </View>
                         <TouchableOpacity
                             style={styles.settingsButton}
