@@ -8,37 +8,36 @@ SourceCode: https://github.com/LuckyTheCookie/FitTrack
 IssueTracker: https://github.com/LuckyTheCookie/FitTrack/issues
 Changelog: https://github.com/LuckyTheCookie/FitTrack/releases
 
-Name: Spix
 AutoName: Spix
 
 RepoType: git
 Repo: https://github.com/LuckyTheCookie/FitTrack.git
 
-Binaries: https://github.com/LuckyTheCookie/FitTrack/releases/download/v%v/Spix-%v-foss.apk
-
 Builds:
-  - versionName: 7.5.1
-    versionCode: 70500
-    commit: v7.5.1
-    subdir: .
+  - versionName: 7.7.0
+    versionCode: 70700
+    commit: 905202d2c72b7aedf3f793c9ebe697fa6a98ebef
     sudo:
       - apt-get update
-      - apt-get install -y nodejs npm
-      - npm install -g n
-      - n 20
-      - npm install -g bun
+      - apt-get install -y npm
     output: android/app/build/outputs/apk/release/app-release.apk
-    prebuild: scripts/fdroid-prebuild.sh
+    prebuild: ./scripts/fdroid-prebuild.sh
     scanignore:
+      - node_modules/react-native/sdks/hermesc/linux64-bin/hermesc
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/expo-modules-autolinking/scripts/android/autolinking_implementation.gradle
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-svg/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+    scandelete:
       - node_modules
     build:
       - cd android
       - gradle assembleRelease
     ndk: r26d
 
-AllowedAPKSigningKeys: 7de06fe7d7ca28c2db68ebe2b0f3c376b53375c8dd11ecc41839b305784a9af4
-
 AutoUpdateMode: Version
-UpdateCheckMode: Tags ^v[\d.]+$
-CurrentVersion: 7.5.1
-CurrentVersionCode: 70500
+UpdateCheckMode: Tags
+UpdateCheckData: app.json|"versionCode":\s*(\d+)|.|"version":\s*"([^"]+)"
+CurrentVersion: 7.7.0
+CurrentVersionCode: 70700
