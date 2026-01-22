@@ -3,7 +3,7 @@
 // ============================================================================
 
 import * as Linking from 'expo-linking';
-import { zustandStorage } from '../../storage';
+import * as SecureStore from 'expo-secure-store';
 
 const POLLINATION_AUTH_URL = 'https://enter.pollinations.ai/authorize';
 const POLLINATION_API_URL = 'https://gen.pollinations.ai/v1/chat/completions';
