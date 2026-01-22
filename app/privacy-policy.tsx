@@ -120,16 +120,21 @@ export default function PrivacyPolicyScreen() {
                         delay={250}
                     >
                         <Text style={styles.paragraph}>{t('privacyPolicy.foss.description')}</Text>
-                        <Text style={styles.subheading}>{t('privacyPolicy.foss.removedTitle', { defaultValue: 'Ce qui a été retiré :' })}</Text>
+                        <Text style={styles.subheading}>{t('privacyPolicy.foss.removedTitle', { defaultValue: 'Services supprimés :' })}</Text>
                         <BulletPoint>{t('privacyPolicy.foss.removed.fcm')}</BulletPoint>
                         <BulletPoint>{t('privacyPolicy.foss.removed.google')}</BulletPoint>
                         <BulletPoint>{t('privacyPolicy.foss.removed.expoPush')}</BulletPoint>
                         
-                        <Text style={styles.subheading}>{t('privacyPolicy.foss.stillWorkingTitle', { defaultValue: 'Ce qui fonctionne toujours :' })}</Text>
+                        <Text style={styles.subheading}>{t('privacyPolicy.foss.unavailableTitle', { defaultValue: 'Fonctionnalités indisponibles :' })}</Text>
+                        <BulletPoint>{t('privacyPolicy.foss.unavailable.ploppy')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.unavailable.social')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.unavailable.push')}</BulletPoint>
+                        
+                        <Text style={styles.subheading}>{t('privacyPolicy.foss.stillWorkingTitle', { defaultValue: 'Fonctionnalités conservées :' })}</Text>
                         <BulletPoint>{t('privacyPolicy.foss.stillWorking.localFeatures')}</BulletPoint>
-                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.social')}</BulletPoint>
                         <BulletPoint>{t('privacyPolicy.foss.stillWorking.localNotifications')}</BulletPoint>
-                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.supabaseSync')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.healthConnect')}</BulletPoint>
+                        <BulletPoint>{t('privacyPolicy.foss.stillWorking.openFoodFacts')}</BulletPoint>
                         
                         <Text style={[styles.paragraph, styles.highlight]}>
                             {t('privacyPolicy.foss.note')}
@@ -151,7 +156,6 @@ export default function PrivacyPolicyScreen() {
                     <BulletPoint>{t('privacyPolicy.social.syncedData.xp')}</BulletPoint>
                     <BulletPoint>{t('privacyPolicy.social.syncedData.streak')}</BulletPoint>
                     <BulletPoint>{t('privacyPolicy.social.syncedData.weeklyCount')}</BulletPoint>
-                    <BulletPoint>{t('privacyPolicy.social.syncedData.weeklyTotals')}</BulletPoint>
                     
                     <Text style={styles.subheading}>{t('privacyPolicy.social.accountDataTitle', { defaultValue: 'Données de compte :' })}</Text>
                     <BulletPoint>{t('privacyPolicy.social.accountData.email')}</BulletPoint>
@@ -215,6 +219,7 @@ export default function PrivacyPolicyScreen() {
                     <BulletPoint>{t('privacyPolicy.healthConnect.data.distance')}</BulletPoint>
                     <BulletPoint>{t('privacyPolicy.healthConnect.data.calories')}</BulletPoint>
                     <BulletPoint>{t('privacyPolicy.healthConnect.data.hr')}</BulletPoint>
+                    <BulletPoint>{t('privacyPolicy.healthConnect.data.weight')}</BulletPoint>
                     
                     <Text style={styles.subheading}>{t('privacyPolicy.healthConnect.usageTitle', { defaultValue: 'Utilisation des données :' })}</Text>
                     <BulletPoint>{t('privacyPolicy.healthConnect.usage.localImport')}</BulletPoint>
