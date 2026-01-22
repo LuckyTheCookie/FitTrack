@@ -59,7 +59,9 @@ export default function LabsScreen() {
   // Handle deep link callback from Pollination
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
-      console.log('[Labs] Deep link received:', event.url);
+      if (__DEV__) {
+        console.log('[Labs] Deep link received:', event.url);
+      }
       
       if (event.url.includes('pollination-callback')) {
         const apiKey = extractApiKeyFromUrl(event.url);
