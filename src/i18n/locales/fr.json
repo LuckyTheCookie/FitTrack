@@ -956,7 +956,7 @@
   "privacyPolicy": {
     "title": "Politique de Confidentialité",
     "intro": "Spix respecte ta vie privée. Cette politique explique comment nous traitons tes données selon le RGPD (Règlement Général sur la Protection des Données).",
-    "lastUpdate": "Dernière mise à jour : 1er janvier 2026",
+    "lastUpdate": "Dernière mise à jour : 22 janvier 2026",
     "localMode": {
       "title": "Mode Local (par défaut)",
       "description": "Par défaut, Spix fonctionne en mode 100% local. Tes données restent uniquement sur ton appareil.",
