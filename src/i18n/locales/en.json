@@ -782,6 +782,34 @@
       "description": "Scan barcodes to view nutritional information",
       "enabledInfo": "A \"Quick Check\" button will appear on the home screen to scan food products.",
       "attribution": "Data provided by OpenFoodFacts (open database)"
+    },
+    "ploppy": {
+      "onboarding": {
+        "title": "Welcome to Ploppy! 🐦",
+        "subtitle": "Your AI nutrition assistant",
+        "feature1": "📸 Analyze your meal photos",
+        "feature2": "⭐ Nutritional score out of 100",
+        "feature3": "💡 Personalized tips",
+        "feature4": "🎯 Improve your diet",
+        "privacy1": "🔒 Your photos are never stored",
+        "privacy2": "📱 Secure processing via Pollination.ai",
+        "privacy3": "✨ Free and ad-free",
+        "accept": "Enable Ploppy",
+        "decline": "Later",
+        "fossWarning": "FOSS version doesn't support Ploppy (no cloud services)"
+      },
+      "settings": {
+        "title": "Ploppy Settings",
+        "enable": "Enable Ploppy",
+        "enableDesc": "AI analysis of your meals",
+        "connected": "Connected to Pollination",
+        "notConnected": "Not connected",
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "disconnectConfirm": "Disconnect",
+        "disconnectMessage": "You'll need to reconnect to use Ploppy.",
+        "fossWarning": "⚠️ Not available in FOSS version"
+      }
     }
   },
   "addEntry": {
@@ -1041,6 +1069,128 @@
       "text": "For questions regarding your personal data, contact us via the app settings."
     }
   },
+  "termsOfService": {
+    "title": "Terms of Service",
+    "intro": "Welcome to Spix! By using this application, you agree to the following terms.",
+    "lastUpdate": "Last updated: January 1, 2026",
+    "license": {
+      "title": "License & Open Source",
+      "description": "Spix is free software under the GNU Affero General Public License version 3 (AGPLv3). The source code is available on GitHub.",
+      "rightsTitle": "Your rights:",
+      "rights": {
+        "use": "Use the application freely",
+        "modify": "Modify the source code",
+        "distribute": "Redistribute the software",
+        "commercial": "Commercial use allowed"
+      },
+      "obligationsTitle": "Obligations (if you redistribute):",
+      "obligations": {
+        "sameTerms": "Keep the same AGPLv3 license",
+        "sourceCode": "Make source code available",
+        "copyright": "Preserve copyright notices"
+      },
+      "viewLicense": "View License",
+      "viewSource": "Source Code"
+    },
+    "appNature": {
+      "title": "Nature of the Application",
+      "description": "Spix is a fitness tracking app with gamification. It offers:",
+      "features": {
+        "tracking": "Workout, run, meal and measurement tracking",
+        "gamification": "XP system, levels, badges and quests",
+        "social": "Optional social features (leaderboards, friends)",
+        "ai": "AI meal analysis via Ploppy (optional)"
+      },
+      "medicalDisclaimer": "⚠️ Spix is not a medical tool. Consult a healthcare professional before starting any exercise program."
+    },
+    "versions": {
+      "title": "App Versions",
+      "description": "Spix comes in two versions with different features:",
+      "standard": {
+        "title": "Standard Version (Google Play / GitHub)",
+        "push": "Push notifications (encouragements, reminders)",
+        "ploppy": "AI meal analysis with Ploppy",
+        "social": "All social features"
+      },
+      "foss": {
+        "title": "FOSS Version (F-Droid)",
+        "noCloud": "No Google cloud services",
+        "noPush": "No remote push notifications",
+        "fullLocal": "100% functional in local mode"
+      },
+      "currentFoss": "🌿 You are currently using the FOSS version."
+    },
+    "optionalServices": {
+      "title": "Optional Services",
+      "description": "Some features require explicit activation:",
+      "ploppy": {
+        "title": "Ploppy (AI Analysis)",
+        "account": "Requires a Pollination account",
+        "photos": "Your photos are sent for analysis",
+        "disable": "Can be disabled at any time"
+      },
+      "social": {
+        "title": "Social Mode",
+        "account": "Requires a Spix account",
+        "rules": "Subject to community guidelines",
+        "delete": "Data can be deleted on request"
+      }
+    },
+    "socialRules": {
+      "title": "Community Guidelines",
+      "description": "By using social features, you agree to:",
+      "rulesTitle": "Expected behavior:",
+      "allowed": {
+        "respect": "Respect other users",
+        "appropriate": "Use appropriate username and avatar",
+        "positive": "Maintain a positive attitude"
+      },
+      "forbidden": {
+        "spam": "Spam or harassment",
+        "impersonate": "Impersonation",
+        "offensive": "Offensive or illegal content"
+      },
+      "warning": "⚠️ Violations may result in social account suspension."
+    },
+    "liability": {
+      "title": "Limitation of Liability",
+      "description": "Spix is provided \"as is\" without warranty. We are not responsible for:",
+      "items": {
+        "medical": "Medical decisions based on the app",
+        "injury": "Injuries during exercise",
+        "accuracy": "Accuracy of AI nutritional data",
+        "dataLoss": "Loss of local data",
+        "thirdParty": "Third-party services (Pollination, Supabase)"
+      }
+    },
+    "jurisdiction": {
+      "title": "Applicable Law",
+      "description": "These terms are governed by French law:",
+      "items": {
+        "french": "French law applies",
+        "gdpr": "GDPR compliance for personal data",
+        "disputes": "Paris courts have jurisdiction"
+      }
+    },
+    "modifications": {
+      "title": "Modifications",
+      "description": "We may modify these terms at any time. Changes will be notified through an app update.",
+      "continued": "Continued use of Spix after a modification constitutes acceptance of the new terms."
+    },
+    "termination": {
+      "title": "Termination",
+      "description": "You can stop using Spix at any time. To delete your data:",
+      "items": {
+        "stop": "Uninstall the app (local data)",
+        "delete": "Delete your account in Settings (cloud data)",
+        "export": "Export your data before deletion"
+      }
+    },
+    "acceptance": {
+      "title": "Acceptance",
+      "text": "By using Spix, you confirm that you have read and accepted these terms of service and our privacy policy."
+    }
+  },
   "profile": {
     "title": "Profile",
     "level": "Level {{level}}",
@@ -1193,6 +1343,8 @@
     "beatsaber": "Beat Saber",
     "meal": "Meal",
     "measure": "Measurements",
+    "custom": "Custom Sport",
+    "noData": "No data",
     "addEntry": "Add Entry",
     "editEntry": "Edit Entry",
     "deleteEntry": "Delete Entry",
@@ -1276,5 +1428,32 @@
     "notFound": "Not found",
     "unauthorized": "Unauthorized",
     "validation": "Invalid data"
+  },
+  "ploppy": {
+    "fossWarning": {
+      "title": "Not Available",
+      "message": "Ploppy is not available in the FOSS version as it requires external cloud services."
+    },
+    "connectRequired": {
+      "title": "Connection Required",
+      "message": "To use Ploppy, you need to connect to Pollination.ai.",
+      "connect": "Connect"
+    },
+    "disconnect": {
+      "title": "Disconnect",
+      "message": "You will need to reconnect to use Ploppy again.",
+      "confirm": "Disconnect"
+    },
+    "settings": {
+      "title": "Ploppy",
+      "subtitle": "AI Nutrition Assistant",
+      "enableTitle": "Enable Ploppy",
+      "enableDesc": "Analyze your meals by photo",
+      "connected": "Connected to Pollination",
+      "notConnected": "Not connected",
+      "disconnect": "Disconnect",
+      "info": "Ploppy analyzes your meal photos to give you a nutritional score and personalized tips. Photos are deleted after 1 hour.",
+      "fossNote": "Ploppy is not available in the FOSS version (no cloud services)."
+    }
   }
 }

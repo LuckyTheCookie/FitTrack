@@ -777,6 +777,34 @@
       "description": "Scanner les codes-barres pour voir les infos nutritionnelles",
       "enabledInfo": "Un bouton \"Check rapide\" apparaîtra sur l'écran d'accueil pour scanner les produits alimentaires.",
       "attribution": "Données fournies par OpenFoodFacts (base de données libre)"
+    },
+    "ploppy": {
+      "onboarding": {
+        "title": "Bienvenue chez Ploppy ! 🐦",
+        "subtitle": "Ton assistant nutrition IA",
+        "feature1": "📸 Analyse tes photos de repas",
+        "feature2": "⭐ Score nutritionnel sur 100",
+        "feature3": "💡 Conseils personnalisés",
+        "feature4": "🎯 Améliore ton alimentation",
+        "privacy1": "🔒 Tes photos ne sont jamais stockées",
+        "privacy2": "📱 Traitement sécurisé via Pollination.ai",
+        "privacy3": "✨ Gratuit et sans publicité",
+        "accept": "Activer Ploppy",
+        "decline": "Plus tard",
+        "fossWarning": "La version FOSS ne supporte pas Ploppy (pas de services cloud)"
+      },
+      "settings": {
+        "title": "Paramètres Ploppy",
+        "enable": "Activer Ploppy",
+        "enableDesc": "Analyse IA de tes repas",
+        "connected": "Connecté à Pollination",
+        "notConnected": "Non connecté",
+        "connect": "Se connecter",
+        "disconnect": "Déconnecter",
+        "disconnectConfirm": "Déconnexion",
+        "disconnectMessage": "Tu devras te reconnecter pour utiliser Ploppy.",
+        "fossWarning": "⚠️ Indisponible dans la version FOSS"
+      }
     }
   },
   "addEntry": {
@@ -1036,6 +1064,128 @@
       "text": "Pour toute question concernant tes données personnelles, contacte-nous via les paramètres de l'application."
     }
   },
+  "termsOfService": {
+    "title": "Conditions d'Utilisation",
+    "intro": "Bienvenue sur Spix ! En utilisant cette application, tu acceptes les conditions suivantes.",
+    "lastUpdate": "Dernière mise à jour : 1er janvier 2026",
+    "license": {
+      "title": "Licence & Open Source",
+      "description": "Spix est un logiciel libre sous licence GNU Affero General Public License version 3 (AGPLv3). Le code source est disponible sur GitHub.",
+      "rightsTitle": "Tes droits :",
+      "rights": {
+        "use": "Utiliser l'application librement",
+        "modify": "Modifier le code source",
+        "distribute": "Redistribuer le logiciel",
+        "commercial": "Utilisation commerciale autorisée"
+      },
+      "obligationsTitle": "Obligations (si tu redistribues) :",
+      "obligations": {
+        "sameTerms": "Conserver la même licence AGPLv3",
+        "sourceCode": "Rendre le code source disponible",
+        "copyright": "Conserver les mentions de copyright"
+      },
+      "viewLicense": "Voir la licence",
+      "viewSource": "Code source"
+    },
+    "appNature": {
+      "title": "Nature de l'Application",
+      "description": "Spix est une application de suivi fitness avec gamification. Elle propose :",
+      "features": {
+        "tracking": "Suivi de séances sportives, courses, repas et mensurations",
+        "gamification": "Système de XP, niveaux, badges et quêtes",
+        "social": "Fonctionnalités sociales optionnelles (classement, amis)",
+        "ai": "Analyse IA des repas via Ploppy (optionnel)"
+      },
+      "medicalDisclaimer": "⚠️ Spix n'est pas un outil médical. Consulte un professionnel de santé avant de commencer un programme sportif."
+    },
+    "versions": {
+      "title": "Versions de l'Application",
+      "description": "Spix existe en deux versions avec des fonctionnalités différentes :",
+      "standard": {
+        "title": "Version Standard (Google Play / GitHub)",
+        "push": "Notifications push (encouragements, rappels)",
+        "ploppy": "Analyse IA des repas avec Ploppy",
+        "social": "Toutes les fonctionnalités sociales"
+      },
+      "foss": {
+        "title": "Version FOSS (F-Droid)",
+        "noCloud": "Aucun service cloud Google",
+        "noPush": "Pas de notifications push distantes",
+        "fullLocal": "100% fonctionnel en mode local"
+      },
+      "currentFoss": "🌿 Tu utilises actuellement la version FOSS."
+    },
+    "optionalServices": {
+      "title": "Services Optionnels",
+      "description": "Certaines fonctionnalités nécessitent une activation explicite :",
+      "ploppy": {
+        "title": "Ploppy (Analyse IA)",
+        "account": "Nécessite un compte Pollination",
+        "photos": "Tes photos sont envoyées pour analyse",
+        "disable": "Désactivable à tout moment"
+      },
+      "social": {
+        "title": "Mode Social",
+        "account": "Nécessite un compte Spix",
+        "rules": "Soumis aux règles de bonne conduite",
+        "delete": "Données supprimables sur demande"
+      }
+    },
+    "socialRules": {
+      "title": "Règles Sociales",
+      "description": "En utilisant les fonctionnalités sociales, tu t'engages à :",
+      "rulesTitle": "Comportements attendus :",
+      "allowed": {
+        "respect": "Respecter les autres utilisateurs",
+        "appropriate": "Utiliser un pseudo et avatar appropriés",
+        "positive": "Maintenir une attitude positive"
+      },
+      "forbidden": {
+        "spam": "Spam ou harcèlement",
+        "impersonate": "Usurpation d'identité",
+        "offensive": "Contenu offensant ou illégal"
+      },
+      "warning": "⚠️ Tout manquement peut entraîner la suspension de ton compte social."
+    },
+    "liability": {
+      "title": "Limitation de Responsabilité",
+      "description": "Spix est fourni \"tel quel\" sans garantie. Nous ne sommes pas responsables de :",
+      "items": {
+        "medical": "Décisions médicales basées sur l'application",
+        "injury": "Blessures pendant l'entraînement",
+        "accuracy": "Exactitude des données nutritionnelles IA",
+        "dataLoss": "Perte de données locales",
+        "thirdParty": "Services tiers (Pollination, Supabase)"
+      }
+    },
+    "jurisdiction": {
+      "title": "Droit Applicable",
+      "description": "Ces conditions sont régies par le droit français :",
+      "items": {
+        "french": "Droit français applicable",
+        "gdpr": "Conformité RGPD pour les données personnelles",
+        "disputes": "Tribunaux de Paris compétents"
+      }
+    },
+    "modifications": {
+      "title": "Modifications",
+      "description": "Nous pouvons modifier ces conditions à tout moment. Les changements seront notifiés via une mise à jour de l'application.",
+      "continued": "L'utilisation continue de Spix après une modification vaut acceptation des nouvelles conditions."
+    },
+    "termination": {
+      "title": "Résiliation",
+      "description": "Tu peux cesser d'utiliser Spix à tout moment. Pour supprimer tes données :",
+      "items": {
+        "stop": "Désinstalle l'application (données locales)",
+        "delete": "Supprime ton compte dans Paramètres (données cloud)",
+        "export": "Exporte tes données avant suppression"
+      }
+    },
+    "acceptance": {
+      "title": "Acceptation",
+      "text": "En utilisant Spix, tu confirmes avoir lu et accepté ces conditions d'utilisation ainsi que notre politique de confidentialité."
+    }
+  },
   "profile": {
     "title": "Profil",
     "level": "Niveau {{level}}",
@@ -1171,6 +1321,8 @@
     "beatsaber": "Beat Saber",
     "meal": "Repas",
     "measure": "Mesures",
+    "custom": "Sport personnalisé",
+    "noData": "Aucune donnée",
     "addEntry": "Ajouter une entrée",
     "editEntry": "Modifier l'entrée",
     "deleteEntry": "Supprimer l'entrée",
@@ -1271,5 +1423,32 @@
     "notFound": "Non trouvé",
     "unauthorized": "Non autorisé",
     "validation": "Données invalides"
+  },
+  "ploppy": {
+    "fossWarning": {
+      "title": "Non disponible",
+      "message": "Ploppy n'est pas disponible dans la version FOSS car elle nécessite des services cloud externes."
+    },
+    "connectRequired": {
+      "title": "Connexion requise",
+      "message": "Pour utiliser Ploppy, tu dois te connecter à Pollination.ai.",
+      "connect": "Se connecter"
+    },
+    "disconnect": {
+      "title": "Déconnexion",
+      "message": "Tu devras te reconnecter pour utiliser Ploppy à nouveau.",
+      "confirm": "Déconnecter"
+    },
+    "settings": {
+      "title": "Ploppy",
+      "subtitle": "Assistant nutrition IA",
+      "enableTitle": "Activer Ploppy",
+      "enableDesc": "Analyse tes repas par photo",
+      "connected": "Connecté à Pollination",
+      "notConnected": "Non connecté",
+      "disconnect": "Déconnecter",
+      "info": "Ploppy analyse tes photos de repas pour te donner un score nutritionnel et des conseils personnalisés. Les photos sont supprimées après 1h.",
+      "fossNote": "Ploppy n'est pas disponible dans la version FOSS (pas de services cloud)."
+    }
   }
 }
