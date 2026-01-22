@@ -34,7 +34,7 @@ export interface PollinationResponse {
 
 export const savePollinationApiKey = async (apiKey: string): Promise<void> => {
   try {
-    await zustandStorage.setItem(STORAGE_KEY, apiKey);
+    await SecureStore.setItemAsync(STORAGE_KEY, apiKey);
   } catch (error) {
     console.error('[Pollination] Error saving API key:', error);
     throw error;
@@ -43,7 +43,7 @@ export const savePollinationApiKey = async (apiKey: string): Promise<void> => {
 
 export const getPollinationApiKey = async (): Promise<string | null> => {
   try {
-    const key = await zustandStorage.getItem(STORAGE_KEY);
+    const key = await SecureStore.getItemAsync(STORAGE_KEY);
     return key || null;
   } catch (error) {
     console.error('[Pollination] Error getting API key:', error);
@@ -53,7 +53,7 @@ export const getPollinationApiKey = async (): Promise<string | null> => {
 
 export const removePollinationApiKey = async (): Promise<void> => {
   try {
-    await zustandStorage.removeItem(STORAGE_KEY);
+    await SecureStore.deleteItemAsync(STORAGE_KEY);
   } catch (error) {
     console.error('[Pollination] Error removing API key:', error);
   }
@@ -142,8 +142,10 @@ export const startPollinationAuth = async (): Promise<void> => {
   const redirectUrl = Linking.createURL('pollination-callback');
   const authUrl = getPollinationAuthUrl(redirectUrl);
   
-  console.log('[Pollination] Starting auth with redirect:', redirectUrl);
-  console.log('[Pollination] Auth URL:', authUrl);
+  if (__DEV__) {
+    console.log('[Pollination] Starting auth with redirect:', redirectUrl);
+    console.log('[Pollination] Auth URL:', authUrl);
+  }
   
   await Linking.openURL(authUrl);
 };
@@ -211,9 +213,11 @@ export const analyzeMealImage = async (imageUrl: string, additionalContext?: str
     throw new Error('Pollination API key not found. Please connect to Pollination first.');
   }
   
-  console.log('[Pollination] Analyzing meal image:', imageUrl);
-  if (additionalContext) {
-    console.log('[Pollination] Additional context:', additionalContext);
+  if (__DEV__) {
+    console.log('[Pollination] Analyzing meal image:', imageUrl);
+    if (additionalContext) {
+      console.log('[Pollination] Additional context:', additionalContext);
+    }
   }
   
   // Construire le message utilisateur avec le contexte additionnel
@@ -267,7 +271,9 @@ export const analyzeMealImage = async (imageUrl: string, additionalContext?: str
     throw new Error('No response from Pollination API');
   }
   
-  console.log('[Pollination] Raw response:', content);
+  if (__DEV__) {
+    console.log('[Pollination] Raw response:', content);
+  }
   
   // Parse le JSON de la réponse
   try {

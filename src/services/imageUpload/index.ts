@@ -65,7 +65,9 @@ const getMimeType = (uri: string): string => {
  */
 export const uploadImageToTmpFiles = async (imageUri: string): Promise<UploadResult> => {
   try {
-    console.log('[ImageUpload] Starting upload to tmpfiles.org:', imageUri);
+    if (__DEV__) {
+      console.log('[ImageUpload] Starting upload to tmpfiles.org:', imageUri);
+    }
     
     // Utiliser la nouvelle API File pour vérifier l'existence
     const file = new File(imageUri);
@@ -86,7 +88,9 @@ export const uploadImageToTmpFiles = async (imageUri: string): Promise<UploadRes
       type: mimeType,
     } as any);
     
-    console.log('[ImageUpload] Uploading file:', fileName, 'MIME:', mimeType, 'Size:', file.size);
+    if (__DEV__) {
+      console.log('[ImageUpload] Uploading file:', fileName, 'MIME:', mimeType, 'Size:', file.size);
+    }
     
     const response = await fetch(TMPFILES_UPLOAD_URL, {
       method: 'POST',
@@ -103,7 +107,9 @@ export const uploadImageToTmpFiles = async (imageUri: string): Promise<UploadRes
     }
     
     const result: TmpFilesResponse = await response.json();
-    console.log('[ImageUpload] Upload response:', result);
+    if (__DEV__) {
+      console.log('[ImageUpload] Upload response:', result);
+    }
     
     if (result.status !== 'success' || !result.data?.url) {
       throw new Error('Invalid response from tmpfiles.org');
@@ -113,7 +119,9 @@ export const uploadImageToTmpFiles = async (imageUri: string): Promise<UploadRes
     // On doit la convertir en https://tmpfiles.org/dl/1234567/image.jpg pour avoir un lien direct
     const directUrl = result.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
     
-    console.log('[ImageUpload] Upload successful:', directUrl);
+    if (__DEV__) {
+      console.log('[ImageUpload] Upload successful:', directUrl);
+    }
     
     return {
       success: true,

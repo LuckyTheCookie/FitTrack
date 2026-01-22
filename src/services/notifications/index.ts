@@ -122,7 +122,9 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
                 projectId,
             });
 
-            console.log('Expo Push Token:', token.data);
+            if (__DEV__) {
+              console.log('Expo Push Token:', token.data);
+            }
             return { success: true, token: token.data };
         } catch (error: any) {
             lastError = error;
