@@ -972,19 +972,24 @@
     },
     "foss": {
       "title": "Version FOSS (F-Droid)",
-      "description": "Tu utilises la version FOSS de Spix, spécialement conçue pour respecter les directives de F-Droid.",
+      "description": "Tu utilises la version FOSS de Spix, spécialement conçue pour respecter les directives de F-Droid. Elle fonctionne en mode 100% local.",
       "removed": {
         "fcm": "Firebase Cloud Messaging (FCM)",
         "google": "Google Services / Google Play Services",
-        "expoPush": "Expo Push Notifications distantes"
+        "expoPush": "Expo Push Notifications"
+      },
+      "unavailable": {
+        "ploppy": "Ploppy (analyse IA des repas) - nécessite Pollination.ai",
+        "social": "Mode social (classement, amis) - nécessite Supabase",
+        "push": "Notifications push distantes"
       },
       "stillWorking": {
         "localFeatures": "Toutes les fonctionnalités locales",
-        "social": "Fonctionnalités sociales (classement, amis)",
         "localNotifications": "Notifications locales (rappels de streak)",
-        "supabaseSync": "Synchronisation des stats avec Supabase"
+        "healthConnect": "Import depuis Health Connect",
+        "openFoodFacts": "Scanner OpenFoodFacts"
       },
-      "note": "🌿 Cette version est 100% libre de traceurs propriétaires Google."
+      "note": "🌿 Cette version est 100% libre de traceurs et services cloud propriétaires."
     },
     "social": {
       "title": "Mode Social (opt-in)",
@@ -993,8 +998,7 @@
         "nickname": "Pseudo public (que tu choisis)",
         "xp": "XP total et niveau",
         "streak": "Streak actuel et meilleur streak",
-        "weeklyCount": "Nombre de séances hebdomadaires",
-        "weeklyTotals": "Distance et durée totales hebdomadaires"
+        "weeklyCount": "Nombre de séances hebdomadaires"
       },
       "accountData": {
         "email": "Email (uniquement pour la connexion)",
@@ -1022,19 +1026,20 @@
     },
     "healthConnect": {
       "title": "Health Connect (Android)",
-      "description": "Spix peut importer des séances d'entraînement depuis Google Health Connect sur Android. Cette fonctionnalité est optionnelle.",
+      "description": "Spix peut importer des séances d'entraînement et des mesures depuis Google Health Connect sur Android. Cette fonctionnalité est optionnelle.",
       "data": {
         "sessions": "Séances d'exercice (type, durée, date)",
         "distance": "Distance parcourue",
         "calories": "Calories brûlées",
-        "hr": "Fréquence cardiaque (si disponible)"
+        "hr": "Fréquence cardiaque (si disponible)",
+        "weight": "Poids corporel"
       },
       "usage": {
         "localImport": "Import local uniquement - aucun envoi serveur",
         "convert": "Conversion en entrées Spix locales",
         "choose": "Tu choisis quelles séances importer"
       },
-      "highlight": "✅ Les données Health Connect sont lues une seule fois et stockées localement. Spix n'écrit jamais dans Health Connect.",
+      "highlight": "✅ Les données Health Connect sont lues et stockées localement. Spix n'écrit jamais dans Health Connect.",
       "revoke": "Tu peux révoquer l'accès à tout moment dans les paramètres Health Connect de ton appareil."
     },
     "rights": {
