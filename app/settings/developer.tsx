@@ -29,6 +29,7 @@ import {
   Coins,
   CheckCircle,
   XCircle,
+  RotateCcw,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore, useGamificationStore } from '../../src/stores';
@@ -272,6 +273,20 @@ export default function DeveloperScreen() {
               router.push('/onboarding');
             }}
             delay={160}
+          />
+          <SettingItem
+            icon={<RotateCcw size={20} color="#fbbf24" />}
+            iconColor="#fbbf24"
+            title="Réinitialiser onboarding Ploppy"
+            subtitle="Réafficher le modal de bienvenue Ploppy"
+            onPress={() => {
+              updateSettings({ ploppyOnboardingShown: false });
+              Alert.alert(
+                'Onboarding réinitialisé',
+                'Le modal de bienvenue Ploppy réapparaîtra au prochain accès à la page repas.'
+              );
+            }}
+            delay={180}
           />
         </GlassCard>
 
