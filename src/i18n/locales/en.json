@@ -977,19 +977,24 @@
     },
     "foss": {
       "title": "FOSS Edition (F-Droid)",
-      "description": "You are using the FOSS edition of Spix, built to comply with F-Droid guidelines.",
+      "description": "You are using the FOSS edition of Spix, built to comply with F-Droid guidelines. It runs in 100% local mode.",
       "removed": {
         "fcm": "Firebase Cloud Messaging (FCM)",
         "google": "Google Services / Google Play Services",
-        "expoPush": "Expo remote push notifications"
+        "expoPush": "Expo Push Notifications"
+      },
+      "unavailable": {
+        "ploppy": "Ploppy (AI meal analysis) - requires Pollination.ai",
+        "social": "Social mode (leaderboard, friends) - requires Supabase",
+        "push": "Remote push notifications"
       },
       "stillWorking": {
         "localFeatures": "All local features",
-        "social": "Social features (leaderboard, friends)",
         "localNotifications": "Local notifications (streak reminders)",
-        "supabaseSync": "Stats sync with Supabase"
+        "healthConnect": "Health Connect import",
+        "openFoodFacts": "OpenFoodFacts scanner"
       },
-      "note": "🌿 This edition is 100% free of Google proprietary trackers."
+      "note": "🌿 This edition is 100% free of proprietary trackers and cloud services."
     },
     "social": {
       "title": "Social Mode (opt-in)",
@@ -998,8 +1003,7 @@
         "nickname": "Public nickname (you choose)",
         "xp": "Total XP and level",
         "streak": "Current streak and best streak",
-        "weeklyCount": "Weekly workouts count",
-        "weeklyTotals": "Weekly distance and duration totals"
+        "weeklyCount": "Weekly workouts count"
       },
       "accountData": {
         "email": "Email (for sign-in only)",
@@ -1027,19 +1031,20 @@
     },
     "healthConnect": {
       "title": "Health Connect (Android)",
-      "description": "Spix can import workouts from Google Health Connect on Android. This feature is optional.",
+      "description": "Spix can import workouts and measurements from Google Health Connect on Android. This feature is optional.",
       "data": {
         "sessions": "Workout sessions (type, duration, date)",
         "distance": "Distance covered",
         "calories": "Calories burned",
-        "hr": "Heart rate (if available)"
+        "hr": "Heart rate (if available)",
+        "weight": "Body weight"
       },
       "usage": {
         "localImport": "Local import only - no server upload",
         "convert": "Converted into local Spix entries",
         "choose": "You choose which sessions to import"
       },
-      "highlight": "✅ Health Connect data is read once and stored locally. Spix never writes to Health Connect.",
+      "highlight": "✅ Health Connect data is read and stored locally. Spix never writes to Health Connect.",
       "revoke": "You can revoke access at any time in your device's Health Connect settings."
     },
     "rights": {
