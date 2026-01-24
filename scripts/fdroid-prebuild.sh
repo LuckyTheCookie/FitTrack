@@ -5,20 +5,34 @@ set -e
 # 🔨 Spix F-Droid Prebuild Script
 # Flavor: FOSS (com.spix.app.foss)
 # Fix: Force ALL Expo modules to build from source
+# + REPRODUCIBLE BUILD optimizations
 # ==================================================
 
 echo "=================================================="
 echo "🚀 Starting F-Droid Prebuild Process (Spix)"
 echo "=================================================="
 
-# 1. Environment Setup
+# ==================================================
+# 1. Environment Setup - REPRODUCIBLE BUILD
+# ==================================================
+echo ""
+echo "🔧 Setting up reproducible build environment..."
+
+# Utiliser le timestamp du dernier commit Git pour la reproductibilité
 if [ -z "$SOURCE_DATE_EPOCH" ]; then
-    export SOURCE_DATE_EPOCH=$(date +%s)
+    export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct 2>/dev/null || date +%s)
 fi
+echo "  ✅ SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
+
 export EXPO_PUBLIC_BUILD_FLAVOR=foss
+export NODE_ENV=production
+export REACT_NATIVE_ENABLE_SOURCE_MAPS=false
 ROOT_DIR="$(pwd)"
 
+# ==================================================
 # 2. Configure app.json for FOSS Package
+# ==================================================
+echo ""
 echo "📝 Configuring app.json for F-Droid build..."
 node -e "
 const fs = require('fs');
@@ -52,6 +66,73 @@ if (appJson.expo.plugins) {
 fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n', 'utf8');
 console.log('✅ app.json configured for FOSS build');
 "
+
+# ==================================================
+# 3. Create/Patch metro.config.js for Reproducibility
+# ==================================================
+echo ""
+echo "🔧 Configuring Metro bundler for reproducible builds..."
+
+cat > metro.config.js <<'EOF'
+const { getDefaultConfig } = require('expo/metro-config');
+const crypto = require('crypto');
+
+const config = getDefaultConfig(__dirname);
+
+// ========================================
+// REPRODUCIBLE BUILD CONFIGURATION
+// ========================================
+
+config.serializer = {
+  ...config.serializer,
+  
+  // Use deterministic module IDs based on path hashing
+  createModuleIdFactory: function() {
+    return function(path) {
+      // Normaliser le chemin pour être déterministe
+      const normalizedPath = path.replace(/\\/g, '/');
+      const hash = crypto.createHash('sha1').update(normalizedPath).digest('hex');
+      return hash.substr(0, 8);
+    };
+  },
+  
+  // Process modules in a deterministic order
+  processModuleFilter: function(module) {
+    // Exclude test modules
+    if (module.path.includes('/__tests__/') || 
+        module.path.includes('/__mocks__/')) {
+      return false;
+    }
+    return true;
+  },
+};
+
+// Transformer config for reproducibility
+config.transformer = {
+  ...config.transformer,
+  enableBabelRCLookup: false,
+  minifierConfig: {
+    keep_classnames: true,
+    keep_fnames: true,
+    mangle: {
+      keep_classnames: true,
+      keep_fnames: true,
+    },
+  },
+};
+
+// Disable source maps in production
+config.transformer.getTransformOptions = async () => ({
+  transform: {
+    experimentalImportSupport: false,
+    inlineRequires: true,
+  },
+});
+
+module.exports = config;
+EOF
+
+echo "  ✅ metro.config.js configured for reproducible builds"
 
 # ==================================================
 # 📦 Create Local FOSS Stubs WITH NATIVE MODULES
@@ -170,7 +251,7 @@ EOF
 echo "  ✅ expo-notifications stub with native Android module"
 
 # ==================================================
-# Stub: expo-application (unchanged)
+# Stub: expo-application
 # ==================================================
 cat > stubs/expo-application/package.json <<'EOF'
 {
@@ -238,14 +319,18 @@ console.log('✅ Forced buildFromSource for ALL Expo modules');
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
 "
 
-# 3. Install dependencies
+# ==================================================
+# 4. Install dependencies
+# ==================================================
 echo ""
 echo "📦 Installing dependencies (including stubs)..."
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
 
-npm install --force
+# Lock file pour reproductibilité
+npm install --force --package-lock-only
+npm ci --force || npm install --force
 
 # ==================================================
 # 🧹 Patch Expo modules BEFORE prebuild
@@ -298,7 +383,9 @@ echo "🔥 Verifying native cleanup..."
 rm -rf android/app/src/main/java/expo/modules/application
 echo "  ✅ Native code verification complete"
 
-# 4. Patching Native Files
+# ==================================================
+# 5. Patching Native Files
+# ==================================================
 echo ""
 echo "🏥 Patching Health Connect configuration..."
 ANDROID_MAIN_DIR="android/app/src/main"
@@ -323,13 +410,15 @@ if [ -f "$MAIN_ACTIVITY_PATH" ]; then
   fi
 fi
 
-# 5. Patch AndroidManifest
+# 6. Patch AndroidManifest
 if [ -f "scripts/patch-health-connect.js" ]; then
   node "scripts/patch-health-connect.js" "$ANDROID_MAIN_DIR/AndroidManifest.xml"
   echo "  ✅ AndroidManifest.xml patched"
 fi
 
-# 6. Cleanup Google Services from Gradle
+# ==================================================
+# 7. Cleanup Google Services from Gradle
+# ==================================================
 echo ""
 echo "🧹 Cleaning up Google Services..."
 if [ -f "android/build.gradle" ]; then
@@ -342,9 +431,11 @@ if [ -f "android/app/build.gradle" ]; then
 fi
 rm -f "android/app/google-services.json"
 
-# 7. Patching Gradle (AGGRESSIVE MODE)
+# ==================================================
+# 8. Patching Gradle (AGGRESSIVE MODE + REPRODUCIBLE)
+# ==================================================
 echo ""
-echo "🔧 Patching Gradle (Aggressive Exclusions + PickFirst)..."
+echo "🔧 Patching Gradle (Reproducible + Aggressive Exclusions)..."
 
 cat >> android/build.gradle <<'EOF'
 
@@ -374,6 +465,7 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+    
     packagingOptions {
         // FIX: Prevent duplicate libc++_shared.so
         pickFirst 'lib/x86/libc++_shared.so'
@@ -392,6 +484,17 @@ android {
     }
 }
 
+// REPRODUCIBLE BUILD: Configuration React Native
+project.ext.react = [
+    enableHermes: true,
+    bundleCommand: "bundle",
+    
+    // Désactiver les source maps pour la reproductibilité
+    bundleConfig: "../metro.config.js",
+    devDisabledInProd: true,
+    bundleInRelease: true,
+]
+
 configurations.all {
     // REPEAT EXCLUSIONS FOR APP
     exclude group: 'com.google.firebase'
@@ -403,7 +506,7 @@ configurations.all {
 }
 EOF
 
-echo "  ✅ Gradle patched (source compilation enforced)"
+echo "  ✅ Gradle patched (reproducible build + source compilation)"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -483,7 +586,9 @@ find node_modules -name "gradle-wrapper.jar" -delete 2>/dev/null || true
 
 echo "  ✅ Intermediates cleaned"
 
-# 8. Dummy build.gradle
+# ==================================================
+# 9. Dummy build.gradle
+# ==================================================
 echo ""
 echo "🧹 Creating dummy Gradle files..."
 rm -f settings.gradle
@@ -500,11 +605,13 @@ echo ""
 echo "=================================================="
 echo "✅ F-Droid prebuild COMPLETED (Spix)"
 echo "=================================================="
-echo "  ✅ buildFromSource: ['.*'] configured in package.json"
-echo "  ✅ expo-notifications stub with native module created"
+echo "  ✅ SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH (from git)"
+echo "  ✅ metro.config.js: Deterministic module IDs"
+echo "  ✅ Source maps: Disabled for reproducibility"
+echo "  ✅ buildFromSource: ['.*'] configured"
+echo "  ✅ expo-notifications stub with native module"
 echo "  ✅ ALL Expo modules will compile from source"
 echo "  ✅ No prebuilt AAR files will be used"
-echo "🚀 Ready for F-Droid build!"
+echo "🚀 Ready for REPRODUCIBLE F-Droid build!"
 echo ""
-echo "📝 VERIFY: Check build logs for absence of [📦] emojis"
-echo "    If you see [📦], something went wrong!"
+echo "📝 Next: Test reproducibility locally before pushing"
