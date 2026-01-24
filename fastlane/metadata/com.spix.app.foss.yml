@@ -14,9 +14,9 @@ RepoType: git
 Repo: https://github.com/LuckyTheCookie/FitTrack.git
 
 Builds:
-  - versionName: 7.7.0
-    versionCode: 70700
-    commit: 905202d2c72b7aedf3f793c9ebe697fa6a98ebef
+  - versionName: 8.0.0
+    versionCode: 80000
+    commit: c01d87071b1ff66cab3dea3f2b857bf074cd624c
     sudo:
       - apt-get update
       - apt-get install -y npm
@@ -39,5 +39,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: app.json|"versionCode":\s*(\d+)|.|"version":\s*"([^"]+)"
-CurrentVersion: 7.7.0
-CurrentVersionCode: 70700
+CurrentVersion: 8.0.0
+CurrentVersionCode: 80000
