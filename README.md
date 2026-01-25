@@ -14,6 +14,12 @@
 
 ---
 
+## Screenshots 
+| ![Screenshot 1](fastlane/metadata/fr-FR/images/phoneScreenshots/1.jpg) | ![Screenshot 2](fastlane/metadata/fr-FR/images/phoneScreenshots/2.jpg) | ![Screenshot 3](fastlane/metadata/fr-FR/images/phoneScreenshots/3.jpg) | ![Screenshot 4](fastlane/metadata/fr-FR/images/phoneScreenshots/4.jpg) | ![Screenshot 5](fastlane/metadata/fr-FR/images/phoneScreenshots/5.jpg) |
+|---|---|---|---|---|
+
+---
+
 ## 🔒 Vie Privée & Philosophie "Clean App"
 
 **Parce que votre santé ne regarde que VOUS**, Spix a été pensée pour être totalement transparente :
