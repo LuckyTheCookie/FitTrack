@@ -7,6 +7,7 @@ set -e
 # Fix: Force ALL Expo modules to build from source
 # + REPRODUCIBLE BUILD optimizations
 # + 🔥 SPLIT APKs & MINIFICATION (R8/ProGuard)
+# + 🔥 FAKE TRANSPORT STUBS (Fix R8 Missing Class)
 # ==================================================
 
 echo "=================================================="
@@ -283,6 +284,127 @@ EOF
 echo "  ✅ Local stubs created in ./stubs/"
 
 # ==================================================
+# 🔥 CRITICAL FIX: Create Dummy Classes for MediaPipe/DataTransport
+# ==================================================
+echo ""
+echo "🚑 Creating Dummy Java Stubs for missing DataTransport classes..."
+# R8 refuse de compiler si ces classes manquent, même avec -dontwarn.
+# On crée donc des coquilles vides pour satisfaire le compilateur.
+
+STUB_DIR="android/app/src/main/java/com/google/android/datatransport"
+mkdir -p "$STUB_DIR/runtime"
+mkdir -p "$STUB_DIR/cct"
+
+# Stub: TransportFactory
+cat > "$STUB_DIR/TransportFactory.java" <<'EOF'
+package com.google.android.datatransport;
+public interface TransportFactory {
+    <T> Transport<T> getTransport(String name, Class<T> payloadType, Transformer<T, byte[]> payloadTransformer);
+    <T> Transport<T> getTransport(String name, Class<T> payloadType, Encoding encoding, Transformer<T, byte[]> payloadTransformer);
+}
+EOF
+
+# Stub: Transport
+cat > "$STUB_DIR/Transport.java" <<'EOF'
+package com.google.android.datatransport;
+public interface Transport<T> {
+    void send(Event<T> event);
+    void schedule(Event<T> event, TransportScheduleCallback callback);
+}
+EOF
+
+# Stub: Event
+cat > "$STUB_DIR/Event.java" <<'EOF'
+package com.google.android.datatransport;
+public abstract class Event<T> {
+    public static <T> Event<T> ofData(int code, T payload) { return null; }
+    public static <T> Event<T> ofTelemetry(int code, T payload) { return null; }
+    public static <T> Event<T> ofUrgent(int code, T payload) { return null; }
+    public abstract Integer getCode();
+    public abstract T getPayload();
+    public abstract Priority getPriority();
+}
+EOF
+
+# Stub: Transformer
+cat > "$STUB_DIR/Transformer.java" <<'EOF'
+package com.google.android.datatransport;
+public interface Transformer<T, U> {
+    U apply(T input);
+}
+EOF
+
+# Stub: Encoding
+cat > "$STUB_DIR/Encoding.java" <<'EOF'
+package com.google.android.datatransport;
+public final class Encoding {
+    public Encoding(String name) {}
+    public static Encoding of(String name) { return new Encoding(name); }
+}
+EOF
+
+# Stub: Priority (Enum)
+cat > "$STUB_DIR/Priority.java" <<'EOF'
+package com.google.android.datatransport;
+public enum Priority {
+    DEFAULT, VERY_LOW, HIGHEST
+}
+EOF
+
+# Stub: TransportScheduleCallback
+cat > "$STUB_DIR/TransportScheduleCallback.java" <<'EOF'
+package com.google.android.datatransport;
+public interface TransportScheduleCallback {
+    void onSchedule(Exception error);
+}
+EOF
+
+# Stub: TransportRuntime
+cat > "$STUB_DIR/runtime/TransportRuntime.java" <<'EOF'
+package com.google.android.datatransport.runtime;
+import com.google.android.datatransport.TransportFactory;
+import android.content.Context;
+
+public class TransportRuntime {
+    public static void initialize(Context context) {}
+    public static TransportRuntime getInstance() { return new TransportRuntime(); }
+    public TransportFactory newFactory(String backendName) { 
+        return new TransportFactory() {
+            @Override
+            public <T> com.google.android.datatransport.Transport<T> getTransport(String name, Class<T> payloadType, com.google.android.datatransport.Transformer<T, byte[]> payloadTransformer) { return null; }
+            @Override
+            public <T> com.google.android.datatransport.Transport<T> getTransport(String name, Class<T> payloadType, com.google.android.datatransport.Encoding encoding, com.google.android.datatransport.Transformer<T, byte[]> payloadTransformer) { return null; }
+        };
+    }
+}
+EOF
+
+# Stub: Destination
+cat > "$STUB_DIR/runtime/Destination.java" <<'EOF'
+package com.google.android.datatransport.runtime;
+public interface Destination {
+    String getName();
+    byte[] getExtras();
+}
+EOF
+
+# Stub: CCTDestination
+cat > "$STUB_DIR/cct/CCTDestination.java" <<'EOF'
+package com.google.android.datatransport.cct;
+import com.google.android.datatransport.Encoding;
+import com.google.android.datatransport.runtime.Destination;
+
+public final class CCTDestination implements Destination {
+    public static final CCTDestination INSTANCE = new CCTDestination();
+    public static final CCTDestination LEGACY_INSTANCE = new CCTDestination();
+    @Override public String getName() { return "cct"; }
+    @Override public byte[] getExtras() { return null; }
+}
+EOF
+
+echo "  ✅ Dummy Java stubs created. R8 should be happy now."
+
+# ==================================================
 # 📦 Patch package.json (CRITICAL FOR F-DROID)
 # ==================================================
 echo ""
@@ -445,7 +567,6 @@ allprojects {
         exclude group: 'com.google.firebase'
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
-        // ⚠️ NE PAS exclure com.google.mlkit car MediaPipe en dépend pour la détection de pose!
         exclude group: 'com.google.android.datatransport'
         exclude module: 'firebase-encoders-proto'
         exclude module: 'firebase-encoders'
@@ -476,11 +597,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // 🔥 CRITICAL: Ignore missing classes from excluded dependencies
-            // This is needed because we exclude datatransport but MediaPipe references it
-            configure {
-                androidResources.ignoreAssets.include('missing_rules.txt')
-            }
+            // 🔥 CRITICAL: Strip native debug symbols for size
             ndk {
                 debugSymbolLevel 'NONE'
             }
@@ -532,116 +649,36 @@ EOF
 if [ ! -f "android/app/proguard-rules.pro" ]; then
     echo "📝 Creating default proguard-rules.pro..."
     cat > android/app/proguard-rules.pro <<'EOF'
-# ============================================================================
-# SPIX F-DROID BUILD - ProGuard Rules
-# ============================================================================
-
-# React Native Core
+# React Native
 -keep class com.facebook.react.** { *; }
 -keep class com.facebook.jni.** { *; }
--keep class com.facebook.hermes.** { *; }
--keepclassmembers class com.facebook.react.bridge.** { *; }
 
-# Expo Modules
+# Expo
 -keep class expo.modules.** { *; }
 -keep class host.exp.exponent.** { *; }
 
-# React Native Vision Camera (CRITICAL)
+# Vision Camera & MediaPipe
 -keep class com.mrousavy.camera.** { *; }
--keepclassmembers class com.mrousavy.camera.** { *; }
--keep class * implements com.mrousavy.camera.frameprocessor.FrameProcessorPlugin { *; }
-
-# React Native Reanimated & Worklets
--keep class com.swmansion.reanimated.** { *; }
--keep class com.swmansion.worklets.** { *; }
-
-# MediaPipe (CRITICAL pour la détection de pose)
 -keep class com.google.mediapipe.** { *; }
--keepclassmembers class com.google.mediapipe.** { *; }
 -keep class com.mediapipe.tasks.** { *; }
--keep class org.tensorflow.lite.** { *; }
 
-# 🔥 CRITICAL: RemoteLoggingClient dépend de datatransport (exclu intentionnellement)
-# Il faut ignorer les classes manquantes pour que R8 ne crash pas
--dontwarn com.google.mediapipe.tasks.core.logging.RemoteLoggingClient
--dontwarn com.google.mediapipe.tasks.**
+# NOS STUBS (Important : ne pas obfusquer nos faux noms de classes)
+-keep class com.google.android.datatransport.** { *; }
 
-# ML Kit (nécessaire pour MediaPipe)
--keep class com.google.mlkit.** { *; }
--dontwarn com.google.mlkit.**
-
-# Native Libraries (JNI)
--keepclasseswithmembernames class * {
-    native <methods>;
-}
-
-# OkHttp & Networking
+# Safety
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn javax.annotation.**
-
-# General Safety
--keepattributes *Annotation*
--keepattributes SourceFile,LineNumberTable
--keepattributes Signature
--keepattributes Exceptions
--keep public class * extends java.lang.Exception
-
-# 🔥 F-DROID: Ignore ALL missing Google service classes (intentionally removed)
-# These are referenced by MediaPipe logging but not actually used in FOSS builds
--dontwarn com.google.android.datatransport.**
--dontwarn com.google.android.datatransport.runtime.**
--dontwarn com.google.android.datatransport.cct.**
 -dontwarn com.google.android.gms.**
 -dontwarn com.google.firebase.**
-
-# 🔥 Preserve enums (important for React Native)
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
 EOF
-    echo "  ✅ proguard-rules.pro created with vision-camera & MediaPipe protection"
+    echo "  ✅ proguard-rules.pro created"
 fi
 
-# 🔥 CREATE R8 MISSING CLASSES CONFIGURATION
-if [ ! -f "android/app/r8-foss.pro" ]; then
-    echo "📝 Creating r8-foss.pro for missing class handling..."
-    cat > android/app/r8-foss.pro <<'EOF'
-# R8 configuration for FOSS builds - Handle missing classes from excluded dependencies
-# These classes are referenced but not available due to exclusions (intentional for F-Droid)
-
-# Ignore ALL missing class errors from excluded Google libraries
--ignorewarnings
-
-# Be explicit about what can reference missing classes
--dontwarn com.google.android.datatransport.**
--dontwarn com.google.android.datatransport.runtime.**
--dontwarn com.google.android.datatransport.cct.**
--dontwarn com.google.android.datatransport.priority.**
--dontwarn com.google.android.datatransport.backend.**
-
-# Ignore warnings about missing Google Play Services
--dontwarn com.google.android.gms.**
--dontwarn com.google.firebase.**
-
-# MediaPipe may reference these but won't actually use them in FOSS
--dontwarn com.google.mediapipe.tasks.core.logging.**
-EOF
-    echo "  ✅ r8-foss.pro created for missing class handling"
-fi
-
-# Now add r8-foss.pro to the proguard files in build.gradle
-if [ -f "android/app/build.gradle" ]; then
-    if ! grep -q "r8-foss.pro" "android/app/build.gradle"; then
-        echo ""
-        echo "📝 Adding r8-foss.pro to build.gradle proguard files..."
-        sed -i "/proguardFiles getDefaultProguardFile.*proguard-rules.pro/s/'proguard-rules.pro'/'proguard-rules.pro', 'r8-foss.pro'/" "android/app/build.gradle"
-        echo "  ✅ r8-foss.pro added to build.gradle"
-    fi
-fi
-
-echo "  ✅ Gradle patched (Splits enabled + Minification enabled)"
+echo "  ✅ Gradle patched (Splits enabled + Minification enabled + Stubs)"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -748,4 +785,5 @@ echo "  ✅ expo-notifications stub with native module"
 echo "  ✅ ALL Expo modules will compile from source"
 echo "  ✅ SPLITS: 4 APKs will be generated (arm64, armv7, x86, x64)"
 echo "  ✅ MINIFICATION: R8/ProGuard enabled"
+echo "  ✅ DATA TRANSPORT: Faked with Java Stubs to fix R8 missing classes"
 echo "🚀 Ready !"
