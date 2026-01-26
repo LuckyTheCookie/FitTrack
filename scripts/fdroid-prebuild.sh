@@ -6,7 +6,6 @@ set -e
 # Flavor: FOSS (com.spix.app.foss)
 # Fix: Force ALL Expo modules to build from source
 # + REPRODUCIBLE BUILD optimizations
-# + Multiple ABIs + Minify without ProGuard/R8
 # ==================================================
 
 echo "=================================================="
@@ -433,10 +432,10 @@ fi
 rm -f "android/app/google-services.json"
 
 # ==================================================
-# 8. Patching Gradle (AGGRESSIVE MODE + REPRODUCIBLE + MULTI-ABI + MINIFY)
+# 8. Patching Gradle (AGGRESSIVE MODE + REPRODUCIBLE)
 # ==================================================
 echo ""
-echo "🔧 Patching Gradle (Reproducible + Multi-ABI + Minify without ProGuard/R8)..."
+echo "🔧 Patching Gradle (Reproducible + Aggressive Exclusions)..."
 
 cat >> android/build.gradle <<'EOF'
 
@@ -467,22 +466,8 @@ android {
         includeInBundle = false
     }
     
-    // ==================================================
-    // 🏗️ MULTIPLE ABIs CONFIGURATION (4 architectures)
-    // ==================================================
-    splits {
-        abi {
-            enable true
-            reset()
-            // Générer des APKs pour les 4 architectures principales
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-            // Générer aussi un APK universel (optionnel)
-            universalApk true
-        }
-    }
-    
-    
     packagingOptions {
+        // FIX: Prevent duplicate libc++_shared.so
         pickFirst 'lib/x86/libc++_shared.so'
         pickFirst 'lib/x86_64/libc++_shared.so'
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
@@ -503,10 +488,11 @@ android {
 project.ext.react = [
     enableHermes: true,
     bundleCommand: "bundle",
+    
+    // Désactiver les source maps pour la reproductibilité
     bundleConfig: "../metro.config.js",
     devDisabledInProd: true,
     bundleInRelease: true,
-    extraPackagerArgs: ["--minify"]
 ]
 
 configurations.all {
@@ -520,7 +506,7 @@ configurations.all {
 }
 EOF
 
-echo "  ✅ Gradle patched (reproducible build + multi-ABI + minify without ProGuard/R8)"
+echo "  ✅ Gradle patched (reproducible build + source compilation)"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -626,8 +612,6 @@ echo "  ✅ buildFromSource: ['.*'] configured"
 echo "  ✅ expo-notifications stub with native module"
 echo "  ✅ ALL Expo modules will compile from source"
 echo "  ✅ No prebuilt AAR files will be used"
-echo "  ✅ Multi-ABI: armeabi-v7a, arm64-v8a, x86, x86_64 + universal"
-echo "  ✅ Minification: Enabled via Metro (no ProGuard/R8)"
 echo "🚀 Ready for REPRODUCIBLE F-Droid build!"
 echo ""
 echo "📝 Next: Test reproducibility locally before pushing"
