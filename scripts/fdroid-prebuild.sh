@@ -544,6 +544,15 @@ if [ ! -f "android/app/proguard-rules.pro" ]; then
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable
 -keep public class * extends java.lang.Exception
+
+# 🔥 FIX F-DROID: Ignorer les classes Datatransport manquantes (supprimées volontairement)
+-dontwarn com.google.android.datatransport.**
+-dontwarn com.google.mediapipe.tasks.core.logging.**
+-dontwarn com.google.android.gms.**
+-dontwarn com.google.firebase.**
+
+# 🔥 FIX MediaPipe: Empêcher R8 de paniquer sur les classes manquantes
+-keep class com.google.mediapipe.tasks.core.logging.RemoteLoggingClient { *; }
 EOF
     echo "  ✅ proguard-rules.pro created"
 fi
