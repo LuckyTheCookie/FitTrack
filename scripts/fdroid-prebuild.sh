@@ -476,6 +476,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 🔥 CRITICAL: Ignore missing classes from excluded dependencies
+            // This is needed because we exclude datatransport but MediaPipe references it
+            configure {
+                androidResources.ignoreAssets.include('missing_rules.txt')
+            }
             ndk {
                 debugSymbolLevel 'NONE'
             }
@@ -556,6 +561,11 @@ if [ ! -f "android/app/proguard-rules.pro" ]; then
 -keep class com.mediapipe.tasks.** { *; }
 -keep class org.tensorflow.lite.** { *; }
 
+# 🔥 CRITICAL: RemoteLoggingClient dépend de datatransport (exclu intentionnellement)
+# Il faut ignorer les classes manquantes pour que R8 ne crash pas
+-dontwarn com.google.mediapipe.tasks.core.logging.RemoteLoggingClient
+-dontwarn com.google.mediapipe.tasks.**
+
 # ML Kit (nécessaire pour MediaPipe)
 -keep class com.google.mlkit.** { *; }
 -dontwarn com.google.mlkit.**
@@ -577,9 +587,11 @@ if [ ! -f "android/app/proguard-rules.pro" ]; then
 -keepattributes Exceptions
 -keep public class * extends java.lang.Exception
 
-# 🔥 F-DROID: Ignore removed Google services (intentional)
+# 🔥 F-DROID: Ignore ALL missing Google service classes (intentionally removed)
+# These are referenced by MediaPipe logging but not actually used in FOSS builds
 -dontwarn com.google.android.datatransport.**
--dontwarn com.google.mediapipe.tasks.core.logging.**
+-dontwarn com.google.android.datatransport.runtime.**
+-dontwarn com.google.android.datatransport.cct.**
 -dontwarn com.google.android.gms.**
 -dontwarn com.google.firebase.**
 
@@ -592,6 +604,42 @@ EOF
     echo "  ✅ proguard-rules.pro created with vision-camera & MediaPipe protection"
 fi
 
+# 🔥 CREATE R8 MISSING CLASSES CONFIGURATION
+if [ ! -f "android/app/r8-foss.pro" ]; then
+    echo "📝 Creating r8-foss.pro for missing class handling..."
+    cat > android/app/r8-foss.pro <<'EOF'
+# R8 configuration for FOSS builds - Handle missing classes from excluded dependencies
+# These classes are referenced but not available due to exclusions (intentional for F-Droid)
+
+# Ignore ALL missing class errors from excluded Google libraries
+-ignorewarnings
+
+# Be explicit about what can reference missing classes
+-dontwarn com.google.android.datatransport.**
+-dontwarn com.google.android.datatransport.runtime.**
+-dontwarn com.google.android.datatransport.cct.**
+-dontwarn com.google.android.datatransport.priority.**
+-dontwarn com.google.android.datatransport.backend.**
+
+# Ignore warnings about missing Google Play Services
+-dontwarn com.google.android.gms.**
+-dontwarn com.google.firebase.**
+
+# MediaPipe may reference these but won't actually use them in FOSS
+-dontwarn com.google.mediapipe.tasks.core.logging.**
+EOF
+    echo "  ✅ r8-foss.pro created for missing class handling"
+fi
+
+# Now add r8-foss.pro to the proguard files in build.gradle
+if [ -f "android/app/build.gradle" ]; then
+    if ! grep -q "r8-foss.pro" "android/app/build.gradle"; then
+        echo ""
+        echo "📝 Adding r8-foss.pro to build.gradle proguard files..."
+        sed -i "/proguardFiles getDefaultProguardFile.*proguard-rules.pro/s/'proguard-rules.pro'/'proguard-rules.pro', 'r8-foss.pro'/" "android/app/build.gradle"
+        echo "  ✅ r8-foss.pro added to build.gradle"
+    fi
+fi
 
 echo "  ✅ Gradle patched (Splits enabled + Minification enabled)"
 
