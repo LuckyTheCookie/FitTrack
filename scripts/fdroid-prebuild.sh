@@ -6,6 +6,7 @@ set -e
 # Flavor: FOSS (com.spix.app.foss)
 # Fix: Force ALL Expo modules to build from source
 # + REPRODUCIBLE BUILD optimizations
+# + 🔥 SPLIT APKs & MINIFICATION (R8/ProGuard)
 # ==================================================
 
 echo "=================================================="
@@ -112,11 +113,11 @@ config.transformer = {
   ...config.transformer,
   enableBabelRCLookup: false,
   minifierConfig: {
-    keep_classnames: true,
-    keep_fnames: true,
+    keep_classnames: false,
+    keep_fnames: false,
     mangle: {
-      keep_classnames: true,
-      keep_fnames: true,
+      keep_classnames: false,
+      keep_fnames: false,
     },
   },
 };
@@ -432,22 +433,19 @@ fi
 rm -f "android/app/google-services.json"
 
 # ==================================================
-# 8. Patching Gradle (AGGRESSIVE MODE + REPRODUCIBLE)
+# 8. Patching Gradle (AGGRESSIVE MODE + REPRODUCIBLE + SPLITS)
 # ==================================================
 echo ""
-echo "🔧 Patching Gradle (Reproducible + Aggressive Exclusions)..."
+echo "🔧 Patching Gradle (Reproducible + Aggressive Exclusions + Splits)..."
 
+# Configuration globale
 cat >> android/build.gradle <<'EOF'
-
 allprojects {
     configurations.all {
-        // GLOBAL BLOCKLIST
         exclude group: 'com.google.firebase'
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
         exclude group: 'com.google.mlkit'
-        
-        // AGGRESSIVE: Remove Transport & Encoders
         exclude group: 'com.google.android.datatransport'
         exclude module: 'firebase-encoders-proto'
         exclude module: 'firebase-encoders'
@@ -458,16 +456,38 @@ allprojects {
 }
 EOF
 
+# Configuration de l'application (MODIFIÉE POUR SPLITS & MINIFICATION)
 cat >> android/app/build.gradle <<'EOF'
 
 android {
+    // 🔥 SPLIT APKS: Generate one APK per architecture
+    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            universalApk false
+        }
+    }
+
+    // 🔥 MINIFICATION: Enable ProGuard/R8
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            ndk {
+                debugSymbolLevel 'NONE'
+            }
+        }
+    }
+
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
     }
     
     packagingOptions {
-        // FIX: Prevent duplicate libc++_shared.so
         pickFirst 'lib/x86/libc++_shared.so'
         pickFirst 'lib/x86_64/libc++_shared.so'
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
@@ -488,15 +508,12 @@ android {
 project.ext.react = [
     enableHermes: true,
     bundleCommand: "bundle",
-    
-    // Désactiver les source maps pour la reproductibilité
     bundleConfig: "../metro.config.js",
     devDisabledInProd: true,
     bundleInRelease: true,
 ]
 
 configurations.all {
-    // REPEAT EXCLUSIONS FOR APP
     exclude group: 'com.google.firebase'
     exclude group: 'com.google.android.gms'
     exclude group: 'com.android.installreferrer'
@@ -506,7 +523,32 @@ configurations.all {
 }
 EOF
 
-echo "  ✅ Gradle patched (reproducible build + source compilation)"
+# 🔥 CREATE DEFAULT PROGUARD RULES if missing
+if [ ! -f "android/app/proguard-rules.pro" ]; then
+    echo "📝 Creating default proguard-rules.pro..."
+    cat > android/app/proguard-rules.pro <<'EOF'
+# React Native
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.jni.** { *; }
+
+# Expo
+-keep class expo.modules.** { *; }
+-keep class host.exp.exponent.** { *; }
+
+# OkHttp
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn javax.annotation.**
+
+# General safety
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
+EOF
+    echo "  ✅ proguard-rules.pro created"
+fi
+
+echo "  ✅ Gradle patched (Splits enabled + Minification enabled)"
 
 # ==================================================
 # 🔧 FIX: MediaPipe
@@ -611,7 +653,6 @@ echo "  ✅ Source maps: Disabled for reproducibility"
 echo "  ✅ buildFromSource: ['.*'] configured"
 echo "  ✅ expo-notifications stub with native module"
 echo "  ✅ ALL Expo modules will compile from source"
-echo "  ✅ No prebuilt AAR files will be used"
-echo "🚀 Ready for REPRODUCIBLE F-Droid build!"
-echo ""
-echo "📝 Next: Test reproducibility locally before pushing"
+echo "  ✅ SPLITS: 4 APKs will be generated (arm64, armv7, x86, x64)"
+echo "  ✅ MINIFICATION: R8/ProGuard enabled"
+echo "🚀 Ready !"
