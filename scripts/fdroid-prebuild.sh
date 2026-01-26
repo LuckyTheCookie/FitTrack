@@ -445,7 +445,7 @@ allprojects {
         exclude group: 'com.google.firebase'
         exclude group: 'com.google.android.gms'
         exclude group: 'com.android.installreferrer'
-        exclude group: 'com.google.mlkit'
+        // ⚠️ NE PAS exclure com.google.mlkit car MediaPipe en dépend pour la détection de pose!
         exclude group: 'com.google.android.datatransport'
         exclude module: 'firebase-encoders-proto'
         exclude module: 'firebase-encoders'
@@ -527,35 +527,71 @@ EOF
 if [ ! -f "android/app/proguard-rules.pro" ]; then
     echo "📝 Creating default proguard-rules.pro..."
     cat > android/app/proguard-rules.pro <<'EOF'
-# React Native
+# ============================================================================
+# SPIX F-DROID BUILD - ProGuard Rules
+# ============================================================================
+
+# React Native Core
 -keep class com.facebook.react.** { *; }
 -keep class com.facebook.jni.** { *; }
+-keep class com.facebook.hermes.** { *; }
+-keepclassmembers class com.facebook.react.bridge.** { *; }
 
-# Expo
+# Expo Modules
 -keep class expo.modules.** { *; }
 -keep class host.exp.exponent.** { *; }
 
-# OkHttp
+# React Native Vision Camera (CRITICAL)
+-keep class com.mrousavy.camera.** { *; }
+-keepclassmembers class com.mrousavy.camera.** { *; }
+-keep class * implements com.mrousavy.camera.frameprocessor.FrameProcessorPlugin { *; }
+
+# React Native Reanimated & Worklets
+-keep class com.swmansion.reanimated.** { *; }
+-keep class com.swmansion.worklets.** { *; }
+
+# MediaPipe (CRITICAL pour la détection de pose)
+-keep class com.google.mediapipe.** { *; }
+-keepclassmembers class com.google.mediapipe.** { *; }
+-keep class com.mediapipe.tasks.** { *; }
+-keep class org.tensorflow.lite.** { *; }
+
+# ML Kit (nécessaire pour MediaPipe)
+-keep class com.google.mlkit.** { *; }
+-dontwarn com.google.mlkit.**
+
+# Native Libraries (JNI)
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# OkHttp & Networking
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn javax.annotation.**
 
-# General safety
+# General Safety
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable
+-keepattributes Signature
+-keepattributes Exceptions
 -keep public class * extends java.lang.Exception
 
-# 🔥 FIX F-DROID: Ignorer les classes Datatransport manquantes (supprimées volontairement)
+# 🔥 F-DROID: Ignore removed Google services (intentional)
 -dontwarn com.google.android.datatransport.**
 -dontwarn com.google.mediapipe.tasks.core.logging.**
 -dontwarn com.google.android.gms.**
 -dontwarn com.google.firebase.**
 
-# 🔥 FIX MediaPipe: Empêcher R8 de paniquer sur les classes manquantes
--keep class com.google.mediapipe.tasks.core.logging.RemoteLoggingClient { *; }
+# 🔥 Preserve enums (important for React Native)
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 EOF
-    echo "  ✅ proguard-rules.pro created"
+    echo "  ✅ proguard-rules.pro created with vision-camera & MediaPipe protection"
 fi
+
 
 echo "  ✅ Gradle patched (Splits enabled + Minification enabled)"
 
