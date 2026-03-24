@@ -42,6 +42,7 @@ import {
     type ArchiveResult 
 } from '../utils/archive';
 import { validateBackup, type ValidationResult } from '../utils/validation';
+import { DEFAULT_SAFETY_AUTO_ALERT_DELAY_SECONDS, DEFAULT_SAFETY_INTERVAL_MINUTES } from '../constants/safety';
 
 // ============================================================================
 // TYPES DU STORE
@@ -124,8 +125,8 @@ const defaultSettings: UserSettings = {
     aiTone: 'neutral',
     safety: {
         contacts: [],
-        defaultIntervalMinutes: 30,
-        defaultAutoAlertDelaySeconds: 60,
+        defaultIntervalMinutes: DEFAULT_SAFETY_INTERVAL_MINUTES,
+        defaultAutoAlertDelaySeconds: DEFAULT_SAFETY_AUTO_ALERT_DELAY_SECONDS,
     },
 };
 

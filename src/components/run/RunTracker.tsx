@@ -59,6 +59,8 @@ import i18n from '../../i18n';
 import { SafetyCheckConfig } from './SafetyCheckConfig';
 import { sendSafetyAlert, sendAllClearSafetyAlert, type AlertPayload } from '../../services/safetyAlert';
 import { CustomAlertModal } from '../ui/CustomAlertModal';
+import type { SafetyContact } from '../../types';
+import { getDefaultSafetySettings } from '../../utils/safety';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const MapLibreRN = getMapLibreModule();
@@ -323,18 +325,21 @@ const SlideAction = ({
   const thumbSize = 44;
   const maxX = Math.max(0, trackWidth - thumbSize - 6);
 
+  const disabledRef = useRef(disabled);
+  const maxXRef = useRef(maxX);
+  const onCompleteRef = useRef(onComplete);
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: () => !disabled,
+      onMoveShouldSetPanResponder: () => !disabledRef.current,
       onPanResponderMove: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
-        const nextX = Math.max(0, Math.min(maxX, gesture.dx));
+        const nextX = Math.max(0, Math.min(maxXRef.current, gesture.dx));
         setThumbX(nextX);
       },
       onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
-        const nextX = Math.max(0, Math.min(maxX, gesture.dx));
-        if (maxX > 0 && nextX >= maxX * thresholdRatio) {
-          setThumbX(maxX);
-          onComplete();
+        const nextX = Math.max(0, Math.min(maxXRef.current, gesture.dx));
+        if (maxXRef.current > 0 && nextX >= maxXRef.current * thresholdRatio) {
+          setThumbX(maxXRef.current);
+          onCompleteRef.current();
           setTimeout(() => setThumbX(0), 160);
         } else {
           setThumbX(0);
@@ -343,6 +348,12 @@ const SlideAction = ({
       onPanResponderTerminate: () => setThumbX(0),
     })
   ).current;
+
+  useEffect(() => {
+    disabledRef.current = disabled;
+    maxXRef.current = maxX;
+    onCompleteRef.current = onComplete;
+  }, [disabled, maxX, onComplete]);
 
   return (
     <View
@@ -435,7 +446,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
     type: 'success' | 'warning' | 'error' | 'info';
     title: string;
     message: string;
-    retryContacts?: import('../../types').SafetyContact[];
+    retryContacts?: SafetyContact[];
   }>({ visible: false, type: 'info', title: '', message: '' });
   const sendingRef = useRef(false);
 
@@ -628,7 +639,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
     state.setAvgPaceSecPerKm(avgPace);
   }, []);
 
-  const runAlertSend = useCallback(async (type: 'no_response' | 'help_requested', contactsOverride?: import('../../types').SafetyContact[]) => {
+  const sendAlert = useCallback(async (type: 'no_response' | 'help_requested', contactsOverride?: SafetyContact[]) => {
     const currentSafety = useSafetyStore.getState();
     if (!currentSafety.lastKnownPosition) return;
     const contacts = contactsOverride ?? currentSafety.contacts;
@@ -678,9 +689,9 @@ export function RunTracker({ mode }: RunTrackerProps) {
   useEffect(() => {
     if (!safety.isEnabled) return;
     if (safety.checkStatus === 'auto_alerting' && safety.alertSentAt === null) {
-      runAlertSend('no_response');
+      sendAlert('no_response');
     }
-  }, [runAlertSend, safety.alertSentAt, safety.checkStatus, safety.isEnabled]);
+  }, [sendAlert, safety.alertSentAt, safety.checkStatus, safety.isEnabled]);
 
   // Start GPS tracking
   const handleStart = useCallback(async () => {
@@ -773,11 +784,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
 
   // Derived metrics
   const runSettings = (settings as any).runSettings;
-  const safetyDefaults = settings.safety ?? {
-    contacts: [],
-    defaultIntervalMinutes: 30,
-    defaultAutoAlertDelaySeconds: 60,
-  };
+  const safetyDefaults = settings.safety ?? getDefaultSafetySettings();
 
   useEffect(() => {
     useSafetyStore.getState().setContacts(safetyDefaults.contacts);
@@ -966,10 +973,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
         <TouchableOpacity
           style={styles.safetyCountdownBanner}
           activeOpacity={0.85}
-          onPress={() => useSafetyStore.setState({
-            checkStatus: 'pending',
-            pendingSeconds: safety.autoAlertDelaySeconds,
-          })}
+          onPress={() => useSafetyStore.getState().startPendingCheck()}
         >
           <Shield size={16} color={C.green} />
           <Text style={styles.safetyCountdownText}>
@@ -1134,13 +1138,31 @@ export function RunTracker({ mode }: RunTrackerProps) {
                 const sentBefore = useSafetyStore.getState().alertSentAt !== null;
                 useSafetyStore.getState().dismissCheck();
                 if (sentBefore) {
-                  await sendAllClearSafetyAlert(useSafetyStore.getState().contacts);
-                  setAlertFeedback({
-                    visible: true,
-                    type: 'success',
-                    title: t('safety.overlay.allClear'),
-                    message: t('safety.overlay.allClear'),
-                  });
+                  const allClearResult = await sendAllClearSafetyAlert(useSafetyStore.getState().contacts);
+                  if (allClearResult.failed.length === 0) {
+                    setAlertFeedback({
+                      visible: true,
+                      type: 'success',
+                      title: t('safety.overlay.allClear'),
+                      message: t('safety.overlay.allClear'),
+                    });
+                  } else if (allClearResult.success.length > 0) {
+                    setAlertFeedback({
+                      visible: true,
+                      type: 'warning',
+                      title: t('safety.alert.sendPartialFailure'),
+                      message: `${t('safety.overlay.allClear')}\n${allClearResult.failed.map((c) => `• ${c.name}`).join('\n')}`,
+                      retryContacts: allClearResult.failed,
+                    });
+                  } else {
+                    setAlertFeedback({
+                      visible: true,
+                      type: 'error',
+                      title: t('safety.alert.sendFailure'),
+                      message: allClearResult.failed.map((c) => `• ${c.name}`).join('\n'),
+                      retryContacts: allClearResult.failed,
+                    });
+                  }
                 }
               }}
             />
@@ -1150,7 +1172,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
               icon={<Siren size={16} color={C.orange} />}
               onComplete={async () => {
                 useSafetyStore.getState().triggerHelp();
-                await runAlertSend('help_requested');
+                await sendAlert('help_requested');
               }}
             />
             <SlideAction
@@ -1228,7 +1250,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
           ...(alertFeedback.retryContacts && alertFeedback.retryContacts.length > 0
             ? [{
               text: t('safety.alert.retry'),
-              onPress: () => runAlertSend('help_requested', alertFeedback.retryContacts),
+              onPress: () => sendAlert('help_requested', alertFeedback.retryContacts),
             }]
             : []),
           {

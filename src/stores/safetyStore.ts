@@ -21,6 +21,7 @@ interface SafetyCheckState {
   tickPending: () => void;
   dismissCheck: () => void;
   triggerHelp: () => void;
+  startPendingCheck: () => void;
   extendCheck: (newIntervalMinutes: number) => void;
   resetCheck: () => void;
   updatePosition: (pos: LatLng) => void;
@@ -85,7 +86,7 @@ export const useSafetyStore = create<SafetyCheckState>((set, get) => ({
     }
 
     set({
-      checkStatus: 'dismissed',
+      checkStatus: 'idle',
       countdownSeconds: remainingSeconds,
     });
   },
@@ -123,6 +124,16 @@ export const useSafetyStore = create<SafetyCheckState>((set, get) => ({
     if (!get().isEnabled) return;
     set({
       checkStatus: 'auto_alerting',
+    });
+  },
+
+  startPendingCheck: () => {
+    const state = get();
+    if (!state.isEnabled) return;
+    set({
+      checkStatus: 'pending',
+      pendingSeconds: state.autoAlertDelaySeconds,
+      countdownSeconds: 0,
     });
   },
 
@@ -174,4 +185,3 @@ export const useSafetyStore = create<SafetyCheckState>((set, get) => ({
     });
   },
 }));
-

@@ -20,30 +20,20 @@ import { GlassCard, CustomAlertModal } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores';
 import type { SafetyContact } from '../../src/types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
+import {
+  PHONE_NUMBER_REGEX,
+  WHATSAPP_CAPABILITY_TEST_URL,
+  SAFETY_INTERVAL_OPTIONS,
+  SAFETY_AUTO_ALERT_OPTIONS,
+} from '../../src/constants/safety';
+import { formatSafetyDelay, formatSafetyInterval, getDefaultSafetySettings } from '../../src/utils/safety';
 
-const INTERVAL_OPTIONS = [15, 30, 45, 60, 90, 120];
-const AUTO_ALERT_OPTIONS = [30, 60, 120, 300];
 const MAX_CONTACTS = 5;
-
-function formatInterval(minutes: number, t: (key: string) => string): string {
-  if (minutes < 60) return `${minutes} ${t('common.minShort')}`;
-  if (minutes % 60 === 0) return `${minutes / 60}${t('common.hour')}`;
-  return `${Math.floor(minutes / 60)}h${minutes % 60}`;
-}
-
-function formatAutoAlert(seconds: number, t: (key: string) => string): string {
-  if (seconds < 60) return `${seconds}s`;
-  return `${Math.round(seconds / 60)} ${t('common.minShort')}`;
-}
 
 export default function SafetySettingsScreen() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useAppStore();
-  const safetySettings = settings.safety ?? {
-    contacts: [],
-    defaultIntervalMinutes: 30,
-    defaultAutoAlertDelaySeconds: 60,
-  };
+  const safetySettings = settings.safety ?? getDefaultSafetySettings();
   const contacts = safetySettings.contacts;
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -55,13 +45,13 @@ export default function SafetySettingsScreen() {
 
   useEffect(() => {
     const checkWhatsApp = async () => {
-      const canOpen = await Linking.canOpenURL('whatsapp://send?phone=+10000000000&text=ping');
+      const canOpen = await Linking.canOpenURL(WHATSAPP_CAPABILITY_TEST_URL);
       setWhatsAppAvailable(canOpen);
     };
     checkWhatsApp();
   }, []);
 
-  const canAdd = useMemo(() => name.trim().length > 0 && /^\+[0-9]{7,16}$/.test(phone), [name, phone]);
+  const canAdd = useMemo(() => name.trim().length > 0 && PHONE_NUMBER_REGEX.test(phone), [name, phone]);
 
   const updateSafetySettings = (partial: Partial<typeof safetySettings>) => {
     updateSettings({
@@ -153,7 +143,7 @@ export default function SafetySettingsScreen() {
           <GlassCard style={styles.card}>
             <Text style={styles.cardTitle}>{t('settings.safety.defaultInterval')}</Text>
             <View style={styles.chipsWrap}>
-              {INTERVAL_OPTIONS.map((interval) => (
+              {SAFETY_INTERVAL_OPTIONS.map((interval) => (
                 <TouchableOpacity
                   key={interval}
                   style={[
@@ -168,7 +158,7 @@ export default function SafetySettingsScreen() {
                       safetySettings.defaultIntervalMinutes === interval && styles.chipTextActive,
                     ]}
                   >
-                    {formatInterval(interval, t)}
+                    {formatSafetyInterval(interval, t('common.minShort'), t('common.hour'))}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -180,7 +170,7 @@ export default function SafetySettingsScreen() {
           <GlassCard style={styles.card}>
             <Text style={styles.cardTitle}>{t('settings.safety.defaultAutoAlert')}</Text>
             <View style={styles.chipsWrap}>
-              {AUTO_ALERT_OPTIONS.map((delaySeconds) => (
+              {SAFETY_AUTO_ALERT_OPTIONS.map((delaySeconds) => (
                 <TouchableOpacity
                   key={delaySeconds}
                   style={[
@@ -195,7 +185,7 @@ export default function SafetySettingsScreen() {
                       safetySettings.defaultAutoAlertDelaySeconds === delaySeconds && styles.chipTextActive,
                     ]}
                   >
-                    {formatAutoAlert(delaySeconds, t)}
+                    {formatSafetyDelay(delaySeconds, t('common.minShort'))}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -396,4 +386,3 @@ const styles = StyleSheet.create({
   primaryActionDisabled: { opacity: 0.45 },
   primaryActionText: { color: Colors.bg, fontSize: FontSize.md, fontWeight: FontWeight.bold },
 });
-

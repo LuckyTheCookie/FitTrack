@@ -4,6 +4,7 @@ import i18n from '../i18n';
 import type { SafetyContact } from '../types';
 import type { LatLng } from '../stores/runStore';
 import { serviceLogger } from '../utils/logger';
+import { WHATSAPP_CAPABILITY_TEST_URL } from '../constants/safety';
 
 export interface AlertPayload {
   type: 'no_response' | 'help_requested';
@@ -16,9 +17,9 @@ export interface AlertPayload {
 const DEFAULT_APP_NAME = 'Spix';
 const DEFAULT_USER_NAME = 'Utilisateur';
 
-function buildMessage(payload: AlertPayload, userName?: string, appName?: string): string {
-  const resolvedUserName = userName?.trim() || DEFAULT_USER_NAME;
-  const resolvedAppName = appName?.trim() || DEFAULT_APP_NAME;
+function buildMessage(payload: AlertPayload): string {
+  const resolvedUserName = DEFAULT_USER_NAME;
+  const resolvedAppName = DEFAULT_APP_NAME;
   const mapsUrl = `https://maps.google.com/?q=${payload.position.latitude},${payload.position.longitude}`;
   const formattedTimestamp = payload.timestamp.toLocaleString();
 
@@ -72,6 +73,8 @@ async function sendSms(phone: string, message: string): Promise<boolean> {
 }
 
 async function sendWhatsApp(phone: string, message: string): Promise<boolean> {
+  const canUseWhatsApp = await Linking.canOpenURL(WHATSAPP_CAPABILITY_TEST_URL);
+  if (!canUseWhatsApp) return false;
   const waUrl = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
   const canOpen = await Linking.canOpenURL(waUrl);
   if (!canOpen) return false;
@@ -132,4 +135,3 @@ export async function sendAllClearSafetyAlert(
 
   return { success, failed };
 }
-

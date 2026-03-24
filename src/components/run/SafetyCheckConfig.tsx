@@ -5,6 +5,8 @@ import { Shield, MessageCircleMore, MessageSquareText, Settings } from 'lucide-r
 import { Colors, BorderRadius, FontSize, FontWeight, Spacing } from '../../constants';
 import { GlassCard } from '../ui';
 import type { SafetyContact } from '../../types';
+import { SAFETY_AUTO_ALERT_OPTIONS, SAFETY_INTERVAL_OPTIONS } from '../../constants/safety';
+import { formatSafetyDelay, formatSafetyInterval } from '../../utils/safety';
 
 interface SafetyCheckConfigProps {
   visible: boolean;
@@ -17,19 +19,8 @@ interface SafetyCheckConfigProps {
   onActivate: (config: { intervalMinutes: number; autoAlertDelaySeconds: number; enabled: boolean }) => void;
 }
 
-const INTERVAL_OPTIONS = [15, 30, 45, 60, 90, 120];
-const AUTO_ALERT_OPTIONS = [30, 60, 120, 300];
-
-function formatInterval(minutes: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
-  if (minutes < 60) return `${minutes} ${t('common.minShort')}`;
-  if (minutes % 60 === 0) return `${minutes / 60}${t('common.hour')}`;
-  return `${Math.floor(minutes / 60)}h${minutes % 60}`;
-}
-
-function formatDelay(seconds: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
-  if (seconds < 60) return `${seconds}s`;
-  return `${Math.round(seconds / 60)} ${t('common.minShort')}`;
-}
+const MAX_INTERVAL_MINUTES = 240;
+const CUSTOM_INTERVAL_PLACEHOLDER = '90';
 
 export function SafetyCheckConfig({
   visible,
@@ -84,14 +75,14 @@ export function SafetyCheckConfig({
 
             <Text style={styles.sectionTitle}>{t('safety.config.intervalLabel')}</Text>
             <View style={styles.chipsWrap}>
-              {INTERVAL_OPTIONS.map((value) => (
+              {SAFETY_INTERVAL_OPTIONS.map((value) => (
                 <TouchableOpacity
                   key={value}
                   style={[styles.chip, intervalMinutes === value && styles.chipActive]}
                   onPress={() => setIntervalMinutes(value)}
                 >
                   <Text style={[styles.chipText, intervalMinutes === value && styles.chipTextActive]}>
-                    {formatInterval(value, t)}
+                    {formatSafetyInterval(value, t('common.minShort'), t('common.hour'))}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -101,9 +92,11 @@ export function SafetyCheckConfig({
               onChangeText={(text) => {
                 setCustomInterval(text);
                 const parsed = Number.parseInt(text, 10);
-                if (!Number.isNaN(parsed) && parsed > 0) setIntervalMinutes(parsed);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                  setIntervalMinutes(Math.min(parsed, MAX_INTERVAL_MINUTES));
+                }
               }}
-              placeholder="90"
+              placeholder={CUSTOM_INTERVAL_PLACEHOLDER}
               placeholderTextColor={Colors.muted}
               keyboardType="number-pad"
               style={styles.customInput}
@@ -111,14 +104,14 @@ export function SafetyCheckConfig({
 
             <Text style={styles.sectionTitle}>{t('safety.config.autoAlertLabel')}</Text>
             <View style={styles.chipsWrap}>
-              {AUTO_ALERT_OPTIONS.map((value) => (
+              {SAFETY_AUTO_ALERT_OPTIONS.map((value) => (
                 <TouchableOpacity
                   key={value}
                   style={[styles.chip, autoAlertDelaySeconds === value && styles.chipActive]}
                   onPress={() => setAutoAlertDelaySeconds(value)}
                 >
                   <Text style={[styles.chipText, autoAlertDelaySeconds === value && styles.chipTextActive]}>
-                    {formatDelay(value, t)}
+                    {formatSafetyDelay(value, t('common.minShort'))}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -341,4 +334,3 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
 });
-
