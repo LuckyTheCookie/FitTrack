@@ -20,6 +20,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="appearance" />
       <Stack.Screen name="language" />
+      <Stack.Screen name="safety" />
       <Stack.Screen name="social" />
       <Stack.Screen name="data" />
       <Stack.Screen name="labs" />

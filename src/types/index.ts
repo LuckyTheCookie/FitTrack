@@ -193,6 +193,19 @@ export type WeightReminderFrequency = 'daily' | 'weekly' | 'monthly';
 export type FitnessGoal = 'loseWeight' | 'buildMuscle' | 'improveCardio' | 'stayHealthy';
 export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
 
+export interface SafetyContact {
+  id: string;
+  name: string;
+  phone: string; // International format (e.g. +33612345678)
+  method: 'sms' | 'whatsapp';
+}
+
+export interface SafetySettings {
+  contacts: SafetyContact[];
+  defaultIntervalMinutes: number;
+  defaultAutoAlertDelaySeconds: number;
+}
+
 export interface UserSettings {
   weeklyGoal: number; // Nombre de séances sport par semaine (défaut: 4)
   units: {
@@ -267,6 +280,8 @@ export interface UserSettings {
 
   // Debug/tracking display
   debugTracking?: boolean; // Show tracking points overlay
+  // Safety check defaults and contacts
+  safety?: SafetySettings;
 }
 
 // ============================================================================

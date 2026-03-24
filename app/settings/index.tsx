@@ -33,6 +33,7 @@ import {
   Dumbbell,
   Heart,
   Bot,
+  ShieldAlert,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
 import { useAppStore, useSocialStore } from '../../src/stores';
@@ -287,6 +288,19 @@ export default function SettingsMainScreen() {
             title={t('settings.healthConnect')}
             subtitle={t('settings.healthConnectDesc')}
             onPress={() => router.push('/health-connect')}
+            delay={250}
+          />
+        </GlassCard>
+
+        {/* SAFETY */}
+        <SectionTitle title={t('settings.safety.title')} delay={245} />
+        <GlassCard style={styles.categoryCard}>
+          <CategoryButton
+            icon={<ShieldAlert size={22} color="#4ade80" />}
+            iconColor="#4ade80"
+            title={t('settings.safety.title')}
+            subtitle={t('settings.safety.contacts')}
+            onPress={() => router.push('/settings/safety')}
             delay={250}
           />
         </GlassCard>

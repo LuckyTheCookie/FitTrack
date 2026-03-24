@@ -630,6 +630,39 @@
     "manualMode": "Manual mode",
     "autoDetection": "Auto detection"
   },
+  "safety": {
+    "config": {
+      "title": "Situation check",
+      "description": "You'll receive periodic checks. If you don't respond, your safety contacts are alerted automatically.",
+      "intervalLabel": "Check me every...",
+      "autoAlertLabel": "Alert if no response after...",
+      "activate": "Enable for this run",
+      "noContacts": "No safety contacts configured. Add them in settings.",
+      "goToSettings": "Configure"
+    },
+    "overlay": {
+      "title": "Situation check 🛡️",
+      "subtitle": "Are you safe?",
+      "countdown": "{{seconds}} seconds",
+      "imOk": "I'm okay",
+      "needHelp": "Need help",
+      "call112": "Call 112",
+      "addTime": "Add time ⏱️",
+      "addTimeOptions": "Choose extra time before next check.",
+      "sending": "Sending in progress...",
+      "alertSent": "⚠️ Alert sent — {{count}} contacts notified",
+      "allClear": "✅ All clear sent to your contacts."
+    },
+    "alert": {
+      "message": "🆘 {{userName}} needs help!\n📍 Position: {{mapsUrl}}\n🏃 Running for {{runDurationMinutes}} min — {{distanceKm}} km covered\n⏰ {{timestamp}}\nSent automatically by {{appName}}.",
+      "messageNoResponse": "⚠️ {{userName}} did not respond to the situation check.\n📍 Position: {{mapsUrl}}\n🏃 Running for {{runDurationMinutes}} min — {{distanceKm}} km covered\n⏰ {{timestamp}}\nSent automatically by {{appName}}.",
+      "messageAllClear": "✅ {{userName}} is safe now. Previous alert was a false alarm.\nSent automatically by {{appName}}.",
+      "sendSuccess": "Alert sent",
+      "sendPartialFailure": "Partial delivery failure",
+      "sendFailure": "Unable to alert contacts",
+      "retry": "Retry"
+    }
+  },
   "settings": {
     "title": "Settings",
     "profile": "Profile",
@@ -752,6 +785,21 @@
     "sportsManagement": "Sports Management",
     "manageSports": "Manage My Sports",
     "manageSportsDesc": "Add, hide or customize",
+    "safety": {
+      "title": "Safety",
+      "contacts": "Safety contacts",
+      "addContact": "Add contact",
+      "editContact": "Contact name",
+      "deleteContact": "Delete contact",
+      "deleteConfirm": "Delete {{name}} from your safety contacts?",
+      "maxContacts": "Maximum 5 safety contacts.",
+      "defaultInterval": "Default check interval",
+      "defaultAutoAlert": "Default automatic alert delay",
+      "disclaimer": "This feature is an assistance tool. In a real emergency, call 112. Message delivery cannot be guaranteed.",
+      "methodSMS": "SMS",
+      "methodWhatsApp": "WhatsApp",
+      "whatsappUnavailable": "WhatsApp is unavailable on this device."
+    },
     "sports": {
       "default": "Default",
       "custom": "Custom",

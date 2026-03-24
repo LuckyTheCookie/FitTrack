@@ -10,6 +10,10 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
+  Linking,
+  PanResponder,
+  type GestureResponderEvent,
+  type PanResponderGestureState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,9 +34,17 @@ import {
   ArrowLeft,
   Navigation,
   MapPin,
+  Shield,
+  CheckCircle2,
+  Siren,
+  PhoneCall,
+  Clock3,
+  Loader,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useRunStore, type LatLng, type RunSegment } from '../../stores/runStore';
 import { useAppStore } from '../../stores';
+import { useSafetyStore } from '../../stores/safetyStore';
 import { getMapLibreModule } from '../../services/maplibre';
 import {
   startTracking,
@@ -44,6 +56,9 @@ import {
   calculateElevationGain,
 } from '../../services/runTracker';
 import i18n from '../../i18n';
+import { SafetyCheckConfig } from './SafetyCheckConfig';
+import { sendSafetyAlert, sendAllClearSafetyAlert, type AlertPayload } from '../../services/safetyAlert';
+import { CustomAlertModal } from '../ui/CustomAlertModal';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const MapLibreRN = getMapLibreModule();
@@ -68,6 +83,7 @@ const C = {
   red:         '#f87171',
   redSoft:     'rgba(248,113,113,0.15)',
   gold:        '#e8b84b',
+  goldSoft:    'rgba(232,184,75,0.10)',
   violet:      '#a78bfa',
   violetSoft:  'rgba(167,139,250,0.12)',
 };
@@ -288,6 +304,72 @@ const SegmentedProgressBar = ({ segments, currentIndex, progressInSegment }: {
   );
 };
 
+const SlideAction = ({
+  label,
+  color,
+  icon,
+  onComplete,
+  disabled,
+}: {
+  label: string;
+  color: string;
+  icon: React.ReactNode;
+  onComplete: () => void;
+  disabled?: boolean;
+}) => {
+  const [trackWidth, setTrackWidth] = useState(0);
+  const [thumbX, setThumbX] = useState(0);
+  const thresholdRatio = 0.88;
+  const thumbSize = 44;
+  const maxX = Math.max(0, trackWidth - thumbSize - 6);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: () => !disabled,
+      onPanResponderMove: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
+        const nextX = Math.max(0, Math.min(maxX, gesture.dx));
+        setThumbX(nextX);
+      },
+      onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
+        const nextX = Math.max(0, Math.min(maxX, gesture.dx));
+        if (maxX > 0 && nextX >= maxX * thresholdRatio) {
+          setThumbX(maxX);
+          onComplete();
+          setTimeout(() => setThumbX(0), 160);
+        } else {
+          setThumbX(0);
+        }
+      },
+      onPanResponderTerminate: () => setThumbX(0),
+    })
+  ).current;
+
+  return (
+    <View
+      style={[styles.slideTrack, { borderColor: `${color}66`, backgroundColor: `${color}18` }]}
+      onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+    >
+      <View style={styles.slideLabelWrap}>
+        {icon}
+        <Text style={[styles.slideLabel, { color }]}>{label}</Text>
+      </View>
+      <View
+        style={[
+          styles.slideThumb,
+          {
+            backgroundColor: color,
+            transform: [{ translateX: thumbX }],
+          },
+          disabled && { opacity: 0.4 },
+        ]}
+        {...(!disabled ? panResponder.panHandlers : {})}
+      >
+        <ChevronRight size={20} color="#fff" />
+      </View>
+    </View>
+  );
+};
+
 // ============================================================================
 // CONFIRMATION MODAL (replaces Alert.alert)
 // ============================================================================
@@ -333,6 +415,7 @@ interface RunTrackerProps {
 export function RunTracker({ mode }: RunTrackerProps) {
   const { t } = useTranslation();
   const settings = useAppStore(s => s.settings);
+  const safety = useSafetyStore();
   const store = useRunStore();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -345,6 +428,16 @@ export function RunTracker({ mode }: RunTrackerProps) {
     visible: boolean; title: string; onConfirm: () => void;
     confirmLabel: string; confirmColor?: string;
   }>({ visible: false, title: '', onConfirm: () => {}, confirmLabel: '' });
+  const [showSafetyConfig, setShowSafetyConfig] = useState(false);
+  const [showAddTimePicker, setShowAddTimePicker] = useState(false);
+  const [alertFeedback, setAlertFeedback] = useState<{
+    visible: boolean;
+    type: 'success' | 'warning' | 'error' | 'info';
+    title: string;
+    message: string;
+    retryContacts?: import('../../types').SafetyContact[];
+  }>({ visible: false, type: 'info', title: '', message: '' });
+  const sendingRef = useRef(false);
 
   // Initialize mode
   useEffect(() => {
@@ -357,6 +450,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
     return () => {
       isMountedRef.current = false;
       stopTracking();
+      useSafetyStore.getState().resetCheck();
     };
   }, []);
 
@@ -414,6 +508,22 @@ export function RunTracker({ mode }: RunTrackerProps) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
+  }, [store.status]);
+
+  useEffect(() => {
+    if (store.status !== 'running' && store.status !== 'paused') return;
+
+    const interval = setInterval(() => {
+      const current = useSafetyStore.getState();
+      if (!current.isEnabled) return;
+      if (current.checkStatus === 'pending') {
+        current.tickPending();
+      } else {
+        current.tickCountdown();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [store.status]);
 
   // Follow user on camera
@@ -508,6 +618,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
     }
 
     state.appendPosition(pos);
+    useSafetyStore.getState().updatePosition(pos);
     state.setDistanceKm(newDistance);
 
     const updatedCoords = [...coords, pos];
@@ -516,6 +627,60 @@ export function RunTracker({ mode }: RunTrackerProps) {
     state.setCurrentPaceSecPerKm(instantPace);
     state.setAvgPaceSecPerKm(avgPace);
   }, []);
+
+  const runAlertSend = useCallback(async (type: 'no_response' | 'help_requested', contactsOverride?: import('../../types').SafetyContact[]) => {
+    const currentSafety = useSafetyStore.getState();
+    if (!currentSafety.lastKnownPosition) return;
+    const contacts = contactsOverride ?? currentSafety.contacts;
+    if (!contacts.length) return;
+    if (sendingRef.current) return;
+
+    sendingRef.current = true;
+    const payload: AlertPayload = {
+      type,
+      position: currentSafety.lastKnownPosition,
+      runDurationMinutes: store.elapsedSeconds / 60,
+      distanceKm: store.distanceKm,
+      timestamp: new Date(),
+    };
+
+    const result = await sendSafetyAlert(contacts, payload);
+    useSafetyStore.getState().markAlertSent();
+
+    if (result.failed.length === 0) {
+      setAlertFeedback({
+        visible: true,
+        type: 'success',
+        title: t('safety.alert.sendSuccess'),
+        message: t('safety.overlay.alertSent', { count: result.success.length }),
+      });
+    } else if (result.success.length > 0) {
+      setAlertFeedback({
+        visible: true,
+        type: 'warning',
+        title: t('safety.alert.sendPartialFailure'),
+        message: `${t('safety.overlay.alertSent', { count: result.success.length })}\n${result.failed.map((c) => `• ${c.name}`).join('\n')}`,
+        retryContacts: result.failed,
+      });
+    } else {
+      setAlertFeedback({
+        visible: true,
+        type: 'error',
+        title: t('safety.alert.sendFailure'),
+        message: result.failed.map((c) => `• ${c.name}`).join('\n'),
+        retryContacts: result.failed,
+      });
+    }
+
+    sendingRef.current = false;
+  }, [store.distanceKm, store.elapsedSeconds, t]);
+
+  useEffect(() => {
+    if (!safety.isEnabled) return;
+    if (safety.checkStatus === 'auto_alerting' && safety.alertSentAt === null) {
+      runAlertSend('no_response');
+    }
+  }, [runAlertSend, safety.alertSentAt, safety.checkStatus, safety.isEnabled]);
 
   // Start GPS tracking
   const handleStart = useCallback(async () => {
@@ -552,6 +717,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
         setConfirmModal(prev => ({ ...prev, visible: false }));
         await stopTracking();
         store.finish();
+        useSafetyStore.getState().resetCheck();
       },
     });
   }, [t]);
@@ -567,6 +733,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
           setConfirmModal(prev => ({ ...prev, visible: false }));
           await stopTracking();
           store.reset();
+          useSafetyStore.getState().resetCheck();
           router.back();
         },
       });
@@ -606,6 +773,15 @@ export function RunTracker({ mode }: RunTrackerProps) {
 
   // Derived metrics
   const runSettings = (settings as any).runSettings;
+  const safetyDefaults = settings.safety ?? {
+    contacts: [],
+    defaultIntervalMinutes: 30,
+    defaultAutoAlertDelaySeconds: 60,
+  };
+
+  useEffect(() => {
+    useSafetyStore.getState().setContacts(safetyDefaults.contacts);
+  }, [safetyDefaults.contacts]);
   const displayedMetrics: string[] = runSettings?.displayedMetrics ?? [
     'distance', 'duration', 'currentPace', 'avgPace',
   ];
@@ -637,6 +813,9 @@ export function RunTracker({ mode }: RunTrackerProps) {
   const routeGeoJSON = buildGeoJSON(store.coords);
   const lastCoord = store.coords.length > 0 ? store.coords[store.coords.length - 1] : null;
   const initialPos = store.initialPosition;
+  const nextMinutes = safety.nextCheckAt
+    ? Math.max(0, Math.ceil((safety.nextCheckAt - Date.now()) / 60000))
+    : 0;
 
   // Map center: prefer last coord → initial position → fallback
   const mapCenter = lastCoord
@@ -768,7 +947,36 @@ export function RunTracker({ mode }: RunTrackerProps) {
               : t('run.ready')}
           </Text>
         </View>
+        <TouchableOpacity
+          style={[
+            styles.safetyButton,
+            safety.isEnabled ? styles.safetyButtonActive : styles.safetyButtonInactive,
+          ]}
+          onPress={() => setShowSafetyConfig(true)}
+          activeOpacity={0.85}
+        >
+          <Shield size={18} color={safety.isEnabled ? C.green : C.textSub} />
+          <Text style={[styles.safetyButtonText, safety.isEnabled && { color: C.green }]}>
+            {safety.isEnabled ? `${nextMinutes} ${t('common.minShort')}` : '--'}
+          </Text>
+        </TouchableOpacity>
       </SafeAreaView>
+
+      {safety.isEnabled && safety.checkStatus === 'countdown' && safety.countdownSeconds <= 60 && (
+        <TouchableOpacity
+          style={styles.safetyCountdownBanner}
+          activeOpacity={0.85}
+          onPress={() => useSafetyStore.setState({
+            checkStatus: 'pending',
+            pendingSeconds: safety.autoAlertDelaySeconds,
+          })}
+        >
+          <Shield size={16} color={C.green} />
+          <Text style={styles.safetyCountdownText}>
+            {t('safety.overlay.countdown', { seconds: safety.countdownSeconds })}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Plan objective banner */}
       {plan && (
@@ -886,6 +1094,149 @@ export function RunTracker({ mode }: RunTrackerProps) {
         confirmLabel={confirmModal.confirmLabel}
         confirmColor={confirmModal.confirmColor}
       />
+
+      {(safety.checkStatus === 'pending' || safety.checkStatus === 'auto_alerting') && (
+        <View style={styles.safetyOverlay}>
+          <View style={styles.safetyOverlayCard}>
+            <View style={styles.safetyOverlayHeader}>
+              <Shield size={22} color={C.green} />
+              <Text style={styles.safetyOverlayTitle}>{t('safety.overlay.title')}</Text>
+            </View>
+            <Text style={styles.safetyOverlaySubtitle}>{t('safety.overlay.subtitle')}</Text>
+
+            <View style={styles.safetyCountdownCircle}>
+              {safety.checkStatus === 'auto_alerting' ? (
+                <>
+                  <Loader size={20} color={C.orange} />
+                  <Text style={styles.safetyCountdownCircleText}>{t('safety.overlay.sending')}</Text>
+                </>
+              ) : (
+                <Text
+                  style={[
+                    styles.safetyCountdownCircleText,
+                    safety.pendingSeconds < 30
+                      ? { color: C.red }
+                      : safety.pendingSeconds < 60
+                        ? { color: C.orange }
+                        : { color: C.green },
+                  ]}
+                >
+                  {t('safety.overlay.countdown', { seconds: safety.pendingSeconds })}
+                </Text>
+              )}
+            </View>
+
+            <SlideAction
+              label={t('safety.overlay.imOk')}
+              color={C.green}
+              icon={<CheckCircle2 size={16} color={C.green} />}
+              onComplete={async () => {
+                const sentBefore = useSafetyStore.getState().alertSentAt !== null;
+                useSafetyStore.getState().dismissCheck();
+                if (sentBefore) {
+                  await sendAllClearSafetyAlert(useSafetyStore.getState().contacts);
+                  setAlertFeedback({
+                    visible: true,
+                    type: 'success',
+                    title: t('safety.overlay.allClear'),
+                    message: t('safety.overlay.allClear'),
+                  });
+                }
+              }}
+            />
+            <SlideAction
+              label={t('safety.overlay.needHelp')}
+              color={C.orange}
+              icon={<Siren size={16} color={C.orange} />}
+              onComplete={async () => {
+                useSafetyStore.getState().triggerHelp();
+                await runAlertSend('help_requested');
+              }}
+            />
+            <SlideAction
+              label={t('safety.overlay.call112')}
+              color={C.red}
+              icon={<PhoneCall size={16} color={C.red} />}
+              onComplete={() => {
+                Linking.openURL('tel:112');
+              }}
+            />
+
+            <TouchableOpacity style={styles.addTimeButton} onPress={() => setShowAddTimePicker(true)}>
+              <Clock3 size={14} color={C.gold} />
+              <Text style={styles.addTimeText}>{t('safety.overlay.addTime')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      <SafetyCheckConfig
+        visible={showSafetyConfig}
+        contacts={safetyDefaults.contacts}
+        initialEnabled={safety.isEnabled}
+        defaultIntervalMinutes={safetyDefaults.defaultIntervalMinutes}
+        defaultAutoAlertDelaySeconds={safetyDefaults.defaultAutoAlertDelaySeconds}
+        onClose={() => setShowSafetyConfig(false)}
+        onGoToSettings={() => {
+          setShowSafetyConfig(false);
+          router.push('/settings/safety');
+        }}
+        onActivate={({ enabled, intervalMinutes, autoAlertDelaySeconds }) => {
+          if (!enabled) {
+            useSafetyStore.getState().resetCheck();
+            return;
+          }
+          useSafetyStore.getState().initCheck(
+            intervalMinutes,
+            autoAlertDelaySeconds,
+            safetyDefaults.contacts
+          );
+        }}
+      />
+
+      <CustomAlertModal
+        visible={showAddTimePicker}
+        type="info"
+        title={t('safety.overlay.addTime')}
+        message={t('safety.overlay.addTimeOptions')}
+        onClose={() => setShowAddTimePicker(false)}
+        showCloseButton
+        buttons={[
+          {
+            text: `+15 ${t('common.minShort')}`,
+            onPress: () => useSafetyStore.getState().extendCheck(15),
+          },
+          {
+            text: `+30 ${t('common.minShort')}`,
+            onPress: () => useSafetyStore.getState().extendCheck(30),
+          },
+          {
+            text: `+1${t('common.hour')}`,
+            onPress: () => useSafetyStore.getState().extendCheck(60),
+          },
+        ]}
+      />
+
+      <CustomAlertModal
+        visible={alertFeedback.visible}
+        type={alertFeedback.type}
+        title={alertFeedback.title}
+        message={alertFeedback.message}
+        onClose={() => setAlertFeedback((prev) => ({ ...prev, visible: false }))}
+        showCloseButton
+        buttons={[
+          ...(alertFeedback.retryContacts && alertFeedback.retryContacts.length > 0
+            ? [{
+              text: t('safety.alert.retry'),
+              onPress: () => runAlertSend('help_requested', alertFeedback.retryContacts),
+            }]
+            : []),
+          {
+            text: t('common.ok'),
+            style: 'cancel' as const,
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -917,6 +1268,50 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusText: { fontSize: T.xs, fontWeight: W.semi, color: C.textSub },
+  safetyButton: {
+    minWidth: 64,
+    height: 42,
+    borderRadius: R.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: S.xs,
+    paddingHorizontal: S.md,
+  },
+  safetyButtonActive: {
+    backgroundColor: 'rgba(52,211,112,0.12)',
+    borderColor: C.greenBorder,
+  },
+  safetyButtonInactive: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderColor: C.border,
+  },
+  safetyButtonText: {
+    color: C.textSub,
+    fontSize: T.xs,
+    fontWeight: W.bold,
+  },
+  safetyCountdownBanner: {
+    position: 'absolute',
+    top: 110,
+    alignSelf: 'center',
+    zIndex: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.sm,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    borderWidth: 1,
+    borderColor: C.greenBorder,
+    borderRadius: R.full,
+    paddingHorizontal: S.lg,
+    paddingVertical: S.sm,
+  },
+  safetyCountdownText: {
+    color: C.text,
+    fontSize: T.sm,
+    fontWeight: W.semi,
+  },
 
   // Plan banner
   planBanner: {
@@ -1048,6 +1443,101 @@ const styles = StyleSheet.create({
     alignItems: 'center', borderWidth: 1, borderColor: 'rgba(248,113,113,0.3)',
   },
   modalConfirmText: { fontSize: T.md, fontWeight: W.bold, color: C.red },
+  safetyOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 120,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    paddingHorizontal: S.lg,
+  },
+  safetyOverlayCard: {
+    backgroundColor: '#141722',
+    borderWidth: 1,
+    borderColor: C.borderUp,
+    borderRadius: R.xxl,
+    padding: S.xl,
+    gap: S.md,
+  },
+  safetyOverlayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: S.sm,
+  },
+  safetyOverlayTitle: {
+    color: C.text,
+    fontSize: T.xl,
+    fontWeight: W.bold,
+    textAlign: 'center',
+  },
+  safetyOverlaySubtitle: {
+    color: C.textSub,
+    fontSize: T.sm,
+    textAlign: 'center',
+  },
+  safetyCountdownCircle: {
+    borderRadius: R.full,
+    width: 130,
+    height: 130,
+    alignSelf: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: S.md,
+  },
+  safetyCountdownCircleText: {
+    color: C.text,
+    fontSize: T.md,
+    fontWeight: W.bold,
+    textAlign: 'center',
+  },
+  slideTrack: {
+    height: 56,
+    borderRadius: R.full,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: S.md,
+    overflow: 'hidden',
+  },
+  slideLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: S.sm,
+  },
+  slideLabel: {
+    fontSize: T.md,
+    fontWeight: W.semi,
+  },
+  slideThumb: {
+    position: 'absolute',
+    left: 3,
+    width: 44,
+    height: 44,
+    borderRadius: R.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: 5,
+  },
+  addTimeButton: {
+    marginTop: S.sm,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.xs,
+    backgroundColor: C.goldSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(232,184,75,0.35)',
+    borderRadius: R.full,
+    paddingHorizontal: S.lg,
+    paddingVertical: S.sm,
+  },
+  addTimeText: {
+    color: C.gold,
+    fontSize: T.sm,
+    fontWeight: W.bold,
+  },
 
   // Permission screen
   permissionScreen: {

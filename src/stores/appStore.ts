@@ -122,6 +122,11 @@ const defaultSettings: UserSettings = {
     heightCm: undefined,
     bodyWeightKg: undefined,
     aiTone: 'neutral',
+    safety: {
+        contacts: [],
+        defaultIntervalMinutes: 30,
+        defaultAutoAlertDelaySeconds: 60,
+    },
 };
 
 // Configuration par défaut des sports

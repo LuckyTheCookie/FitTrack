@@ -649,6 +649,39 @@
       "ready": "Calibration terminée !"
     }
   },
+  "safety": {
+    "config": {
+      "title": "Contrôle de situation",
+      "description": "Vous recevrez une vérification périodique. Sans réponse, vos contacts de sécurité seront alertés automatiquement.",
+      "intervalLabel": "Me vérifier toutes les...",
+      "autoAlertLabel": "M'alerter si pas de réponse après...",
+      "activate": "Activer pour cette course",
+      "noContacts": "Aucun contact de sécurité configuré. Ajoutez-en dans les paramètres.",
+      "goToSettings": "Configurer"
+    },
+    "overlay": {
+      "title": "Contrôle de situation 🛡️",
+      "subtitle": "Êtes-vous en sécurité ?",
+      "countdown": "{{seconds}} secondes",
+      "imOk": "Je vais bien",
+      "needHelp": "Besoin d'aide",
+      "call112": "Appeler le 112",
+      "addTime": "Ajouter du temps ⏱️",
+      "addTimeOptions": "Choisissez du temps supplémentaire avant le prochain contrôle.",
+      "sending": "Envoi en cours...",
+      "alertSent": "⚠️ Alerte envoyée — {{count}} contacts notifiés",
+      "allClear": "✅ Message rassurant envoyé à vos contacts."
+    },
+    "alert": {
+      "message": "🆘 {{userName}} a besoin d'aide !\n📍 Position : {{mapsUrl}}\n🏃 En course depuis {{runDurationMinutes}} min — {{distanceKm}} km parcourus\n⏰ {{timestamp}}\nEnvoyé automatiquement par {{appName}}.",
+      "messageNoResponse": "⚠️ {{userName}} n'a pas répondu au contrôle de situation.\n📍 Position : {{mapsUrl}}\n🏃 En course depuis {{runDurationMinutes}} min — {{distanceKm}} km parcourus\n⏰ {{timestamp}}\nEnvoyé automatiquement par {{appName}}.",
+      "messageAllClear": "✅ {{userName}} va bien maintenant. L'alerte précédente était une fausse alerte.\nEnvoyé automatiquement par {{appName}}.",
+      "sendSuccess": "Alerte envoyée",
+      "sendPartialFailure": "Échec partiel d'envoi",
+      "sendFailure": "Impossible d'alerter les contacts",
+      "retry": "Réessayer"
+    }
+  },
   "settings": {
     "title": "Paramètres",
     "profile": "Profil",
@@ -773,6 +806,21 @@
     "sportsManagement": "Gestion des sports",
     "manageSports": "Gérer mes sports",
     "manageSportsDesc": "Ajouter, masquer ou personnaliser",
+    "safety": {
+      "title": "Sécurité",
+      "contacts": "Contacts de sécurité",
+      "addContact": "Ajouter un contact",
+      "editContact": "Nom du contact",
+      "deleteContact": "Supprimer le contact",
+      "deleteConfirm": "Supprimer {{name}} de vos contacts de sécurité ?",
+      "maxContacts": "Maximum 5 contacts de sécurité.",
+      "defaultInterval": "Intervalle de contrôle par défaut",
+      "defaultAutoAlert": "Délai d'alerte auto par défaut",
+      "disclaimer": "Cette fonctionnalité est un outil d'assistance. En cas d'urgence réelle, composez le 112. L'application ne garantit pas la délivrabilité des messages.",
+      "methodSMS": "SMS",
+      "methodWhatsApp": "WhatsApp",
+      "whatsappUnavailable": "WhatsApp est indisponible sur cet appareil."
+    },
     "sports": {
       "default": "Par défaut",
       "custom": "Personnalisé",
