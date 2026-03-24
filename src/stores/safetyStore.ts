@@ -79,8 +79,9 @@ export const useSafetyStore = create<SafetyCheckState>((set, get) => ({
 
     if (remainingSeconds <= COUNTDOWN_WARNING_SECONDS) {
       set({
-        checkStatus: 'countdown',
-        countdownSeconds: remainingSeconds,
+        checkStatus: 'pending',
+        countdownSeconds: 0,
+        pendingSeconds: state.autoAlertDelaySeconds,
       });
       return;
     }

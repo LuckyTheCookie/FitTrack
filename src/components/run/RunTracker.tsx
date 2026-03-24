@@ -969,18 +969,6 @@ export function RunTracker({ mode }: RunTrackerProps) {
         </TouchableOpacity>
       </SafeAreaView>
 
-      {safety.isEnabled && safety.checkStatus === 'countdown' && safety.countdownSeconds <= 60 && (
-        <TouchableOpacity
-          style={styles.safetyCountdownBanner}
-          activeOpacity={0.85}
-          onPress={() => useSafetyStore.getState().startPendingCheck()}
-        >
-          <Shield size={16} color={C.green} />
-          <Text style={styles.safetyCountdownText}>
-            {t('safety.overlay.countdown', { seconds: safety.countdownSeconds })}
-          </Text>
-        </TouchableOpacity>
-      )}
 
       {/* Plan objective banner */}
       {plan && (
