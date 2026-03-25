@@ -1,4 +1,4 @@
-import { Stack, usePathname, useRouter, useRootNavigationState, useSegments, useNavigation, useNavigationContainerRef } from 'expo-router';
+import { Slot, usePathname, useRouter, useRootNavigationState, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { useSettings, useSocialStore } from '../src/stores';
 import { View, StyleSheet, Pressable } from 'react-native';
@@ -173,30 +173,7 @@ export default function Layout() {
     return (
         <ErrorBoundary>
             <GestureHandlerRootView style={{ flex: 1 }}>
-                <Stack
-                    screenOptions={{
-                        headerShown: false,
-                        contentStyle: { backgroundColor: Colors.bg },
-                        animation: 'fade_from_bottom',
-                        animationDuration: 250,
-                    }}
-                >
-                    <Stack.Screen name="index" />
-                    <Stack.Screen name="workout" />
-                    <Stack.Screen name="gamification" />
-                    <Stack.Screen name="social" />
-                    <Stack.Screen name="progress" />
-                    <Stack.Screen name="tools" />
-                    <Stack.Screen name="settings" />
-                    <Stack.Screen name="onboarding" />
-                    <Stack.Screen name="repCounter/index" />
-                    <Stack.Screen name="health-connect" />
-                    <Stack.Screen name="auth" />
-                    <Stack.Screen name="profile" />
-                    <Stack.Screen name="pollination-callback" />
-                    <Stack.Screen name="privacy-policy" />
-                    <Stack.Screen name="terms-of-service" />
-                </Stack>
+                <Slot />
                 <CustomNavBar />
             </GestureHandlerRootView>
         </ErrorBoundary>
