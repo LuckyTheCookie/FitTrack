@@ -9,7 +9,7 @@
       "status": "completed",
       "type": "cleanup",
       "affectedFiles": [
-        "/home/runner/work/FitTrack/FitTrack/code_quality_tasks.json"
+        "code_quality_tasks.json"
       ],
       "errorContext": "`view` and `glob` checks found no `rapport.txt` under the repository.",
       "resolutionNotes": "Searched repository paths for `rapport.txt`/`*rapport*.txt`; no file exists. Proceeded with baseline validation and CI log inspection to derive actionable tasks."
@@ -21,7 +21,7 @@
       "status": "completed",
       "type": "bug",
       "affectedFiles": [
-        "/home/runner/work/FitTrack/FitTrack/tsconfig.json"
+        "tsconfig.json"
       ],
       "errorContext": "`npx tsc --noEmit` => TS5103 Invalid value for '--ignoreDeprecations' at tsconfig.json:5.",
       "resolutionNotes": "Updated `ignoreDeprecations` from `6.0` to `5.0` in `tsconfig.json`. Re-ran `npx tsc --noEmit` and confirmed the TS5103 configuration error is resolved."
@@ -33,7 +33,7 @@
       "status": "completed",
       "type": "architecture",
       "affectedFiles": [
-        "/home/runner/work/FitTrack/FitTrack/code_quality_tasks.json"
+        "code_quality_tasks.json"
       ],
       "errorContext": "Historical failures exist on `main` (e.g., run 21313141751), while latest runs on current branch are in progress/success.",
       "resolutionNotes": "Used GitHub MCP workflow run listing + failed job logs as required. Failure is historical (`expo-notifications:compileReleaseKotlin`) and not directly reproducible in this local branch scope."
