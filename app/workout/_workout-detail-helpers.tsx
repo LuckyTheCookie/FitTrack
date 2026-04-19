@@ -1,4 +1,3 @@
-import React from 'react';
 import { Text } from 'react-native';
 import { Flame, Footprints, Gamepad2, Home, Ruler, UtensilsCrossed } from 'lucide-react-native';
 import { ScreenPalettes } from '../../src/constants';

@@ -2,7 +2,6 @@
 // EXERCISE SELECTOR - Grid of exercise buttons
 // ============================================================================
 
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';

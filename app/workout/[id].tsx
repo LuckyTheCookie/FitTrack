@@ -45,7 +45,7 @@ import { getMapLibreModule } from '../../src/services/maplibre';
 import { storageHelpers } from '../../src/storage/mmkv';
 import { useAppStore, useSettings, useSportsConfig } from '../../src/stores';
 import { useGamificationStore } from '../../src/stores';
-import { formatDisplayDate, getRelativeTime, isInCurrentWeek } from '../../src/utils/date';
+import { formatDisplayDate, getRelativeTime } from '../../src/utils/date';
 import { generateTextAnalysis } from '../../src/services/pollination/textAnalysis';
 import { isPollinationConnected } from '../../src/services/pollination';
 import i18n from '../../src/i18n';
@@ -76,15 +76,6 @@ const MapLibreRN = getMapLibreModule();
 
 const C = ScreenPalettes.cool;
 const S = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 44 };
-const R = { sm: 6, md: 10, lg: 14, xl: 18, xxl: 22, xxxl: 32, full: 999 };
-const T = {
-  nano: 9, micro: 10, xs: 11, sm: 13, md: 15, lg: 17, xl: 20,
-  xxl: 26, xxxl: 34, display: 48,
-};
-const W = {
-  light: '300', reg: '400', med: '500',
-  semi: '600', bold: '700', xbold: '800', black: '900',
-} as const;
 type RoutePoint = { longitude: number; latitude: number };
 type RouteLineFeature = {
   type: 'Feature';

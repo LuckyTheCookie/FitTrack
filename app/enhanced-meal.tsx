@@ -73,12 +73,17 @@ import { styles } from './_enhanced-meal.styles';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const SCORE_EXCELLENT = 85;
+const SCORE_VERY_GOOD = 70;
+const SCORE_GOOD = 50;
+const SCORE_CAN_IMPROVE = 30;
+
 // Score label key based on value
 const getScoreLabelKey = (score: number): string => {
-    if (score >= 85) return 'enhancedMeal.scoreLabels.excellent';
-    if (score >= 70) return 'enhancedMeal.scoreLabels.veryGood';
-    if (score >= 50) return 'enhancedMeal.scoreLabels.good';
-    if (score >= 30) return 'enhancedMeal.scoreLabels.canImprove';
+    if (score >= SCORE_EXCELLENT) return 'enhancedMeal.scoreLabels.excellent';
+    if (score >= SCORE_VERY_GOOD) return 'enhancedMeal.scoreLabels.veryGood';
+    if (score >= SCORE_GOOD) return 'enhancedMeal.scoreLabels.good';
+    if (score >= SCORE_CAN_IMPROVE) return 'enhancedMeal.scoreLabels.canImprove';
     return 'enhancedMeal.scoreLabels.warning';
 };
 

@@ -345,6 +345,9 @@ export default function TodayScreen() {
 
 // ─── StyleSheet ───────────────────────────────────────────────────────────────
 
+const HERO_HALO_TOP = -40;
+const HERO_HALO_RIGHT = -60;
+
 const st = StyleSheet.create({
 
     container:  { flex: 1, backgroundColor: C.bg },
@@ -359,7 +362,7 @@ const st = StyleSheet.create({
     },
     heroHalo: {
         position: 'absolute',
-        top: -40, right: -60,
+        top: HERO_HALO_TOP, right: HERO_HALO_RIGHT,
         width: 220, height: 220,
         borderRadius: 110,
         backgroundColor: Colors.overlayCoral055,

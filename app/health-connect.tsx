@@ -43,12 +43,11 @@ import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { GlassCard, Button } from '../src/components/ui';
 import { HealthConnectSettingsSheet, type HealthConnectSettingsSheetRef } from '../src/components/sheets';
 import { useTranslation } from 'react-i18next';
-import { useAppStore, useGamificationStore } from '../src/stores';
+import { useAppStore } from '../src/stores';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../src/constants';
 import { styles } from './_health-connect.styles';
 import * as healthConnect from '../src/services/healthConnect';
 import type { HealthConnectWorkout, SpixWorkoutType, HealthConnectWeight } from '../src/services/healthConnect';
-import { calculateQuestTotals, calculateXpForEntry } from '../src/stores/gamificationStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { SportConfig } from '../src/types';
@@ -57,6 +56,8 @@ import * as LucideIcons from 'lucide-react-native';
 // ============================================================================
 // TYPES
 // ============================================================================
+
+const EMPTY_STATE_ICON_URI = 'https://cdn-icons-png.flaticon.com/512/7486/7486744.png';
 
 type HealthConnectMappedType = 'home' | 'run' | 'beatsaber' | 'custom' | 'skip';
 
@@ -84,8 +85,6 @@ function getLucideIcon(iconName: string): React.ComponentType<{ size: number; co
 // WORKOUT TYPE SELECTOR - Built dynamically from sportsConfig
 // ============================================================================
 
-// Static skip option
-const SKIP_OPTION = { type: 'skip' as const, label: 'common.skip', icon: Trash2, color: Colors.gray400 };
 
 function WorkoutTypePill({
     sportConfig,
@@ -762,7 +761,6 @@ export default function HealthConnectScreen() {
         // READY STATE
         const selectedCount = workouts.filter((w) => w.selected && w.spixType !== 'skip').length;
         const selectedWeightsCount = weights.filter((w) => w.selected).length;
-        const totalSelected = selectedCount + selectedWeightsCount;
 
         return (
             <>
@@ -800,7 +798,7 @@ export default function HealthConnectScreen() {
                     {workouts.length === 0 && weights.length === 0 ? (
                         <View style={styles.emptyContainer}>
                             <Image 
-                                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/7486/7486744.png' }} 
+                                source={{ uri: EMPTY_STATE_ICON_URI }} 
                                 accessibilityLabel={t('healthConnect.emptyTitle', { defaultValue: 'No data found' })}
                                 style={{ width: 80, height: 80, opacity: 0.5, marginBottom: 16 }} 
                             />

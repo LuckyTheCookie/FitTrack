@@ -17,8 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Animated, { FadeIn, FadeInDown, FadeInUp, SlideInDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn, FadeInUp, SlideInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import { 

@@ -6,7 +6,7 @@ import React, { forwardRef, useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { useTranslation } from 'react-i18next';
-import { Settings, Sparkles, ExternalLink, Trash2, Info, AlertTriangle } from 'lucide-react-native';
+import { Sparkles, Trash2, Info, AlertTriangle } from 'lucide-react-native';
 import { useAppStore } from '../../stores';
 import { 
   isPollinationConnected, 

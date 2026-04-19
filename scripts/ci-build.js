@@ -32,6 +32,10 @@ const BUILD_FLAVORS = {
 
 // --- HELPERS ---
 
+async function pathExists(p) {
+  try { await fs.promises.access(p); return true; } catch { return false; }
+}
+
 async function updateJsonFile(filePath, updater) {
   const content = await fs.promises.readFile(filePath, 'utf8');
   const object = JSON.parse(content);
@@ -77,7 +81,7 @@ async function patchGoogleServices(rootDir) {
 
   // 3. Move JSON
   // En CI, on suppose que le JSON a été décodé à la racine "google-services.json"
-  if (fs.existsSync(path.join(rootDir, 'google-services.json'))) {
+  if (await pathExists(path.join(rootDir, 'google-services.json'))) {
       await fs.promises.copyFile(
         path.join(rootDir, 'google-services.json'),
         path.join(rootDir, 'android/app/google-services.json')
@@ -93,14 +97,14 @@ async function patchHealthConnect(rootDir) {
   const manifestPath = path.join(androidMainDir, 'AndroidManifest.xml');
 
   // Copie des fichiers Kotlin (s'ils existent dans le repo)
-  if(fs.existsSync(patchesDir)) {
-      if(fs.existsSync(path.join(patchesDir, 'MainActivity.kt.patch'))) {
+  if(await pathExists(patchesDir)) {
+      if(await pathExists(path.join(patchesDir, 'MainActivity.kt.patch'))) {
           await fs.promises.copyFile(
             path.join(patchesDir, 'MainActivity.kt.patch'),
             path.join(kotlinDir, 'MainActivity.kt')
           );
       }
-      if(fs.existsSync(path.join(patchesDir, 'PermissionsRationaleActivity.kt'))) {
+      if(await pathExists(path.join(patchesDir, 'PermissionsRationaleActivity.kt'))) {
           await fs.promises.copyFile(
             path.join(patchesDir, 'PermissionsRationaleActivity.kt'),
             path.join(kotlinDir, 'PermissionsRationaleActivity.kt')
@@ -109,7 +113,7 @@ async function patchHealthConnect(rootDir) {
   }
 
   // Patch Manifest (Ton code Regex original)
-  if (fs.existsSync(manifestPath)) {
+  if (await pathExists(manifestPath)) {
     let manifest = await fs.promises.readFile(manifestPath, 'utf8');
     if (!manifest.includes('ACTION_SHOW_PERMISSIONS_RATIONALE')) {
       const mainActivityIntentFilter = `
@@ -142,7 +146,7 @@ async function injectGradleConfig(rootDir, enableSplits) {
   const tempKeystore = path.join(rootDir, 'spix.p12.tmp');
   const destKeystore = path.join(rootDir, 'android/app/spix.p12');
   
-  if (fs.existsSync(tempKeystore)) {
+  if (await pathExists(tempKeystore)) {
       await fs.promises.copyFile(tempKeystore, destKeystore);
       console.log("   🔑 Keystore injected into android/app.");
   } else {
@@ -286,11 +290,11 @@ async function buildFlavor(rootDir, flavor, version) {
   // 5. Move Artifacts
   const apkDir = path.join(rootDir, 'android/app/build/outputs/apk/release');
   const releasesDir = path.join(rootDir, 'releases');
-    if (!fs.existsSync(releasesDir)) {
+    if (!(await pathExists(releasesDir))) {
     await fs.promises.mkdir(releasesDir, { recursive: true });
     }
 
-  if (fs.existsSync(apkDir)) {
+  if (await pathExists(apkDir)) {
       const apks = (await fs.promises.readdir(apkDir)).filter(f => f.endsWith('.apk') && !f.includes('metadata'));
       await Promise.all(apks.map(async (apk) => {
           let archSuffix = '';
@@ -337,7 +341,7 @@ async function main() {
     if (TARGET_FLAVOR === 'both' || TARGET_FLAVOR === 'foss') {
         // Important: Reset du dossier android pour éviter les conflits de plugins (Google Services vs FOSS)
         // Expo prebuild le recréera
-        if (fs.existsSync(path.join(rootDir, 'android'))) {
+        if (await pathExists(path.join(rootDir, 'android'))) {
         await fs.promises.rm(path.join(rootDir, 'android'), { recursive: true, force: true });
         }
         await buildFlavor(rootDir, 'foss', finalVersion);

@@ -21,6 +21,7 @@ const RING_SIZE = 112;
 const RING_STROKE = 6;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const RING_CENTER = RING_SIZE / 2;
 
 function withAlpha(hexColor: string, alpha: number): string {
   const safeAlpha = Math.max(0, Math.min(1, alpha));
@@ -297,7 +298,7 @@ export function SafetyCheckOverlay({
               strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
               strokeDashoffset={dashOffset}
               strokeLinecap="round"
-              transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+              transform={`rotate(-90 ${RING_CENTER} ${RING_CENTER})`}
             />
           </Svg>
           <View style={styles.ringCenter}>

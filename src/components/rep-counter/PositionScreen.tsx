@@ -2,7 +2,7 @@
 // POSITION SCREEN - Instructions before starting exercise
 // ============================================================================
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {

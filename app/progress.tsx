@@ -4,7 +4,7 @@
 // i18n fully configured · All dynamic logic preserved
 // ============================================================================
 
-import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
     TouchableOpacity, Animated as RNAnimated,
@@ -36,7 +36,7 @@ import i18n from '../src/i18n';
 import type { MeasureEntry, HomeWorkoutEntry, RunEntry, Entry } from '../src/types';
 import { Colors } from '../src/constants';
 import { BadgesGrid, PersonalRecords, TopExCard, WeightSparkline, WorkoutBarChart } from './_progressWidgets';
-import { C, PAD, R, S, SW, T, W } from './_progressTokens';
+import { C, PAD, R, S, T, W } from './_progressTokens';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const EyebrowLabel = ({ text, color = C.textMuted }: { text: string; color?: string }) => (
@@ -48,9 +48,6 @@ const EyebrowLabel = ({ text, color = C.textMuted }: { text: string; color?: str
     </Text>
 );
 
-// Thin separator line
-const Sep = () => <View style={{ height: 1, backgroundColor: C.border, marginVertical: S.xl }} />;
-
 // ─── STREAK COVER ─────────────────────────────────────────────────────────────
 // Fixed: continuous arc instead of segmented (no visible gap artifacts)
 function StreakCover({ current, best }: { current: number; best: number }) {
@@ -58,13 +55,14 @@ function StreakCover({ current, best }: { current: number; best: number }) {
     const pct = best > 0 ? Math.min(current / best, 1) : 0;
 
     // Arc geometry — single continuous path, much cleaner
+    const DEG_TO_RAD = Math.PI / 180;
     const SIZE = 160;
     const cx = SIZE / 2, cy = SIZE / 2;
     const R_outer = 70, R_inner = 58;
     const GAP_DEG = 40; // degrees cut at bottom
-    const START_ANGLE = (90 + GAP_DEG / 2) * (Math.PI / 180); // start from bottom-left
-    const END_ANGLE   = (90 - GAP_DEG / 2 + 360) * (Math.PI / 180); // end at bottom-right
-    const FULL_SWEEP  = (360 - GAP_DEG) * (Math.PI / 180);
+    const START_ANGLE = (90 + GAP_DEG / 2) * DEG_TO_RAD; // start from bottom-left
+    const END_ANGLE   = (90 - GAP_DEG / 2 + 360) * DEG_TO_RAD; // end at bottom-right
+    const FULL_SWEEP  = (360 - GAP_DEG) * DEG_TO_RAD;
 
     const polarToXY = (angle: number, r: number) => ({
         x: cx + r * Math.cos(angle - Math.PI / 2),
@@ -87,15 +85,15 @@ function StreakCover({ current, best }: { current: number; best: number }) {
     };
 
     const trackPath = arcPath(
-        START_ANGLE * (Math.PI / 180),
-        END_ANGLE   * (Math.PI / 180),
+        START_ANGLE * DEG_TO_RAD,
+        END_ANGLE   * DEG_TO_RAD,
         R_outer, R_inner
     );
 
     // Fill arc — sweep from start to pct
-    const fillEnd = START_ANGLE * (Math.PI / 180) + FULL_SWEEP * pct;
+    const fillEnd = START_ANGLE * DEG_TO_RAD + FULL_SWEEP * pct;
     const fillPath = pct > 0.01
-        ? arcPath(START_ANGLE * (Math.PI / 180), fillEnd, R_outer, R_inner)
+        ? arcPath(START_ANGLE * DEG_TO_RAD, fillEnd, R_outer, R_inner)
         : null;
 
     return (
@@ -556,7 +554,7 @@ function PloppyWeeklySummary({ entries, settings }: {
     }, [settings.aiFeaturesEnabled]);
 
     useEffect(() => {
-        fetchSummary();
+        void fetchSummary();
     }, [fetchSummary]);
 
 

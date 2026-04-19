@@ -5,7 +5,7 @@
 // All UI    → individual components
 // ============================================================================
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -18,7 +18,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { SessionRecoveryModal } from '../../src/components/ui';
 import { useTranslation } from 'react-i18next';
 
-import { RC, SP, RAD, FONT, W, SCREEN_HEIGHT } from '@/repCounter/constants';
+import { RC, SP, FONT, W, SCREEN_HEIGHT } from '@/repCounter/constants';
 import { useRepCounter } from '@/repCounter/hooks/useRepCounter';
 import { ExerciseSelector } from '@/repCounter/components/ExerciseSelector';
 import { PositionScreen } from '@/repCounter/components/PositionScreen';

@@ -2,7 +2,6 @@
 // SIMPLE RUN SCREEN — Direct run tracking without AI
 // ============================================================================
 
-import React from 'react';
 import { useRunStore } from '../../../src/stores/runStore';
 import { RunTracker } from '../../../src/components/run/RunTracker';
 import { RunSummary } from '../../../src/components/run/RunSummary';

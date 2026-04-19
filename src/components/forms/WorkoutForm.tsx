@@ -2,7 +2,6 @@
 // WORKOUT FORM — Formulaire séance maison + builder d'exercices
 // ============================================================================
 
-import React from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity,
     TextInput,

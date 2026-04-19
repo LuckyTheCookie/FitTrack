@@ -1,9 +1,12 @@
-import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Activity, Heart, MessageSquare, X, Zap } from 'lucide-react-native';
 import { GlassCard } from '../../ui';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../../constants';
 import type { FeedViewItem } from './types';
+
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+const SECONDS_PER_DAY = 86400;
 
 interface FeedSectionProps {
     items: FeedViewItem[];
@@ -32,10 +35,10 @@ function relativeTimeLabel(dateIso: string, labels: FeedSectionProps['labels']):
     const now = Date.now();
     const delta = Math.max(0, Math.floor((now - created) / 1000));
 
-    if (delta < 60) return labels.justNow;
-    if (delta < 3600) return labels.minutesAgo(Math.floor(delta / 60));
-    if (delta < 86400) return labels.hoursAgo(Math.floor(delta / 3600));
-    return labels.daysAgo(Math.floor(delta / 86400));
+    if (delta < SECONDS_PER_MINUTE) return labels.justNow;
+    if (delta < SECONDS_PER_HOUR) return labels.minutesAgo(Math.floor(delta / SECONDS_PER_MINUTE));
+    if (delta < SECONDS_PER_DAY) return labels.hoursAgo(Math.floor(delta / SECONDS_PER_HOUR));
+    return labels.daysAgo(Math.floor(delta / SECONDS_PER_DAY));
 }
 
 // Generate a consistent color for each avatar initial

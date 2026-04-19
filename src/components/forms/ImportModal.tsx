@@ -2,7 +2,6 @@
 // IMPORT MODAL — Import JSON d'exercices avec style premium
 // ============================================================================
 
-import React from 'react';
 import {
     View, Text, StyleSheet, Modal, Pressable,
     TouchableOpacity,

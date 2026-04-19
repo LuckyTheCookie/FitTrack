@@ -40,6 +40,7 @@ function XPRing({ animatedProgress, size = 190 }: { animatedProgress: { value: n
     const sw = 7;
     const r  = (size - sw) / 2;
     const circ = 2 * Math.PI * r;
+    const center = size / 2;
 
     const animatedProps = useAnimatedProps(() => ({
         strokeDashoffset: circ * (1 - animatedProgress.value),
@@ -54,13 +55,13 @@ function XPRing({ animatedProgress, size = 190 }: { animatedProgress: { value: n
                         <Stop offset="100%" stopColor={C.gold} />
                     </SvgLinearGradient>
                 </Defs>
-                <Circle cx={size/2} cy={size/2} r={r}
+                <Circle cx={center} cy={center} r={r}
                     stroke={C.border} strokeWidth={sw} fill={Colors.transparent} />
                 <AnimatedCircle
-                    cx={size/2} cy={size/2} r={r}
+                    cx={center} cy={center} r={r}
                     stroke="url(#xpGrad)" strokeWidth={sw} fill={Colors.transparent}
                     strokeDasharray={`${circ}`} strokeLinecap="round"
-                    transform={`rotate(-90 ${size/2} ${size/2})`}
+                    transform={`rotate(-90 ${center} ${center})`}
                     animatedProps={animatedProps}
                 />
             </Svg>

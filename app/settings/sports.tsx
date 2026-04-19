@@ -40,7 +40,7 @@ import {
     Music,
     Sparkles,
 } from 'lucide-react-native';
-import { GlassCard, Button } from '../../src/components/ui';
+import { Button } from '../../src/components/ui';
 import { useAppStore, useSportsConfig } from '../../src/stores';
 import type { SportConfig, SportTrackingField } from '../../src/types';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
@@ -115,7 +115,6 @@ function SportCard({
     delay?: number;
 }) {
     const { t } = useTranslation();
-    const IconComponent = AVAILABLE_ICONS.find(i => i.name === sport.icon)?.icon || Dumbbell;
 
     return (
         <Animated.View 

@@ -5,7 +5,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react-native';
+import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../constants';
 import { errorLogger } from '../utils/logger';
 

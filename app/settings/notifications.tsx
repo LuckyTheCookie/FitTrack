@@ -68,6 +68,10 @@ export default function NotificationsScreen() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useAppStore();
 
+  const MAX_HOUR = 23;
+  const MIN_HOUR = 0;
+  const MAX_MINUTE = 59;
+  const MIN_MINUTE = 0;
   const commitSettings = useCallback(async (patch: Parameters<typeof updateSettings>[0]) => {
     await Promise.resolve(updateSettings(patch));
   }, [updateSettings]);
@@ -105,7 +109,7 @@ export default function NotificationsScreen() {
     const hour = parseInt(mealTimePickerHour, 10);
     const minute = parseInt(mealTimePickerMinute, 10);
     
-    if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    if (isNaN(hour) || isNaN(minute) || hour < MIN_HOUR || hour > MAX_HOUR || minute < MIN_MINUTE || minute > MAX_MINUTE) {
       Alert.alert(t('common.error'), t('settings.reminderInvalid'));
       return;
     }
@@ -219,7 +223,7 @@ export default function NotificationsScreen() {
     const hour = parseInt(weightTimePickerHour, 10);
     const minute = parseInt(weightTimePickerMinute, 10);
     
-    if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    if (isNaN(hour) || isNaN(minute) || hour < MIN_HOUR || hour > MAX_HOUR || minute < MIN_MINUTE || minute > MAX_MINUTE) {
       Alert.alert(t('common.error'), t('settings.reminderInvalid'));
       return;
     }

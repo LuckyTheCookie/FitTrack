@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,7 @@ import {
   Shield,
   TriangleAlert,
 } from 'lucide-react-native';
-import { useRunStore, type LatLng, type RunSegment } from '../../stores/runStore';
+import { useRunStore, type LatLng } from '../../stores/runStore';
 import { useAppStore } from '../../stores';
 import { useSafetyStore, type SafetyAutoAlertType } from '../../stores/safetyStore';
 import { getMapLibreModule } from '../../services/maplibre';
@@ -136,7 +136,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
         clearInterval(alertHapticsLoopRef.current);
         alertHapticsLoopRef.current = null;
       }
-      stopTracking();
+      void stopTracking();
       useSafetyStore.getState().resetCheck();
     };
   }, []);
@@ -861,7 +861,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
         {/* Controls */}
         <View style={styles.controls}>
           {store.status === 'idle' && (
-            <TouchableOpacity onPress={handleStart} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => void handleStart()} activeOpacity={0.8}>
               <LinearGradient colors={[C.green, '#28b860']} style={styles.mainBtn}>
                 <Play size={28} color="#fff" fill="#fff" />
                 <Text style={styles.mainBtnText}>{t('run.start')}</Text>
@@ -869,7 +869,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
             </TouchableOpacity>
           )}
           {store.status === 'running' && (
-            <TouchableOpacity onPress={handlePause} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => void handlePause()} activeOpacity={0.8}>
               <LinearGradient colors={[C.orange, '#d48e1e']} style={styles.mainBtn}>
                 <Pause size={28} color="#fff" fill="#fff" />
                 <Text style={styles.mainBtnText}>{t('run.pause')}</Text>
@@ -878,7 +878,7 @@ export function RunTracker({ mode }: RunTrackerProps) {
           )}
           {store.status === 'paused' && (
             <View style={styles.pausedControls}>
-              <TouchableOpacity onPress={handleResume} activeOpacity={0.8}>
+              <TouchableOpacity onPress={() => void handleResume()} activeOpacity={0.8}>
                 <LinearGradient colors={[C.green, '#28b860']} style={styles.secondaryBtn}>
                   <Play size={22} color="#fff" fill="#fff" />
                   <Text style={styles.secondaryBtnText}>{t('run.resume')}</Text>

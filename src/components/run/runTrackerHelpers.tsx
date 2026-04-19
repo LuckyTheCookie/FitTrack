@@ -16,7 +16,7 @@ export function formatPace(secPerKm: number): string {
   return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
-export function pickMotivation(key: string): string | null {
+function pickMotivation(key: string): string | null {
   const messages = i18n.t(key, { returnObjects: true });
   if (!Array.isArray(messages) || messages.length === 0) return null;
   return messages[Math.floor(Math.random() * messages.length)];
@@ -134,7 +134,7 @@ export function buildPointGeoJSON(coord: LatLng | null): GeoJSONFeatureCollectio
 }
 
 export const EMPTY_GEOJSON: GeoJSONFeatureCollection = { type: 'FeatureCollection', features: [] };
-export const RING_SIZE = 128;
+const RING_SIZE = 128;
 
 export const MetricCard = ({ label, value, color }: { label: string; value: string; color?: string }) => (
   <View style={styles.metricCard}>

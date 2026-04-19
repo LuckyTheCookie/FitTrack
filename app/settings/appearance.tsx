@@ -42,7 +42,6 @@ import {
   Sparkles,
   ChevronRight,
 } from 'lucide-react-native';
-import { GlassCard } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores';
 import {
   Colors,

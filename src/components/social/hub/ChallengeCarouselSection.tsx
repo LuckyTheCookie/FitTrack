@@ -1,4 +1,3 @@
-import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle2, Clock, Crown, Flag, Target, Users, X, XCircle, Zap } from 'lucide-react-native';
@@ -123,11 +122,13 @@ export function ChallengeCarouselSection({
                                             iLost && styles.statusPillLoss,
                                             isDraw && styles.statusPillDraw,
                                         ]}>
-                                            {(iWon || isDraw) ? (
-                                                <Crown size={9} color={iWon ? Colors.gold : Colors.muted} />
-                                            ) : (
-                                                <XCircle size={9} color={Colors.error} />
-                                            )}
+                                            {(() => {
+                                                const crownColor = iWon ? Colors.gold : Colors.muted;
+                                                if (iWon || isDraw) {
+                                                    return <Crown size={9} color={crownColor} />;
+                                                }
+                                                return <XCircle size={9} color={Colors.error} />;
+                                            })()}
                                             <Text style={[
                                                 styles.statusPillText,
                                                 iWon && styles.statusPillTextWin,
