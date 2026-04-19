@@ -1,0 +1,5709 @@
+{
+  "source_report": "perf-report.txt",
+  "generated_at": "2026-04-19T10:03:59.259Z",
+  "summary": {
+    "total_tasks": 356,
+    "status_counts": {
+      "pending": 353,
+      "in_progress": 0,
+      "completed": 3,
+      "needs_fix": 0
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "PERF-0001",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:293",
+        "snippet": "const fetchAnalysis = useCallback(async (force: boolean = false) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0002",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:360",
+        "snippet": "export function BadgesGrid({ badges, badgeProgress }: {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0003",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:192",
+        "snippet": "useEffect(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0004",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:85",
+        "snippet": "function QuestCard({ quest, index }: { quest: Quest; index: number }) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0005",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/SocialHubScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/SocialHubScreen.tsx:89",
+        "snippet": "export default function SocialHubScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0006",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:211",
+        "snippet": "await updateJsonFile(appJsonPath, (obj) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0007",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:403",
+        "snippet": "const GamificationStep = ({ enabled, onToggle }: { enabled: boolean, onToggle: ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0008",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:279",
+        "snippet": "function BadgeModal({ badge, onClose }: { badge: Badge | null; onClose: () => vo"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0009",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:8",
+        "snippet": "export function ChallengeCarouselSection({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0010",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/rep-counter/useSensorDetection.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useSensorDetection.ts:35",
+        "snippet": "const startSensorTracking = useCallback(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0011",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/FeedSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/FeedSection.tsx:55",
+        "snippet": "export function FeedSection({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0012",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/rep-counter/useSensorDetection.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useSensorDetection.ts:52",
+        "snippet": "subscriptionRef.current = Accelerometer.addListener((data: AccelerometerMeasurem"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0013",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:42",
+        "snippet": "export function WorkoutBarChart({ data, maxValue }: { data: { label: string; val"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0014",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/rep-counter/useEllipticalCalibration.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useEllipticalCalibration.ts:29",
+        "snippet": "export function useEllipticalCalibration({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0015",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:215",
+        "snippet": "export default function GamificationScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0016",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:106",
+        "snippet": "export default function WorkoutDetailScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0017",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:85",
+        "snippet": "export function AddEntryForm({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0018",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:279",
+        "snippet": "const handleSubmit = useCallback(async () => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0019",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/rep-counter/PositionScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/PositionScreen.tsx:31",
+        "snippet": "export function PositionScreen({ exercise, onReady, detectionMode }: PositionScr"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0020",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:288",
+        "snippet": "? parsed.segments.map((item): RunSegment => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0021",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:355",
+        "snippet": "const SocialStep = ({ enabled, onToggle }: { enabled: boolean, onToggle: (v: boo"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0022",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/SafetyCheckConfig.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/SafetyCheckConfig.tsx:299",
+        "snippet": "{visibleContacts.map((contact) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0023",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/social.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/social.tsx:76",
+        "snippet": "export default function SocialSettingsScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0024",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/ChallengesTabPage.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengesTabPage.tsx:169",
+        "snippet": "const renderPastCard = (item: SocialChallengeProgress) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0025",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:193",
+        "snippet": "const timer = setInterval(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0026",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/safety.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/safety.tsx:36",
+        "snippet": "export default function SafetySettingsScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0027",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:233",
+        "snippet": "const repChartData = useMemo(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0028",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:56",
+        "snippet": "function StreakCover({ current, best }: { current: number; best: number }) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0029",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/auth.tsx"
+      ],
+      "error_context": {
+        "location": "app/auth.tsx:42",
+        "snippet": "export default function AuthScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0030",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:346",
+        "snippet": "{Array.from({ length: 42 }).map((_, idx) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0031",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:154",
+        "snippet": "export default function PoseDebugScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0032",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:173",
+        "snippet": "useEffect(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0033",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:33",
+        "snippet": "export default function PersonalInfoScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0034",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:48",
+        "snippet": "{activeChallenges.map((item) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0035",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:486",
+        "snippet": "const fetchSummary = useCallback(async (force: boolean = false) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0036",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/SafetyCheckConfig.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/SafetyCheckConfig.tsx:89",
+        "snippet": "export function SafetyCheckConfig({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0037",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:202",
+        "snippet": "export const SegmentedProgressBar = ({ segments, currentIndex, progressInSegment"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0038",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/FeedSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/FeedSection.tsx:83",
+        "snippet": "items.map((item, index) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0039",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/CreateChallengeSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/CreateChallengeSheet.tsx:155",
+        "snippet": "{goalTypes.map(goal => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0040",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/notifications.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/notifications.tsx:67",
+        "snippet": "export default function NotificationsScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0041",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/SafetyCheckOverlay.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/SafetyCheckOverlay.tsx:211",
+        "snippet": "export function SafetyCheckOverlay({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0042",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:106",
+        "snippet": "function SportCard({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0043",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:185",
+        "snippet": "const handleSendFreeText = useCallback(async () => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0044",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunSummary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunSummary.tsx:121",
+        "snippet": "export function RunSummary() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0045",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:568",
+        "snippet": "const handleImport = async () => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0046",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/SocialHubScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/SocialHubScreen.tsx:684",
+        "snippet": "const handleDeleteChallenge = useCallback((item: SocialChallengeProgress) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0047",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/ChallengeDetailsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeDetailsSheet.tsx:47",
+        "snippet": "export function ChallengeDetailsSheet({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0048",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:214",
+        "snippet": "useEffect(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0049",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:209",
+        "snippet": "async function configureForFlavor(appJsonPath, flavor, version) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0050",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:389",
+        "snippet": "export default function HealthConnectScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0051",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/ChallengesTabPage.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengesTabPage.tsx:72",
+        "snippet": "const renderActiveCard = (item: SocialChallengeProgress) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0052",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/barcode-scanner.tsx"
+      ],
+      "error_context": {
+        "location": "app/barcode-scanner.tsx:60",
+        "snippet": "export default function BarcodeScannerScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0053",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/sheets/HealthConnectSettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/HealthConnectSettingsSheet.tsx:48",
+        "snippet": "export const HealthConnectSettingsSheet = forwardRef<HealthConnectSettingsSheetR"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0054",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:422",
+        "snippet": "const renderContent = () => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0055",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:88",
+        "snippet": "{data.map((item, i) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0056",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:273",
+        "snippet": "const handlePosition = useCallback((pos: LatLng) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0057",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/tools.tsx"
+      ],
+      "error_context": {
+        "location": "app/tools.tsx:46",
+        "snippet": "export default function ToolsScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0058",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:165",
+        "snippet": "export default function EnhancedMealScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0059",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/sheets/PloppySettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/PloppySettingsSheet.tsx:24",
+        "snippet": "export const PloppySettingsSheet = forwardRef<PloppySettingsSheetRef>((_, ref) ="
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0060",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:463",
+        "snippet": "const ReadyStep = ({ onComplete, wantsSocial, wantsGamification }: { onComplete:"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0061",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/CreateChallengeSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/CreateChallengeSheet.tsx:48",
+        "snippet": "export function CreateChallengeSheet({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0062",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:140",
+        "snippet": "function HistoryItem({ item, index, isLast }: { item: GamificationLog; index: nu"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0063",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/index.tsx:82",
+        "snippet": "export default function TodayScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0064",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/profile.tsx"
+      ],
+      "error_context": {
+        "location": "app/profile.tsx:31",
+        "snippet": "export default function ProfileScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0065",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/ChallengesTabPage.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengesTabPage.tsx:57",
+        "snippet": "export function ChallengesTabPage({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0066",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/forms/SportForms.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/SportForms.tsx:228",
+        "snippet": "export function CustomSportForm({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0067",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:90",
+        "snippet": "function WorkoutTypePill({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0068",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/social.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/social.tsx:33",
+        "snippet": "function SettingItem({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0069",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:202",
+        "snippet": "const handleImport = useCallback(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0070",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:174",
+        "snippet": "const subscription = NotificationService.addNotificationResponseListener((respon"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0071",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:25",
+        "snippet": "export function checkSegmentMotivation("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0072",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/_workout-detail-helpers.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/_workout-detail-helpers.tsx:48",
+        "snippet": "export function computeSessionStats(entry: Entry, allEntries: Entry[]) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0073",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:474",
+        "snippet": "function PloppyWeeklySummary({ entries, settings }: {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0074",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:297",
+        "snippet": "const buildPayloadSnapshot = useCallback((): PoseCapturePayload => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0075",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:311",
+        "snippet": "export default function AppearanceScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0076",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:246",
+        "snippet": "useEffect(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0077",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:212",
+        "snippet": "{segments.map((seg, i) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0078",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/_workout-detail-helpers.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/_workout-detail-helpers.tsx:133",
+        "snippet": "export function computeRepInsights(repTimeline?: RepTimelineData | null): RepIns"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0079",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/forms/DateTimeSelector.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/DateTimeSelector.tsx:27",
+        "snippet": "export function DateTimeSelector({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0080",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/labs.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/labs.tsx:43",
+        "snippet": "export default function LabsScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0081",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/developer.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/developer.tsx:88",
+        "snippet": "export default function DeveloperScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0082",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:79",
+        "snippet": "export default function AiRunConfigScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0083",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunSummary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunSummary.tsx:171",
+        "snippet": "useEffect(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0084",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/repCounter/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/repCounter/index.tsx:30",
+        "snippet": "export default function RepCounterScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0085",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:163",
+        "snippet": "export default function Layout() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0086",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:308",
+        "snippet": "function MonthCalendar({ daysInMonth, startDayOfWeek, activeDays, monthName }: {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0087",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/data.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/data.tsx:88",
+        "snippet": "export default function DataScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0088",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunSummary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunSummary.tsx:105",
+        "snippet": "const DeltaBadge = ({ value, unit, inverted }: { value: number; unit: string; in"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0089",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:44",
+        "snippet": "const handleSave = useCallback(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0090",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:250",
+        "snippet": "const generatePlan = useCallback(async (context: string, qcmAnswers: string[]) ="
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0091",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/auth.tsx"
+      ],
+      "error_context": {
+        "location": "app/auth.tsx:65",
+        "snippet": "const handleSubmit = async () => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0092",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/index.tsx:181",
+        "snippet": "const renderContent = useCallback(() => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0093",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:84",
+        "snippet": "export function RunTracker({ mode }: RunTrackerProps) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0094",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/run/RunSummary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunSummary.tsx:175",
+        "snippet": "(async () => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0095",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/workout/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/index.tsx:165",
+        "snippet": "const EntryCard = React.memo(({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0096",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:112",
+        "snippet": "function CustomNavBar() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0097",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/rep-counter/useSensorDetection.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useSensorDetection.ts:20",
+        "snippet": "export function useSensorDetection({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0098",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:151",
+        "snippet": "function WorkoutImportCard({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0099",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "src/components/social/hub/AddFriendSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/AddFriendSheet.tsx:39",
+        "snippet": "export function AddFriendSheet({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0100",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:313",
+        "snippet": "function WeightImportCard({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0101",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:187",
+        "snippet": "({ onSave }, ref) => {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0102",
+      "title": "High cyclomatic complexity",
+      "description": "Function 'anonymous' has cyclomatic complexity of 32 (threshold: 10)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "function-complexity",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:103",
+        "snippet": "export default function OnboardingScreen() {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0103",
+      "title": "Tests missing",
+      "description": "No tests found for a project with 23 source files",
+      "status": "pending",
+      "type": "tests",
+      "rule": "missing-tests",
+      "affected_files": [],
+      "error_context": {
+        "location": "report-summary",
+        "snippet": "No tests found for a project with 23 source files"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0104",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/notifications.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/notifications.tsx:618",
+        "snippet": "{(['daily', 'weekly', 'monthly'] as const).map((freq) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0105",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:505",
+        "snippet": "{q?.options.map((opt, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0106",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:541",
+        "snippet": "{fields.map((field) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0107",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:334",
+        "snippet": "{AVAILABLE_COLORS.map((c) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0108",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:266",
+        "snippet": "{small.map((s, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0109",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/forms/CategoryScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/CategoryScreen.tsx:101",
+        "snippet": "{categories.map((cat, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0110",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:295",
+        "snippet": "{AVAILABLE_EMOJIS.map((e) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0111",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:594",
+        "snippet": "{plan.points.map((point, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0112",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/ai.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/ai.tsx:176",
+        "snippet": "{lockedFeatures.map((feature, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0113",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:609",
+        "snippet": "{plan.segments.map((seg, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0114",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/rep-counter/ExerciseSelector.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/ExerciseSelector.tsx:27",
+        "snippet": "{EXERCISES.map((exercise, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0115",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/safety.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/safety.tsx:262",
+        "snippet": "{SAFETY_AUTO_ALERT_OPTIONS.map((delaySeconds) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0116",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:339",
+        "snippet": "{days.map((d, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0117",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:378",
+        "snippet": ") : recentHistory.map((item, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0118",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/index.tsx:123",
+        "snippet": "{items.map((item, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0119",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:509",
+        "snippet": "{['#f472b6', '#c084fc', '#818cf8'].map((c, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0120",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:191",
+        "snippet": "{FITNESS_LEVELS.map((level) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0121",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:481",
+        "snippet": "{defaultSports.map((sport: SportConfig, index: number) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0122",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/forms/WorkoutForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/WorkoutForm.tsx:88",
+        "snippet": "{exercises.map((ex, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0123",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:190",
+        "snippet": "{[pts[0], pts[pts.length - 1]].map((p, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0124",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:232",
+        "snippet": "{item.preview_participants.slice(0, 3).map((p, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0125",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:475",
+        "snippet": "{THEME_CARDS.map((theme, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0126",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/ChallengeDetailsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeDetailsSheet.tsx:176",
+        "snippet": "{contributions.map((item) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0127",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:777",
+        "snippet": "{analysis.suggestions.map((suggestion, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0128",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/index.tsx:204",
+        "snippet": "{Array.from({ length: weeklyGoal }).map((_, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0129",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/ChallengesTabPage.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengesTabPage.tsx:138",
+        "snippet": "{topParticipants.map((p, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0130",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:402",
+        "snippet": "{unlocked.map((badge, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0131",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/safety.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/safety.tsx:156",
+        "snippet": "contacts.map((contact) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0132",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:585",
+        "snippet": "{pointStats.map((point) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0133",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:361",
+        "snippet": ") : quests.map((q, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0134",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:264",
+        "snippet": "{activeChallenges.map((item, idx) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0135",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/language.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/language.tsx:66",
+        "snippet": "{(Object.entries(LANGUAGES) as [LanguageCode, typeof LANGUAGES[LanguageCode]]..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0136",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/FeedSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/FeedSection.tsx:124",
+        "snippet": "{item.stats.map((stat) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0137",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/index.tsx:315",
+        "snippet": "{recentWorkouts.map((workout) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0138",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/safety.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/safety.tsx:182",
+        "snippet": "{SAFETY_INTERVAL_OPTIONS.map((interval) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0139",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/AddFriendSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/AddFriendSheet.tsx:128",
+        "snippet": "{searchResults.map((user, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0140",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/notifications.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/notifications.tsx:645",
+        "snippet": "{weekDayLabels.map((day, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0141",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:355",
+        "snippet": "{TRACKING_FIELDS.map(({ id, labelKey, icon: FieldIcon }) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0142",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:818",
+        "snippet": "{workouts.map((workout, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0143",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:837",
+        "snippet": "{weights.map((weight, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0144",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:109",
+        "snippet": "{GENDER_OPTIONS.map(opt => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0145",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/tools.tsx"
+      ],
+      "error_context": {
+        "location": "app/tools.tsx:168",
+        "snippet": "{generatedWorkout.exercises.map((exercise, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0146",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:538",
+        "snippet": "{Object.entries(groupedFields).map(([groupKey, fields]) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0147",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:598",
+        "snippet": "{e.suggestions.map((s, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0148",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:212",
+        "snippet": "].map((item, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0149",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:315",
+        "snippet": "{AVAILABLE_ICONS.map(({ name: iconName, icon: IconComp }) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0150",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:499",
+        "snippet": "{customSports.map((sport: SportConfig, index: number) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0151",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/forms/SportPickerScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/SportPickerScreen.tsx:101",
+        "snippet": "{visibleSports.map((sport) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0152",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:511",
+        "snippet": "{visibleSports.map((sport) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0153",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/sheets/HealthConnectSettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/HealthConnectSettingsSheet.tsx:128",
+        "snippet": "{options.map((option) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0154",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:148",
+        "snippet": "{visibleScreens.map((config) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0155",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/social/hub/ChallengesTabPage.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengesTabPage.tsx:320",
+        "snippet": "{pastChallenges.map((item, idx) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0156",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/settings/notifications.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/notifications.tsx:388",
+        "snippet": "{(settings.mealReminders || []).map((reminder, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0157",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:261",
+        "snippet": "{records.map((rec, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0158",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:657",
+        "snippet": "{detailTags.map((tag) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0159",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/index.tsx:231",
+        "snippet": "{weekDays.map((day) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0160",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:307",
+        "snippet": "{[...alertSummary.success.map((contact) => ({ contact, ok: true })), ...alert..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0161",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:535",
+        "snippet": "{mealTimeOptions.map((option, index) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0162",
+      "title": "Missing key prop in React list",
+      "description": "map() with JSX - can cause rendering bugs",
+      "status": "pending",
+      "type": "bug",
+      "rule": "react-missing-key",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:412",
+        "snippet": "].map((suggestion, i) => ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0163",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:329",
+        "snippet": "void updateEntry(editEntry.id, { ...payload, date: entryD..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0164",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/run/RunSummary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunSummary.tsx:222",
+        "snippet": "gpxPath = await saveGPXFile(gpxContent, `run_${dateStr}_$..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0165",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:513",
+        "snippet": "useRunStore.getState().setCoords(coordsRef.current);"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0166",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:295",
+        "snippet": "void updateEntry(editEntry.id, { ...payload, date: entryD..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0167",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:56",
+        "snippet": "async function patchGoogleServices(rootDir) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0168",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:88",
+        "snippet": "async function patchHealthConnect(rootDir) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0169",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:35",
+        "snippet": "async function updateJsonFile(filePath, updater) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0170",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:514",
+        "snippet": "useRunStore.getState().setDistanceKm(distanceRef.current);"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0171",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:308",
+        "snippet": "void updateEntry(editEntry.id, { ...payload, date: entryD..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0172",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:498",
+        "snippet": "useSafetyStore.getState().resetCheck();"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0173",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:319",
+        "snippet": "void updateEntry(editEntry.id, { ...payload, date: entryD..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0174",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:343",
+        "snippet": "void updateEntry(editEntry.id, { ...payload, date: entryD..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0175",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:495",
+        "snippet": "useRunStore.getState().setCoords(coordsRef.current);"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0176",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:492",
+        "snippet": "weekStart.setDate(weekStart.getDate() - weekStart.getDay(..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0177",
+      "title": "Potentially unwaited promise",
+      "description": "This async function is not awaited - errors will be ignored",
+      "status": "pending",
+      "type": "bug",
+      "rule": "floating-promise",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:496",
+        "snippet": "useRunStore.getState().setDistanceKm(distanceRef.current);"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0178",
+      "title": "Next.js Image missing alt attribute",
+      "description": "Next.js Image component must have an alt attribute",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "img-missing-alt",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:227",
+        "snippet": "<Image"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0179",
+      "title": "Next.js Image missing alt attribute",
+      "description": "Next.js Image component must have an alt attribute",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "img-missing-alt",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:571",
+        "snippet": "<Image"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0180",
+      "title": "Next.js Image missing alt attribute",
+      "description": "Next.js Image component must have an alt attribute",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "img-missing-alt",
+      "affected_files": [
+        "app/barcode-scanner.tsx"
+      ],
+      "error_context": {
+        "location": "app/barcode-scanner.tsx:348",
+        "snippet": "<Image"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0181",
+      "title": "Next.js Image missing alt attribute",
+      "description": "Next.js Image component must have an alt attribute",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "img-missing-alt",
+      "affected_files": [
+        "app/barcode-scanner.tsx"
+      ],
+      "error_context": {
+        "location": "app/barcode-scanner.tsx:271",
+        "snippet": "<Image"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0182",
+      "title": "Next.js Image missing alt attribute",
+      "description": "Next.js Image component must have an alt attribute",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "img-missing-alt",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:802",
+        "snippet": "<Image"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0183",
+      "title": "Variable shadows outer scope",
+      "description": "'segColor' shadows a variable from an outer scope",
+      "status": "completed",
+      "type": "cleanup",
+      "rule": "shadow-variable",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:213",
+        "snippet": "const segColor = seg.type === 'run' ? C.green"
+      },
+      "resolution_notes": "Renamed inner segColor variable to segmentColor in SegmentedProgressBar to remove shadowing and improve readability."
+    },
+    {
+      "task_id": "PERF-0184",
+      "title": "Synchronous operation",
+      "description": "existsSync blocks the event loop",
+      "status": "pending",
+      "type": "perf",
+      "rule": "sync-file-ops",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:96",
+        "snippet": "if(fs.existsSync(patchesDir)) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0185",
+      "title": "Synchronous operation",
+      "description": "existsSync blocks the event loop",
+      "status": "pending",
+      "type": "perf",
+      "rule": "sync-file-ops",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:97",
+        "snippet": "if(fs.existsSync(path.join(patchesDir, 'MainActivity.kt.p..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0186",
+      "title": "Synchronous operation",
+      "description": "existsSync blocks the event loop",
+      "status": "pending",
+      "type": "perf",
+      "rule": "sync-file-ops",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:80",
+        "snippet": "if (fs.existsSync(path.join(rootDir, 'google-services.jso..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0187",
+      "title": "Synchronous operation",
+      "description": "existsSync blocks the event loop",
+      "status": "pending",
+      "type": "perf",
+      "rule": "sync-file-ops",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:112",
+        "snippet": "if (fs.existsSync(manifestPath)) {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0188",
+      "title": "Synchronous operation",
+      "description": "existsSync blocks the event loop",
+      "status": "pending",
+      "type": "perf",
+      "rule": "sync-file-ops",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:103",
+        "snippet": "if(fs.existsSync(path.join(patchesDir, 'PermissionsRation..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0189",
+      "title": "Nested ternaries",
+      "description": "2 nested ternaries detected",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "long-ternary",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:126",
+        "snippet": "{(iWon || isDraw) ? ("
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0190",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerTokens.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerTokens.ts:26",
+        "snippet": "export const R = { sm: 6, md: 10, lg: 14, xl: 18, xxl: 22..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0191",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/sheets/AddEntryBottomSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/AddEntryBottomSheet.tsx:35",
+        "snippet": "export const AddEntryBottomSheet = forwardRef<AddEntryBot..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0192",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_enhanced-meal.styles.ts"
+      ],
+      "error_context": {
+        "location": "app/_enhanced-meal.styles.ts:4",
+        "snippet": "export const styles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0193",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:139",
+        "snippet": "export const MetricCard = ({ label, value, color }: { lab..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0194",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/settings/_notifications.styles.ts"
+      ],
+      "error_context": {
+        "location": "app/settings/_notifications.styles.ts:4",
+        "snippet": "export const styles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0195",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerStyles.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerStyles.ts:7",
+        "snippet": "export const styles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0196",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:136",
+        "snippet": "export const EMPTY_GEOJSON: GeoJSONFeatureCollection = { ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0197",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:235",
+        "snippet": "export const ConfirmOverlay = ({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0198",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:282",
+        "snippet": "export const AlertSentOverlay = ({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0199",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:80",
+        "snippet": "const T = {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0200",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/sheets/PloppySettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/PloppySettingsSheet.tsx:24",
+        "snippet": "export const PloppySettingsSheet = forwardRef<PloppySetti..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0201",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:118",
+        "snippet": "const IconComponent = AVAILABLE_ICONS.find(i => i.name ==..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0202",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_progressTokens.ts"
+      ],
+      "error_context": {
+        "location": "app/_progressTokens.ts:11",
+        "snippet": "export const T = {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0203",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:137",
+        "snippet": "export const RING_SIZE = 128;"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0204",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerTokens.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerTokens.ts:27",
+        "snippet": "export const T = { nano: 9, xs: 11, sm: 13, md: 15, lg: 1..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0205",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_progressTokens.ts"
+      ],
+      "error_context": {
+        "location": "app/_progressTokens.ts:7",
+        "snippet": "export const C = ScreenPalettes.warm;"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0206",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:354",
+        "snippet": "export const IosSendPromptOverlay = ({ visible, t, onClos..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0207",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_progressTokens.ts"
+      ],
+      "error_context": {
+        "location": "app/_progressTokens.ts:23",
+        "snippet": "export const W = {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0208",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerTokens.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerTokens.ts:25",
+        "snippet": "export const S = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0209",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/workout/_workout-detail.styles.ts"
+      ],
+      "error_context": {
+        "location": "app/workout/_workout-detail.styles.ts:17",
+        "snippet": "export const styles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0210",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:765",
+        "snippet": "const totalSelected = selectedCount + selectedWeightsCount;"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0211",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:146",
+        "snippet": "export const MotivationBubble = React.memo(({ message }: ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0212",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:180",
+        "snippet": "export const SegmentIndicator = ({ segment, index, total ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0213",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerTokens.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerTokens.ts:28",
+        "snippet": "export const W = { reg: '400', med: '500', semi: '600', b..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0214",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:88",
+        "snippet": "const SKIP_OPTION = { type: 'skip' as const, label: 'comm..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0215",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/workout/_workout-detail-helpers.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/_workout-detail-helpers.tsx:36",
+        "snippet": "export const getTypeLabel = (type: string, t: TranslateFu..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0216",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:52",
+        "snippet": "const Sep = () => <View style={{ height: 1, backgroundCol..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0217",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/social/SocialHubScreen.styles.ts"
+      ],
+      "error_context": {
+        "location": "src/components/social/SocialHubScreen.styles.ts:4",
+        "snippet": "export const styles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0218",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/rep-counter/types.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/types.ts:74",
+        "snippet": "export const EXERCISES: ExerciseConfig[] = ["
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0219",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:202",
+        "snippet": "export const SegmentedProgressBar = ({ segments, currentI..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0220",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_progressTokens.ts"
+      ],
+      "error_context": {
+        "location": "app/_progressTokens.ts:5",
+        "snippet": "export const PAD = 18;"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0221",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_progressTokens.ts"
+      ],
+      "error_context": {
+        "location": "app/_progressTokens.ts:10",
+        "snippet": "export const R = { sm: 6, md: 10, lg: 14, xl: 18, xxl: 22..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0222",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/workout/_workout-detail-helpers.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/_workout-detail-helpers.tsx:18",
+        "snippet": "export const getEntryTypeConfig = (type: string, sportCon..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0223",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:84",
+        "snippet": "const W = {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0224",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerTokens.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerTokens.ts:30",
+        "snippet": "export const MAP_STYLE = 'https://tiles.openfreemap.org/s..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0225",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_health-connect.styles.ts"
+      ],
+      "error_context": {
+        "location": "app/_health-connect.styles.ts:4",
+        "snippet": "export const styles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0226",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/run/runTrackerTokens.ts"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerTokens.ts:1",
+        "snippet": "export const C = {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0227",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:79",
+        "snippet": "const R = { sm: 6, md: 10, lg: 14, xl: 18, xxl: 22, xxxl:..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0228",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "src/components/forms/formStyles.ts"
+      ],
+      "error_context": {
+        "location": "src/components/forms/formStyles.ts:72",
+        "snippet": "export const sharedStyles = StyleSheet.create({"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0229",
+      "title": "Variable non utilisee",
+      "description": "La variable \"R\" est declaree mais jamais utilisee",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-variables",
+      "affected_files": [
+        "app/_progressTokens.ts"
+      ],
+      "error_context": {
+        "location": "app/_progressTokens.ts:9",
+        "snippet": "export const S = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0230",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/notifications.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/notifications.tsx:67",
+        "snippet": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0231",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:215",
+        "snippet": "app/settings/notifications.tsx:67"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0232",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:406",
+        "snippet": "app/gamification.tsx:215"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0233",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:165",
+        "snippet": "app/settings/sports.tsx:406"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0234",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/safety.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/safety.tsx:36",
+        "snippet": "app/enhanced-meal.tsx:165"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0235",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/terms-of-service.tsx"
+      ],
+      "error_context": {
+        "location": "app/terms-of-service.tsx:88",
+        "snippet": "app/settings/safety.tsx:36"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0236",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/ActionCards.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ActionCards.tsx:18",
+        "snippet": "app/terms-of-service.tsx:88"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0237",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/rep-counter/ProgressRing.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/ProgressRing.tsx:19",
+        "snippet": "src/components/social/hub/ActionCards.tsx:18"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0238",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:311",
+        "snippet": "src/components/rep-counter/ProgressRing.tsx:19"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0239",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/forms/SportForms.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/SportForms.tsx:357",
+        "snippet": "app/settings/appearance.tsx:311"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0240",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:106",
+        "snippet": "src/components/forms/SportForms.tsx:357"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0241",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/CreateChallengeSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/CreateChallengeSheet.tsx:48",
+        "snippet": "app/workout/[id].tsx:106"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0242",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/SocialHubScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/SocialHubScreen.tsx:89",
+        "snippet": "src/components/social/hub/CreateChallengeSheet.tsx:48"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0243",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/auth.tsx"
+      ],
+      "error_context": {
+        "location": "app/auth.tsx:42",
+        "snippet": "src/components/social/SocialHubScreen.tsx:89"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0244",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/sheets/HealthConnectSettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/HealthConnectSettingsSheet.tsx:48",
+        "snippet": "app/auth.tsx:42"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0245",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/FeedSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/FeedSection.tsx:55",
+        "snippet": "src/components/sheets/HealthConnectSettingsSheet.tsx:48"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0246",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/ai.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/ai.tsx:41",
+        "snippet": "src/components/social/hub/FeedSection.tsx:55"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0247",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/run/runTrackerHelpers.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/runTrackerHelpers.tsx:19",
+        "snippet": "app/settings/ai.tsx:41"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0248",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:671",
+        "snippet": "src/components/run/runTrackerHelpers.tsx:19"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0249",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/ErrorBoundary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/ErrorBoundary.tsx:36",
+        "snippet": "app/progress.tsx:671"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0250",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:8",
+        "snippet": "src/components/ErrorBoundary.tsx:36"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0251",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/profile.tsx"
+      ],
+      "error_context": {
+        "location": "app/profile.tsx:31",
+        "snippet": "src/components/social/hub/ChallengeCarouselSection.tsx:8"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0252",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:154",
+        "snippet": "app/profile.tsx:31"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0253",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:85",
+        "snippet": "app/settings/pose-debug.tsx:154"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0254",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/labs.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/labs.tsx:43",
+        "snippet": "src/components/forms/AddEntryForm.tsx:85"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0255",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/_layout.tsx:7",
+        "snippet": "app/settings/labs.tsx:43"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0256",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/pollination-callback.tsx"
+      ],
+      "error_context": {
+        "location": "app/pollination-callback.tsx:24",
+        "snippet": "app/settings/_layout.tsx:7"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0257",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/run/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/_layout.tsx:3",
+        "snippet": "app/pollination-callback.tsx:24"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0258",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/forms/SportForms.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/SportForms.tsx:352",
+        "snippet": "app/run/_layout.tsx:3"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0259",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/social.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/social.tsx:76",
+        "snippet": "src/components/forms/SportForms.tsx:352"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0260",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:389",
+        "snippet": "app/settings/social.tsx:76"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0261",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/rep-counter/useEllipticalCalibration.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useEllipticalCalibration.ts:29",
+        "snippet": "app/health-connect.tsx:389"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0262",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/rep-counter/useRepCounterSounds.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useRepCounterSounds.ts:12",
+        "snippet": "src/components/rep-counter/useEllipticalCalibration.ts:29"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0263",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/rep-counter/PositionScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/PositionScreen.tsx:31",
+        "snippet": "src/components/rep-counter/useRepCounterSounds.ts:12"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0264",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/preferences.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/preferences.tsx:73",
+        "snippet": "src/components/rep-counter/PositionScreen.tsx:31"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0265",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/language.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/language.tsx:23",
+        "snippet": "app/settings/preferences.tsx:73"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0266",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/barcode-scanner.tsx"
+      ],
+      "error_context": {
+        "location": "app/barcode-scanner.tsx:60",
+        "snippet": "app/settings/language.tsx:23"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0267",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/ChallengesTabPage.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengesTabPage.tsx:57",
+        "snippet": "app/barcode-scanner.tsx:60"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0268",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/AddFriendSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/AddFriendSheet.tsx:39",
+        "snippet": "src/components/social/hub/ChallengesTabPage.tsx:57"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0269",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/data.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/data.tsx:88",
+        "snippet": "src/components/social/hub/AddFriendSheet.tsx:39"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0270",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/legal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/legal.tsx:58",
+        "snippet": "app/settings/data.tsx:88"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0271",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:103",
+        "snippet": "app/settings/legal.tsx:58"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0272",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/tools.tsx"
+      ],
+      "error_context": {
+        "location": "app/tools.tsx:46",
+        "snippet": "app/onboarding.tsx:103"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0273",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:33",
+        "snippet": "app/tools.tsx:46"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0274",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:163",
+        "snippet": "app/settings/personal.tsx:33"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0275",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/forms/SportPickerScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/SportPickerScreen.tsx:23",
+        "snippet": "app/_layout.tsx:163"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0276",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/social/hub/ChallengeDetailsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeDetailsSheet.tsx:47",
+        "snippet": "src/components/forms/SportPickerScreen.tsx:23"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0277",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/privacy-policy.tsx"
+      ],
+      "error_context": {
+        "location": "app/privacy-policy.tsx:70",
+        "snippet": "src/components/social/hub/ChallengeDetailsSheet.tsx:47"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0278",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/rep-counter/ExerciseSelector.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/ExerciseSelector.tsx:22",
+        "snippet": "app/privacy-policy.tsx:70"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0279",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/workout/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/_layout.tsx:3",
+        "snippet": "src/components/rep-counter/ExerciseSelector.tsx:22"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0280",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "src/components/rep-counter/useSensorDetection.ts"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/useSensorDetection.ts:20",
+        "snippet": "app/workout/_layout.tsx:3"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0281",
+      "title": "Export inutilise",
+      "description": "'NotificationsScreen' est exporte mais n'est importe par aucun fichier du projet",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-exports",
+      "affected_files": [
+        "app/settings/developer.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/developer.tsx:88",
+        "snippet": "src/components/rep-counter/useSensorDetection.ts:20"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0282",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/forms/DateTimeSelector.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/DateTimeSelector.tsx:5",
+        "snippet": "import React, { useMemo, useCallback } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0283",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/labs.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/labs.tsx:5",
+        "snippet": "import React, { useState, useEffect, useCallback } from '..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0284",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/repCounter/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/repCounter/index.tsx:8",
+        "snippet": "import React, { useCallback } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0285",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:5",
+        "snippet": "import React, { useState, useCallback, useRef } from 'rea..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0286",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/run/simple/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/simple/index.tsx:5",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0287",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/social/hub/FeedSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/FeedSection.tsx:1",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0288",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/language.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/language.tsx:5",
+        "snippet": "import React, { useState, useCallback } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0289",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:34",
+        "snippet": "import { Users, Trophy, Sparkles, CheckCircle2 } from 'lu..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0290",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/forms/WorkoutForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/WorkoutForm.tsx:5",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0291",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/social/hub/ActionCards.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ActionCards.tsx:1",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0292",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:46",
+        "snippet": "import { useAppStore, useGamificationStore } from '../src..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0293",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/tools.tsx"
+      ],
+      "error_context": {
+        "location": "app/tools.tsx:5",
+        "snippet": "import React, { useState, useCallback } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0294",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/ErrorBoundary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/ErrorBoundary.tsx:8",
+        "snippet": "import { AlertTriangle, RefreshCw, Home } from 'lucide-re..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0295",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/profile.tsx"
+      ],
+      "error_context": {
+        "location": "app/profile.tsx:5",
+        "snippet": "import React, { useState, useEffect } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0296",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:45",
+        "snippet": "import { GlassCard } from '../../src/components/ui';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0297",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/sheets/AddEntryBottomSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/AddEntryBottomSheet.tsx:19",
+        "snippet": "import { Colors, Spacing, FontSize, FontWeight, BorderRad..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0298",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:20",
+        "snippet": "import Animated, { FadeInDown, FadeIn, Layout } from 'rea..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0299",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/run/CountdownBanner.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/CountdownBanner.tsx:1",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0300",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/rep-counter/ExerciseSelector.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/ExerciseSelector.tsx:5",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0301",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:43",
+        "snippet": "import { GlassCard, Button } from '../../src/components/ui';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0302",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:48",
+        "snippet": "import { formatDisplayDate, getRelativeTime, isInCurrentW..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0303",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/_layout.tsx"
+      ],
+      "error_context": {
+        "location": "app/_layout.tsx:2",
+        "snippet": "import React, { useEffect } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0304",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/social/hub/ChallengeCarouselSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/ChallengeCarouselSection.tsx:1",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0305",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:51",
+        "snippet": "import { calculateQuestTotals, calculateXpForEntry } from..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0306",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/repCounter/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/repCounter/index.tsx:21",
+        "snippet": "import { RC, SP, RAD, FONT, W, SCREEN_HEIGHT } from '@/re..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0307",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/forms/AddEntryForm.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/AddEntryForm.tsx:5",
+        "snippet": "import React, { useState, useCallback, useMemo, useRef, u..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0308",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:7",
+        "snippet": "import React, { useMemo, useState, useRef, useEffect, use..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0309",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:5",
+        "snippet": "import React, { useState, useCallback } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0310",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/barcode-scanner.tsx"
+      ],
+      "error_context": {
+        "location": "app/barcode-scanner.tsx:21",
+        "snippet": "import { LinearGradient } from 'expo-linear-gradient';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0311",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/safety.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/safety.tsx:1",
+        "snippet": "import React, { useEffect, useMemo, useState } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0312",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/auth.tsx"
+      ],
+      "error_context": {
+        "location": "app/auth.tsx:5",
+        "snippet": "import React, { useState } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0313",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/forms/ImportModal.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/ImportModal.tsx:5",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0314",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:5",
+        "snippet": "import React, { useState, useCallback, useMemo } from 're..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0315",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/data.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/data.tsx:35",
+        "snippet": "import { Colors, Spacing, FontSize, FontWeight, BorderRad..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0316",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/sheets/PloppySettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/PloppySettingsSheet.tsx:9",
+        "snippet": "import { Settings, Sparkles, ExternalLink, Trash2, Info, ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0317",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/sheets/PloppySettingsSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/PloppySettingsSheet.tsx:6",
+        "snippet": "import { View, Text, StyleSheet, TouchableOpacity, Switch..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0318",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/appearance.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/appearance.tsx:5",
+        "snippet": "import React, { useEffect, useMemo, useState, useRef } fr..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0319",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/barcode-scanner.tsx"
+      ],
+      "error_context": {
+        "location": "app/barcode-scanner.tsx:20",
+        "snippet": "import Animated, { FadeIn, FadeInDown, FadeInUp, SlideInD..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0320",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/workout/_workout-detail-helpers.tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/_workout-detail-helpers.tsx:1",
+        "snippet": "import React from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0321",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:47",
+        "snippet": "import { Colors, Spacing, FontSize, FontWeight, BorderRad..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0322",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:39",
+        "snippet": "import { C, PAD, R, S, SW, T, W } from './_progressTokens';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0323",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/sheets/AddEntryBottomSheet.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/sheets/AddEntryBottomSheet.tsx:6",
+        "snippet": "import React, { useState, useCallback, useRef, forwardRef..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0324",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/pose-debug.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/pose-debug.tsx:1",
+        "snippet": "import React, { useCallback, useEffect, useMemo, useRef, ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0325",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/pollination-callback.tsx"
+      ],
+      "error_context": {
+        "location": "app/pollination-callback.tsx:6",
+        "snippet": "import React, { useEffect, useState } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0326",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:38",
+        "snippet": "import { useRunStore, type LatLng, type RunSegment } from..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0327",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:1",
+        "snippet": "import React, { useEffect, useRef, useCallback, useState ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0328",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/rep-counter/PositionScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/rep-counter/PositionScreen.tsx:5",
+        "snippet": "import React, { useEffect } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0329",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/forms/SportPickerScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/forms/SportPickerScreen.tsx:5",
+        "snippet": "import React, { useRef, useEffect } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0330",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/social/SocialHubScreen.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/SocialHubScreen.tsx:1",
+        "snippet": "import React, { useCallback, useEffect, useMemo, useRef, ..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0331",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "src/components/run/SafetyCheckConfig.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/SafetyCheckConfig.tsx:1",
+        "snippet": "import React, { useEffect, useMemo, useState } from 'react';"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0332",
+      "title": "Import non utilise",
+      "description": "L'import \"useCallback\" n'est pas utilise dans ce fichier",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-imports",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:19",
+        "snippet": "import { ArrowLeft, User, Ruler, Weight, Heart, Shield, A..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0333",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/onboarding.tsx"
+      ],
+      "error_context": {
+        "location": "app/onboarding.tsx:374",
+        "snippet": "<Text style={{ fontSize: 24 }}>👥</Text>"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0334",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "src/components/run/RunSummary.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunSummary.tsx:263",
+        "snippet": "<SafeAreaView style={{ flex: 1 }} edges={['top']}>"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0335",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:43",
+        "snippet": "<Text style={{"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0336",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:203",
+        "snippet": "style={{ marginBottom: Spacing.md }}"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0337",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/settings/personal.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/personal.tsx:157",
+        "snippet": "<View style={{ flex: 1 }}>"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0338",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/workout/[id].tsx"
+      ],
+      "error_context": {
+        "location": "app/workout/[id].tsx:513",
+        "snippet": "style={{"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0339",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/run/ai/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/run/ai/index.tsx:124",
+        "snippet": "<SafeAreaView style={{ flex: 1 }} edges={['top']}>"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0340",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:49",
+        "snippet": "<View style={{ width: size, height: size, justifyContent: 'center', alignItem..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0341",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:142",
+        "snippet": "<Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} style={{ fle..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0342",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/settings/sports.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/sports.tsx:391",
+        "snippet": "style={{ flex: 1 }}"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0343",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "src/components/run/RunTracker.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/RunTracker.tsx:546",
+        "snippet": "<TouchableOpacity onPress={() => router.back()} style={{ marginTop: S.lg }}>"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0344",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/index.tsx:73",
+        "snippet": "<View style={{ backgroundColor: bg, borderWidth: 1, borderColor: border, bord..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0345",
+      "title": "Inline styles detected",
+      "description": "9 inline styles - performance impact",
+      "status": "pending",
+      "type": "perf",
+      "rule": "rn-inline-styles",
+      "affected_files": [
+        "app/_progressWidgets.tsx"
+      ],
+      "error_context": {
+        "location": "app/_progressWidgets.tsx:31",
+        "snippet": "<Text style={{"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0346",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "src/components/social/hub/FeedSection.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/social/hub/FeedSection.tsx:36",
+        "snippet": "if (delta < 3600) return labels.minutesAgo(Math.floor(del..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0347",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "src/components/run/SafetyCheckOverlay.tsx"
+      ],
+      "error_context": {
+        "location": "src/components/run/SafetyCheckOverlay.tsx:300",
+        "snippet": "transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0348",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "app/progress.tsx"
+      ],
+      "error_context": {
+        "location": "app/progress.tsx:90",
+        "snippet": "START_ANGLE * (Math.PI / 180),"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0349",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "app/settings/notifications.tsx"
+      ],
+      "error_context": {
+        "location": "app/settings/notifications.tsx:108",
+        "snippet": "if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0350",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "app/index.tsx"
+      ],
+      "error_context": {
+        "location": "app/index.tsx:362",
+        "snippet": "top: -40, right: -60,"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0351",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "app/enhanced-meal.tsx"
+      ],
+      "error_context": {
+        "location": "app/enhanced-meal.tsx:78",
+        "snippet": "if (score >= 85) return 'enhancedMeal.scoreLabels.excelle..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0352",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "app/health-connect.tsx"
+      ],
+      "error_context": {
+        "location": "app/health-connect.tsx:803",
+        "snippet": "source={{ uri: 'https://cdn-icons-png.flaticon.com/512/74..."
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0353",
+      "title": "Magic numbers detected",
+      "description": "4 magic numbers detected (e.g., 3600)",
+      "status": "pending",
+      "type": "refactor",
+      "rule": "magic-numbers",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:63",
+        "snippet": "transform={`rotate(-90 ${size/2} ${size/2})`}"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0354",
+      "title": "Unused function parameter",
+      "description": "Parameter 'iso' in function 'fmt' is never used",
+      "status": "pending",
+      "type": "cleanup",
+      "rule": "unused-parameters",
+      "affected_files": [
+        "app/gamification.tsx"
+      ],
+      "error_context": {
+        "location": "app/gamification.tsx:142",
+        "snippet": "const fmt = (iso: string) => new Date(iso).toLocaleDateString(i18n.language, {"
+      },
+      "resolution_notes": ""
+    },
+    {
+      "task_id": "PERF-0355",
+      "title": "Await in loop",
+      "description": "Sequential requests in a loop are slow",
+      "status": "completed",
+      "type": "perf",
+      "rule": "no-await-in-loop",
+      "affected_files": [
+        "scripts/ci-build.js"
+      ],
+      "error_context": {
+        "location": "scripts/ci-build.js:301",
+        "snippet": "await fs.promises.rename(path.join(apkDir, apk), path.joi..."
+      },
+      "resolution_notes": "Refactored APK artifact renames to Promise.all over mapped async operations to remove await-in-loop bottleneck."
+    },
+    {
+      "task_id": "LOCAL-0001",
+      "title": "TypeScript compiler option compatibility",
+      "description": "tsc failed before code fixes due to invalid ignoreDeprecations value in tsconfig.",
+      "status": "completed",
+      "type": "build",
+      "rule": "local-validation",
+      "affected_files": [
+        "tsconfig.json"
+      ],
+      "error_context": {
+        "location": "tsconfig.json:5",
+        "snippet": "\"ignoreDeprecations\": \"6.0\""
+      },
+      "resolution_notes": "Changed tsconfig ignoreDeprecations from 6.0 to 5.0. TypeScript now parses tsconfig and proceeds to project-level type errors."
+    }
+  ]
+}

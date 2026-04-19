@@ -210,7 +210,7 @@ export const SegmentedProgressBar = ({ segments, currentIndex, progressInSegment
   return (
     <View style={styles.segProgressContainer}>
       {segments.map((seg, i) => {
-        const segColor = seg.type === 'run' ? C.green
+        const segmentColor = seg.type === 'run' ? C.green
           : seg.type === 'walk' ? C.orange
           : C.textMuted;
         const fill = i < currentIndex ? 1
@@ -222,7 +222,7 @@ export const SegmentedProgressBar = ({ segments, currentIndex, progressInSegment
             <View style={[styles.segProgressBg, i === 0 && { borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }, i === total - 1 && { borderTopRightRadius: 3, borderBottomRightRadius: 3 }]}> 
               <View style={[styles.segProgressFill, {
                 width: `${fill * 100}%`,
-                backgroundColor: segColor,
+                backgroundColor: segmentColor,
               }, i === 0 && { borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }, i === total - 1 && fill >= 1 && { borderTopRightRadius: 3, borderBottomRightRadius: 3 }]} />
             </View>
           </View>

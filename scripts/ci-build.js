@@ -292,15 +292,15 @@ async function buildFlavor(rootDir, flavor, version) {
 
   if (fs.existsSync(apkDir)) {
       const apks = (await fs.promises.readdir(apkDir)).filter(f => f.endsWith('.apk') && !f.includes('metadata'));
-      for (const apk of apks) {
+      await Promise.all(apks.map(async (apk) => {
           let archSuffix = '';
           const archMatch = apk.match(/(arm64-v8a|armeabi-v7a|x86_64|x86)/);
           if (archMatch) archSuffix = `-${archMatch[1]}`;
           
           const newName = `Spix-${version}${flavorConfig.apkSuffix}${archSuffix}.apk`;
-        await fs.promises.rename(path.join(apkDir, apk), path.join(releasesDir, newName));
+          await fs.promises.rename(path.join(apkDir, apk), path.join(releasesDir, newName));
           console.log(`✅ Artifact ready: releases/${newName}`);
-      }
+      }));
   } else {
       console.error("⚠️ No APK found in output folder.");
   }
