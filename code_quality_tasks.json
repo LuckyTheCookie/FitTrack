@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-04-19T09:54:16.393Z",
+  "sourceReport": "rapport.txt",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Analysis report file unavailable",
+      "description": "The referenced analysis report `rapport.txt` is not present in the repository, so issue extraction must use available validation signals.",
+      "status": "completed",
+      "type": "cleanup",
+      "affectedFiles": [
+        "/home/runner/work/FitTrack/FitTrack/code_quality_tasks.json"
+      ],
+      "errorContext": "`view` and `glob` checks found no `rapport.txt` under the repository.",
+      "resolutionNotes": "Searched repository paths for `rapport.txt`/`*rapport*.txt`; no file exists. Proceeded with baseline validation and CI log inspection to derive actionable tasks."
+    },
+    {
+      "id": "TASK-002",
+      "title": "TypeScript config uses unsupported ignoreDeprecations value",
+      "description": "Type-check fails because `tsconfig.json` sets `ignoreDeprecations` to `6.0`, which is invalid for the installed TypeScript version.",
+      "status": "pending",
+      "type": "bug",
+      "affectedFiles": [
+        "/home/runner/work/FitTrack/FitTrack/tsconfig.json"
+      ],
+      "errorContext": "`npx tsc --noEmit` => TS5103 Invalid value for '--ignoreDeprecations' at tsconfig.json:5.",
+      "resolutionNotes": ""
+    },
+    {
+      "id": "TASK-003",
+      "title": "Investigate referenced CI/build failure context",
+      "description": "Review recent GitHub Actions runs and failed job logs to verify whether the failure is still actionable for current branch.",
+      "status": "completed",
+      "type": "architecture",
+      "affectedFiles": [
+        "/home/runner/work/FitTrack/FitTrack/code_quality_tasks.json"
+      ],
+      "errorContext": "Historical failures exist on `main` (e.g., run 21313141751), while latest runs on current branch are in progress/success.",
+      "resolutionNotes": "Used GitHub MCP workflow run listing + failed job logs as required. Failure is historical (`expo-notifications:compileReleaseKotlin`) and not directly reproducible in this local branch scope."
+    }
+  ]
+}
