@@ -12,7 +12,7 @@
 
 🇫🇷 Ce README est en français.  
 🇬🇧 See the [English README](README_EN.md)
-
+Note pour Hackclub : Claude et Copilot (IA) ont étés utilisés lors de la réalisation de ce projet
 
 **Spix** est une application de suivi fitness moderne conçue avec une philosophie simple : **vos données vous appartiennent**. Elle combine un design *Glassmorphism* sombre ultra-soigné, une gamification motivante et des fonctionnalités avancées (Health Connect, AI Rep Counter) tout en fonctionnant parfaitement **hors ligne**.
 

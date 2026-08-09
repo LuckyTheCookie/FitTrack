@@ -12,6 +12,8 @@
 
 **Spix** is a modern fitness tracking app built on a simple philosophy: **your data belongs to you**. It blends a slick dark *glassmorphism* UI with motivating gamification and advanced features (Health Connect, AI Rep Counter) while working fully **offline**.
 
+Note for Hackclub: Claude and Copilot (AI) were used in the development of this project
+
 ---
 
 ## Screenshots 
